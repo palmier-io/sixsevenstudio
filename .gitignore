@@ -1,0 +1,25 @@
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+
+# Frontend build artifacts (adjust based on your frontend framework)
+dist/
+build/
+out/
+
+# Node.js dependencies
+node_modules/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Environment variables
+.env
+.env.*
