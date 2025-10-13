@@ -8,8 +8,6 @@ interface ToastOptions {
 
 export function useToast() {
   const toast = ({ title, description, variant }: ToastOptions) => {
-    const message = description || title || "";
-
     if (variant === "destructive") {
       sonnerToast.error(title, {
         description,
