@@ -5,28 +5,27 @@ use commands::*;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
+            // openai api key commands
             save_api_key,
             get_api_key,
             remove_api_key,
-            generate_video,
+            // openai video commands
+            create_video,
             check_video_status,
-            start_video_generation_with_polling,
             download_video,
-            // workspace & projects
+            // workspace & projects commands
             get_workspace_dir,
             ensure_workspace_exists,
             list_projects,
             create_project,
-            rename_project,
             delete_project,
-            // project metadata & videos
-            add_video_to_project,
-            list_project_videos,
-            get_project_meta,
-            update_project_meta,
+            get_project,
+            add_videos_to_project,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
