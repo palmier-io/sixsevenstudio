@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useOpenAI } from "@/hooks/use-openai";
+import { useApiKey } from "@/hooks/tauri/use-api-key";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,7 +14,7 @@ export function ApiKey() {
   const [apiKey, setApiKey] = useState("");
   const [hasApiKey, setHasApiKey] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { saveApiKey, getApiKey, removeApiKey } = useOpenAI();
+  const { saveApiKey, getApiKey, removeApiKey } = useApiKey();
   const { toast } = useToast();
 
   useEffect(() => {
