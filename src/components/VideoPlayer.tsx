@@ -2,12 +2,17 @@ import { useRef, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Pause } from "lucide-react";
+import { useVideoPolling } from "@/hooks/useVideoPolling";
+import { OpenAIVideoJobStatus } from "@/types/openai";
+import { VideoStatus } from "@/components/VideoStatus";
 
 interface VideoPlayerProps {
   src: string;
+  videoId: string;
+  projectPath: string;
 }
 
-export function VideoPlayer({ src }: VideoPlayerProps) {
+export function VideoPlayer({ src, videoId, projectPath }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -15,13 +20,18 @@ export function VideoPlayer({ src }: VideoPlayerProps) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const status = useVideoPolling({
+    videoId,
+    projectPath,
+  });
+
   // Reset state when src changes
   useEffect(() => {
     setIsPlaying(false);
     setCurrentTime(0);
     setError(null);
     setIsLoading(true);
-    
+
     if (videoRef.current) {
       videoRef.current.load();
     }
@@ -75,40 +85,54 @@ export function VideoPlayer({ src }: VideoPlayerProps) {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const isVideoReady = status?.status === OpenAIVideoJobStatus.COMPLETED && status?.videoSrc;
+
   return (
     <Card className="w-full overflow-hidden">
       <CardContent className="p-0">
-        <div className="relative bg-black">
-          <video
-            ref={videoRef}
-            key={src}
-            src={src}
-            className="w-full aspect-video"
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onCanPlay={handleCanPlay}
-            onError={handleError}
-            onEnded={() => setIsPlaying(false)}
-            onClick={togglePlay}
-            preload="metadata"
-          />
+        <div className="relative bg-black aspect-video">
+          {isVideoReady && (
+            <video
+              ref={videoRef}
+              key={src}
+              src={src}
+              className="w-full aspect-video"
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onCanPlay={handleCanPlay}
+              onError={handleError}
+              onEnded={() => setIsPlaying(false)}
+              onClick={togglePlay}
+              preload="metadata"
+            />
+          )}
 
-          {/* Loading Indicator */}
-          {isLoading && !error && (
+          {/* Video status overlay (generating/failed) */}
+          {status && (
+            <VideoStatus
+              status={status.status}
+              progress={status.progress}
+              size="large"
+            />
+          )}
+
+          {/* Loading Indicator for video file */}
+          {isVideoReady && isLoading && !error && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-              <div className="text-white text-sm">Loading...</div>
+              <div className="text-white text-sm">Loading video...</div>
             </div>
           )}
 
-          {/* Error Display */}
-          {error && (
+          {/* Error Display for video playback */}
+          {isVideoReady && error && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/80">
               <div className="text-red-400">{error}</div>
             </div>
           )}
 
-          {/* Video Controls Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 space-y-2">
+          {/* Video Controls Overlay - only show when video is ready */}
+          {isVideoReady && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 space-y-2">
             {/* Seek Bar */}
             <input
               type="range"
@@ -137,7 +161,8 @@ export function VideoPlayer({ src }: VideoPlayerProps) {
                 {formatTime(currentTime)} / {formatTime(totalDuration)}
               </span>
             </div>
-          </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

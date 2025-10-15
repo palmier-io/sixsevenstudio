@@ -109,6 +109,8 @@ export function ProjectPage() {
               {selectedVideoId && projectMeta ? (
                 <VideoPlayer
                   src={convertFileSrc(`${projectMeta.path}/${selectedVideoId}.mp4`)}
+                  videoId={selectedVideoId}
+                  projectPath={projectMeta.path}
                 />
               ) : (
                 <VideoPlaceholder
