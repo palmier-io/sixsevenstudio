@@ -11,7 +11,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { useEffect, useState } from "react"
 import { useProjects, ProjectSummary } from "@/hooks/tauri/use-projects"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -24,32 +23,12 @@ export function Sidebar({
 }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const {
-    getWorkspaceDir,
-    listProjects,
-    deleteProject,
-  } = useProjects()
-  const [projects, setProjects] = useState<ProjectSummary[]>([])
-
-  const reload = async () => {
-    const ws = await getWorkspaceDir()
-    if (ws) {
-      const list = await listProjects()
-      setProjects(list)
-    } else {
-      setProjects([])
-    }
-  }
-
-  useEffect(() => {
-    void reload()
-  }, [])
+  const { projects, deleteProject } = useProjects()
 
   const onDelete = async (name: string) => {
     if (!confirm(`Move project "${name}" to Trash?`)) return
     try {
       await deleteProject(name, "trash")
-      setProjects((prev) => prev.filter((p) => p.name !== name))
     } catch (error) {
       console.error("Failed to delete project:", error)
       alert(`Failed to delete project: ${error}`)
