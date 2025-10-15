@@ -44,11 +44,11 @@ function calculateCost(s: { model: Model; duration: number; samples: number; res
 }
 
 type InputBoxProps = {
-  placeholder?: string
-  onGenerate?: (value: string) => void
+  onGenerate?: (params: { prompt: string; settings: Settings }) => void
   onImageSelect?: (file: File) => void
   onImageClear?: () => void
   onSettingsChange?: (settings: Settings) => void
+  disabled?: boolean
 }
 
 type Settings = {
@@ -58,7 +58,7 @@ type Settings = {
   samples: number
 }
 
-export function InputBox({ placeholder, onGenerate, onImageSelect, onImageClear, onSettingsChange }: InputBoxProps) {
+export function InputBox({ onGenerate, onImageSelect, onImageClear, onSettingsChange, disabled }: InputBoxProps) {
   const [value, setValue] = useState("")
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -127,10 +127,7 @@ export function InputBox({ placeholder, onGenerate, onImageSelect, onImageClear,
         <Textarea
           value={value}
           onChange={(e) => setValue(e.currentTarget.value)}
-          placeholder={
-            placeholder ??
-            "Describe your video... (e.g., 'A serene sunset over the ocean with waves gently crashing')"
-          }
+          placeholder="Describe your video... (e.g., 'A serene sunset over the ocean with waves gently crashing')"
           className="min-h-24 resize-none border-0 p-0 shadow-none focus-visible:ring-0"
         />
       </div>
@@ -263,7 +260,12 @@ export function InputBox({ placeholder, onGenerate, onImageSelect, onImageClear,
           <Button variant="ghost" size="icon-sm" aria-label="Enhance">
             <Sparkles className="size-4" />
           </Button>
-          <Button onClick={() => onGenerate?.(value)}>Generate</Button>
+          <Button
+            onClick={() => onGenerate?.({ prompt: value, settings })}
+            disabled={!value.trim() || disabled}
+          >
+            Generate
+          </Button>
         </div>
       </div>
     </div>
