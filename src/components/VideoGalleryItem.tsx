@@ -1,11 +1,12 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, AlertCircle, Play } from "lucide-react";
+import { Loader2, AlertCircle, Play, Trash2 } from "lucide-react";
 import { VideoMeta } from "@/hooks/tauri/use-projects";
 import { useVideos } from "@/hooks/tauri/use-videos";
 import { useEffect, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 const STATUS_POLL_INTERVAL = 5000; // 5 seconds
 
@@ -14,6 +15,7 @@ interface VideoGalleryItemProps {
   projectPath: string;
   isSelected?: boolean;
   onClick?: () => void;
+  onDelete?: () => void;
 }
 
 export function VideoGalleryItem({
@@ -21,6 +23,7 @@ export function VideoGalleryItem({
   projectPath,
   isSelected,
   onClick,
+  onDelete,
 }: VideoGalleryItemProps) {
   const { getVideoStatus, downloadVideo } = useVideos();
   const [status, setStatus] = useState<{ status: string; progress: number }>({ status: "", progress: 0 });
@@ -76,7 +79,7 @@ export function VideoGalleryItem({
   return (
     <Card
       className={`relative overflow-hidden cursor-pointer transition-all hover:shadow-md aspect-video p-0 ${
-        isSelected ? "ring-2 ring-primary" : ""
+        isSelected ? "border-2 border-primary" : ""
       }`}
       onClick={onClick}
     >
@@ -117,6 +120,28 @@ export function VideoGalleryItem({
         {!isGenerating && !hasFailed && (
           <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center group">
             <Play className="size-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+          </div>
+        )}
+
+        {/* Video ID overlay */}
+        <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded text-white text-[10px] font-mono max-w-[calc(100%-6rem)] truncate">
+          {video.id}
+        </div>
+
+        {/* Delete button overlay */}
+        {onDelete && (
+          <div className="absolute top-2 right-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="bg-black/60 hover:bg-red-600/80 text-white h-8 w-8"
+            >
+              <Trash2 className="size-4" />
+            </Button>
           </div>
         )}
       </div>

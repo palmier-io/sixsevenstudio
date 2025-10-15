@@ -224,3 +224,36 @@ pub async fn add_videos_to_project(
     write_project_meta(&project_path, &meta)?;
     Ok(())
 }
+
+#[tauri::command]
+pub async fn delete_video_from_project(
+    app: AppHandle,
+    project_name: String,
+    video_id: String,
+) -> Result<(), String> {
+    let ws = safe_workspace(&app)?;
+    let project_name = sanitize_project_name(&project_name)?;
+    let project_path = project_dir(&ws, &project_name);
+
+    if !project_path.exists() {
+        return Err(format!("Project '{}' does not exist", project_name));
+    }
+
+    // Read current metadata
+    let mut meta = read_project_meta(&project_path)?;
+
+    // Remove video from metadata
+    meta.videos.retain(|v| v.id != video_id);
+
+    // Write updated metadata
+    write_project_meta(&project_path, &meta)?;
+
+    // Delete video file
+    let video_file_path = project_path.join(format!("{}.mp4", video_id));
+    if video_file_path.exists() {
+        fs::remove_file(&video_file_path)
+            .map_err(|e| format!("Failed to delete video file: {}", e))?;
+    }
+
+    Ok(())
+}

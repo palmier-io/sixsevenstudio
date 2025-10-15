@@ -41,7 +41,7 @@ function VideoPlaceholder(props: { title: string; subtitle: string; pulsing?: bo
 export function ProjectPage() {
   const params = useParams<{ projectName: string }>();
 
-  const { getProject } = useProjects();
+  const { getProject, deleteVideoFromProject } = useProjects();
 
   const [projectMeta, setProjectMeta] = useState<ProjectMeta | null>(null);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
@@ -70,6 +70,21 @@ export function ProjectPage() {
   const handleVideoSelect = useCallback((video: VideoMeta) => {
     setSelectedVideoId(video.id);
   }, []);
+
+  const handleVideoDelete = useCallback(async (videoId: string) => {
+    if (!params.projectName) return;
+    try {
+      await deleteVideoFromProject(params.projectName, videoId);
+      const updatedMeta = await getProject(params.projectName);
+      setProjectMeta(updatedMeta);
+      setSelectedVideoId(null);
+      toast.success("Video deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete video", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }, [params.projectName, deleteVideoFromProject, getProject]);
 
   const selectedVideo: VideoMeta | undefined = useMemo(() => {
     return projectMeta?.videos.find(v => v.id === selectedVideoId);
@@ -119,6 +134,7 @@ export function ProjectPage() {
             videos={projectMeta.videos}
             selectedVideoId={selectedVideoId || undefined}
             onVideoSelect={handleVideoSelect}
+            onVideoDelete={handleVideoDelete}
             projectPath={projectMeta.path}
           />
         )}

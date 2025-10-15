@@ -13,6 +13,7 @@ interface VideoGalleryProps {
   videos: VideoMeta[];
   selectedVideoId?: string;
   onVideoSelect: (video: VideoMeta) => void;
+  onVideoDelete?: (videoId: string) => void;
   projectPath: string;
 }
 
@@ -20,6 +21,7 @@ export function VideoGallery({
   videos,
   selectedVideoId,
   onVideoSelect,
+  onVideoDelete,
   projectPath,
 }: VideoGalleryProps) {
   const [api, setApi] = useState<CarouselApi>();
@@ -69,6 +71,7 @@ export function VideoGallery({
                       projectPath={projectPath}
                       isSelected={selectedVideoId === video.id}
                       onClick={() => onVideoSelect(video)}
+                      onDelete={onVideoDelete ? () => onVideoDelete(video.id) : undefined}
                     />
                   </div>
                 </CarouselItem>

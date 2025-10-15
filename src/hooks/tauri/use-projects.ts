@@ -51,6 +51,10 @@ export function useProjects() {
     await invoke("add_videos_to_project", { projectName, videosMeta });
   };
 
+  const deleteVideoFromProject = async (projectName: string, videoId: string): Promise<void> => {
+    await invoke("delete_video_from_project", { projectName, videoId });
+  };
+
   return {
     getWorkspaceDir,
     ensureWorkspaceExists,
@@ -59,6 +63,7 @@ export function useProjects() {
     deleteProject,
     getProject,
     addVideosToProject,
+    deleteVideoFromProject,
   };
 }
 
