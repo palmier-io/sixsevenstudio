@@ -3,11 +3,6 @@ import { invoke } from "@tauri-apps/api/core";
 export interface ProjectSummary {
   name: string;
   path: string;
-  video_count: number;
-}
-
-export interface ProjectMeta {
-  videos: VideoMeta[];
 }
 
 export interface VideoMeta {
@@ -16,11 +11,15 @@ export interface VideoMeta {
   model: string;
   resolution: string;
   duration: number;
-  file_path: string;
   created_at: number;
 }
 
-export function useWorkspaceApi() {
+export interface ProjectMeta {
+  path: string;
+  videos: VideoMeta[];
+}
+
+export function useProjects() {
   const getWorkspaceDir = async (): Promise<string | null> => {
     return await invoke<string | null>("get_workspace_dir");
   };
@@ -37,16 +36,6 @@ export function useWorkspaceApi() {
     return await invoke<ProjectSummary>("create_project", { name });
   };
 
-  const renameProject = async (
-    oldName: string,
-    newName: string
-  ): Promise<ProjectSummary> => {
-    return await invoke<ProjectSummary>("rename_project", {
-      oldName,
-      newName,
-    });
-  };
-
   const deleteProject = async (
     name: string,
     mode?: "trash" | "delete"
@@ -54,13 +43,12 @@ export function useWorkspaceApi() {
     await invoke("delete_project", { name, mode });
   };
 
-
-  const getProjectMeta = async (projectName: string): Promise<ProjectMeta> => {
-    return await invoke<ProjectMeta>("get_project_meta", { projectName });
+  const getProject = async (projectName: string): Promise<ProjectMeta> => {
+    return await invoke<ProjectMeta>("get_project", { name: projectName });
   };
 
-  const listProjectVideos = async (projectName: string): Promise<VideoMeta[]> => {
-    return await invoke<VideoMeta[]>("list_project_videos", { projectName });
+  const addVideosToProject = async (projectName: string, videosMeta: VideoMeta[]): Promise<void> => {
+    await invoke("add_videos_to_project", { projectName, videosMeta });
   };
 
   return {
@@ -68,10 +56,9 @@ export function useWorkspaceApi() {
     ensureWorkspaceExists,
     listProjects,
     createProject,
-    renameProject,
     deleteProject,
-    getProjectMeta,
-    listProjectVideos,
+    getProject,
+    addVideosToProject,
   };
 }
 
