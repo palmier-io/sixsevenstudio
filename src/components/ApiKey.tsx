@@ -8,14 +8,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Key, Trash2, AlertCircle, Save } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export function ApiKey() {
   const [apiKey, setApiKey] = useState("");
   const [hasApiKey, setHasApiKey] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { saveApiKey, getApiKey, removeApiKey } = useApiKey();
-  const { toast } = useToast();
 
   useEffect(() => {
     loadApiKey();
@@ -35,11 +34,7 @@ export function ApiKey() {
 
   const handleSave = async () => {
     if (!apiKey.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter an API key",
-        variant: "destructive",
-      });
+      toast.error("Please enter an API key");
       return;
     }
 
@@ -47,15 +42,10 @@ export function ApiKey() {
     try {
       await saveApiKey(apiKey);
       setHasApiKey(true);
-      toast({
-        title: "Success",
-        description: "API key saved successfully",
-      });
+      toast.success("API key saved successfully");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save API key",
-        variant: "destructive",
+      toast.error("Failed to save API key", {
+        description: error instanceof Error ? error.message : undefined,
       });
     } finally {
       setIsLoading(false);
@@ -68,15 +58,10 @@ export function ApiKey() {
       await removeApiKey();
       setApiKey("");
       setHasApiKey(false);
-      toast({
-        title: "Success",
-        description: "API key deleted successfully",
-      });
+      toast.success("API key deleted successfully");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete API key",
-        variant: "destructive",
+      toast.error("Failed to delete API key", {
+        description: error instanceof Error ? error.message : undefined,
       });
     } finally {
       setIsLoading(false);
