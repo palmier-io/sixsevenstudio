@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { VideoGallery } from "@/components/VideoGallery";
+import { VideoDetails } from "@/components/VideoDetails";
 import { useProjects, type VideoMeta, type ProjectMeta } from "@/hooks/tauri/use-projects";
 import { toast } from "sonner";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -92,24 +93,17 @@ export function ProjectPage() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Top Section: Left (Original Prompt) + Right (Video Display) */}
+      {/* Top Section: Left (Video Details) + Right (Video Player) */}
       <div className="flex-1 overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Left Panel: Original Prompt */}
+          {/* Left Panel: Video Details */}
           <ResizablePanel defaultSize={35} minSize={25}>
-            <div className="h-full overflow-auto p-6">
-              <div>
-                <h2 className="text-lg font-semibold mb-2">Original Prompt</h2>
-                <p className="text-sm text-muted-foreground">
-                  {selectedVideo?.prompt || "No prompt available"}
-                </p>
-              </div>
-            </div>
+            <VideoDetails video={selectedVideo} />
           </ResizablePanel>
 
           <ResizableHandle withHandle />
 
-          {/* Right Panel: Video Display */}
+          {/* Right Panel: Video Player */}
           <ResizablePanel defaultSize={65} minSize={40}>
             <div className="h-full overflow-auto p-6 flex items-center justify-center">
               {selectedVideoId && projectMeta ? (
