@@ -26,6 +26,7 @@ pub struct ProjectSummary {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ProjectMeta {
     pub videos: Vec<VideoMeta>,
+    pub path: String,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -83,7 +84,7 @@ fn safe_workspace(_app: &AppHandle) -> Result<PathBuf, String> {
 fn read_project_meta(project_path: &Path) -> Result<ProjectMeta, String> {
     let meta_path = project_path.join(PROJECT_META_DIR).join(PROJECT_META_FILE);
     if !meta_path.exists() {
-        return Ok(ProjectMeta { videos: Vec::new() });
+        return Ok(ProjectMeta { videos: Vec::new(), path: project_path.to_string_lossy().to_string() });
     }
     let contents =
         fs::read_to_string(&meta_path).map_err(|e| format!("Failed to read metadata: {}", e))?;
@@ -153,7 +154,7 @@ pub async fn create_project(app: AppHandle, name: String) -> Result<ProjectSumma
     ensure_dir(&meta_dir)?;
     let meta_path = meta_dir.join(PROJECT_META_FILE);
     if !meta_path.exists() {
-        let json = serde_json::to_string_pretty(&ProjectMeta { videos: Vec::new() })
+        let json = serde_json::to_string_pretty(&ProjectMeta { videos: Vec::new(), path: dir.to_string_lossy().to_string() })
             .map_err(|e| e.to_string())?;
         fs::write(&meta_path, json).map_err(|e| e.to_string())?;
     }
@@ -218,6 +219,7 @@ pub async fn add_videos_to_project(
 
     let meta = ProjectMeta {
         videos: videos_meta,
+        path: project_path.to_string_lossy().to_string(),
     };
     write_project_meta(&project_path, &meta)?;
     Ok(())

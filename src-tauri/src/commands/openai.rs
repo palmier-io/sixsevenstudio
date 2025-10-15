@@ -208,13 +208,14 @@ pub async fn remove_api_key(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn check_video_status(
+pub async fn get_video_status(
     app: tauri::AppHandle,
     video_id: String,
 ) -> Result<OpenAIVideoJobResponse, String> {
     let api_key = get_api_key_from_store(&app).await?;
     let client = OpenAIClient::new(api_key);
-    let video_response = client.check_video_status(video_id).await?;
+    let video_response = client.check_video_status(video_id.clone()).await?;
+    log::info!("Checking video status for {} -> {:?}", video_id, video_response);
     Ok(video_response)
 }
 
@@ -230,6 +231,12 @@ pub async fn create_video(
     let client = OpenAIClient::new(api_key);
     let video_id = client.create_video(model, prompt, size, seconds).await?;
     Ok(video_id)
+}
+
+/// Check if a file exists at the specified path
+#[tauri::command]
+pub fn file_exists(file_path: String) -> bool {
+    Path::new(&file_path).exists()
 }
 
 /// Download video from OpenAI API to specified path and save metadata to project

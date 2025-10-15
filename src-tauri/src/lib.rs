@@ -16,8 +16,9 @@ pub fn run() {
             remove_api_key,
             // openai video commands
             create_video,
-            check_video_status,
+            get_video_status,
             download_video,
+            file_exists,
             // workspace & projects commands
             get_workspace_dir,
             ensure_workspace_exists,
