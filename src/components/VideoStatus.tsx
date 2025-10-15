@@ -81,19 +81,21 @@ export function VideoStatus({ status, progress, size = "small" }: VideoStatusPro
           {catFrames[catFrame]}
         </pre>
         <span className={`${isSmall ? "text-[10px]" : "text-sm"} font-medium`}>
-          {messages[messageIndex]}
+          {status === OpenAIVideoJobStatus.QUEUED ? "queued..." : messages[messageIndex]}
         </span>
       </div>
-      <div className={isSmall ? "w-3/4 space-y-0.5" : "w-2/3 space-y-2"}>
-        <div className={`flex justify-between ${isSmall ? "text-[9px]" : "text-xs"}`}>
-          <span>Progress</span>
-          <span>{progress}%</span>
+      {status === OpenAIVideoJobStatus.IN_PROGRESS && (
+        <div className={isSmall ? "w-3/4 space-y-0.5" : "w-2/3 space-y-2"}>
+          <div className={`flex justify-between ${isSmall ? "text-[9px]" : "text-xs"}`}>
+            <span>Progress</span>
+            <span>{progress}%</span>
+          </div>
+          <Progress
+            value={progress}
+            className={`${isSmall ? "h-0.5" : "h-1"} bg-white/20`}
+          />
         </div>
-        <Progress
-          value={progress}
-          className={`${isSmall ? "h-0.5" : "h-1"} bg-white/20`}
-        />
-      </div>
+      )}
     </div>
   );
 }
