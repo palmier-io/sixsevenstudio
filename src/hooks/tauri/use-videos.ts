@@ -1,27 +1,6 @@
 import { useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-
-export interface OpenAIVideoJobResponse {
-  id: string;
-  completed_at?: number;
-  created_at?: number;
-  error?: any | null;
-  expires_at?: number;
-  model?: string;
-  object?: string;
-  progress?: number;
-  remixed_from_video_id?: string | null;
-  seconds?: string;
-  size?: string;
-  status?: string;
-}
-
-export interface OpenAIVideoRequestParams {
-  model: string;
-  prompt: string;
-  size?: string;
-  seconds?: string;
-}
+import { OpenAIVideoRequestParams, OpenAIVideoJobResponse } from "@/types/openai";
 
 export function useVideos() {
 

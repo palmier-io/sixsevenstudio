@@ -3,6 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, AlertCircle, Play, Trash2 } from "lucide-react";
 import { VideoMeta } from "@/hooks/tauri/use-projects";
 import { useVideos } from "@/hooks/tauri/use-videos";
+import { OpenAIVideoJobStatus } from "@/types/openai";
 import { useEffect, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { toast } from "sonner";
@@ -35,7 +36,7 @@ export function VideoGalleryItem({
 
     const poll = async () => {
       // Stop if already in terminal state
-      if (status.status === "completed" || status.status === "failed") return;
+      if (status.status === OpenAIVideoJobStatus.COMPLETED || status.status === OpenAIVideoJobStatus.FAILED) return;
 
       try {
         const res = await getVideoStatus(video.id);
@@ -44,7 +45,7 @@ export function VideoGalleryItem({
         setStatus({ status: res.status, progress: res.progress ?? 0 });
 
         // Download and set video source when completed
-        if (res.status === "completed") {
+        if (res.status === OpenAIVideoJobStatus.COMPLETED) {
           const savePath = `${projectPath}/${video.id}.mp4`;
           try {
             await downloadVideo(video.id, savePath);
@@ -73,8 +74,8 @@ export function VideoGalleryItem({
     };
   }, [video.id, projectPath, status.status, getVideoStatus, downloadVideo]);
 
-  const isGenerating = status.status === "queued" || status.status === "processing";
-  const hasFailed = status.status === "failed" || status.status === "error" || status.status === "timeout";
+  const isGenerating = status.status === OpenAIVideoJobStatus.QUEUED || status.status === OpenAIVideoJobStatus.IN_PROGRESS;
+  const hasFailed = status.status === OpenAIVideoJobStatus.FAILED;
 
   return (
     <Card
