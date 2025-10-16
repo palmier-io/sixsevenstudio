@@ -93,17 +93,10 @@ export function ProjectPage() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Top Section: Left (Video Details) + Right (Video Player) */}
+      {/* Top Section */}
       <div className="flex-1 overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Left Panel: Video Details */}
-          <ResizablePanel defaultSize={35} minSize={25}>
-            <VideoDetails video={selectedVideo} />
-          </ResizablePanel>
-
-          <ResizableHandle withHandle />
-
-          {/* Right Panel: Video Player */}
+          {/* Left Panel: Video Player */}
           <ResizablePanel defaultSize={65} minSize={40}>
             <div className="h-full overflow-auto p-6 flex items-center justify-center">
               {selectedVideoId && projectMeta ? (
@@ -119,6 +112,13 @@ export function ProjectPage() {
                 />
               )}
             </div>
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Right Panel: Video Details */}
+          <ResizablePanel defaultSize={35} minSize={15}>
+            <VideoDetails video={selectedVideo} />
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
