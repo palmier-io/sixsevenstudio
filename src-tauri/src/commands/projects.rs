@@ -3,6 +3,7 @@ use std::env;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::AppHandle;
 
 // ============================================================================
@@ -21,12 +22,14 @@ const PROJECT_META_FILE: &str = "metadata.json";
 pub struct ProjectSummary {
     pub name: String,
     pub path: String,
+    pub created_at: i64,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ProjectMeta {
     pub videos: Vec<VideoMeta>,
     pub path: String,
+    pub created_at: i64,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -81,10 +84,21 @@ fn safe_workspace(_app: &AppHandle) -> Result<PathBuf, String> {
     Ok(default)
 }
 
+fn current_timestamp() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs() as i64
+}
+
 fn read_project_meta(project_path: &Path) -> Result<ProjectMeta, String> {
     let meta_path = project_path.join(PROJECT_META_DIR).join(PROJECT_META_FILE);
     if !meta_path.exists() {
-        return Ok(ProjectMeta { videos: Vec::new(), path: project_path.to_string_lossy().to_string() });
+        return Ok(ProjectMeta {
+            videos: Vec::new(),
+            path: project_path.to_string_lossy().to_string(),
+            created_at: current_timestamp(),
+        });
     }
     let contents =
         fs::read_to_string(&meta_path).map_err(|e| format!("Failed to read metadata: {}", e))?;
@@ -133,13 +147,22 @@ pub async fn list_projects(app: AppHandle) -> Result<Vec<ProjectSummary>, String
             if name.is_empty() || name.starts_with('.') {
                 continue;
             }
+
+            let meta = read_project_meta(&path).unwrap_or_else(|_| ProjectMeta {
+                videos: Vec::new(),
+                path: path.to_string_lossy().to_string(),
+                created_at: current_timestamp(),
+            });
+
             items.push(ProjectSummary {
                 name,
                 path: path.to_string_lossy().to_string(),
+                created_at: meta.created_at,
             });
         }
     }
-    items.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    // Sort by created_at descending (newest first)
+    items.sort_by(|a, b| b.created_at.cmp(&a.created_at));
     Ok(items)
 }
 
@@ -149,18 +172,26 @@ pub async fn create_project(app: AppHandle, name: String) -> Result<ProjectSumma
     let name = sanitize_project_name(&name)?;
     let dir = project_dir(&ws, &name);
     ensure_dir(&dir)?;
+
+    let created_at = current_timestamp();
+
     // init metadata
     let meta_dir = dir.join(PROJECT_META_DIR);
     ensure_dir(&meta_dir)?;
     let meta_path = meta_dir.join(PROJECT_META_FILE);
     if !meta_path.exists() {
-        let json = serde_json::to_string_pretty(&ProjectMeta { videos: Vec::new(), path: dir.to_string_lossy().to_string() })
-            .map_err(|e| e.to_string())?;
+        let json = serde_json::to_string_pretty(&ProjectMeta {
+            videos: Vec::new(),
+            path: dir.to_string_lossy().to_string(),
+            created_at,
+        })
+        .map_err(|e| e.to_string())?;
         fs::write(&meta_path, json).map_err(|e| e.to_string())?;
     }
     Ok(ProjectSummary {
         name,
         path: dir.to_string_lossy().to_string(),
+        created_at,
     })
 }
 
@@ -217,9 +248,12 @@ pub async fn add_videos_to_project(
         return Err(format!("Project '{}' does not exist", project_name));
     }
 
+    let existing_meta = read_project_meta(&project_path)?;
+
     let meta = ProjectMeta {
         videos: videos_meta,
         path: project_path.to_string_lossy().to_string(),
+        created_at: existing_meta.created_at,
     };
     write_project_meta(&project_path, &meta)?;
     Ok(())

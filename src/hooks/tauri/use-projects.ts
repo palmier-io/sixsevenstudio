@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 export interface ProjectSummary {
   name: string;
   path: string;
+  created_at: number;
 }
 
 export interface VideoMeta {
@@ -18,6 +19,7 @@ export interface VideoMeta {
 export interface ProjectMeta {
   path: string;
   videos: VideoMeta[];
+  created_at: number;
 }
 
 // Query keys

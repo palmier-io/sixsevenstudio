@@ -1,9 +1,8 @@
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use tauri_plugin_store::StoreExt;
 use tauri_plugin_log::log;
-
+use tauri_plugin_store::StoreExt;
 
 // ============================================================================
 // Constants
@@ -215,7 +214,11 @@ pub async fn get_video_status(
     let api_key = get_api_key_from_store(&app).await?;
     let client = OpenAIClient::new(api_key);
     let video_response = client.check_video_status(video_id.clone()).await?;
-    log::info!("Checking video status for {} -> {:?}", video_id, video_response);
+    log::debug!(
+        "Checking video status for {} -> {:?}",
+        video_id,
+        video_response
+    );
     Ok(video_response)
 }
 
