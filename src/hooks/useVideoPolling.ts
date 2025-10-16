@@ -11,10 +11,11 @@ interface UseVideoPollingOptions {
 }
 
 export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions) => {
-  const { getVideoStatus, downloadVideo } = useVideos();
+  const { getVideoStatus, downloadVideo, fileExists } = useVideos();
   const { setStatus, getStatus, startPolling } = useVideoStatusStore();
   const isMountedRef = useRef(true);
   const hasDownloadedRef = useRef(false);
+  const hasCheckedLocalRef = useRef(false);
 
   // Shared download handler
   const handleDownload = useCallback(async (status: OpenAIVideoJobStatus, progress: number) => {
@@ -43,6 +44,29 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
       });
     }
   }, [videoId, projectPath, downloadVideo, setStatus]);
+
+  // Check if video exists locally before polling
+  useEffect(() => {
+    if (hasCheckedLocalRef.current) return;
+    hasCheckedLocalRef.current = true;
+
+    const checkLocalVideo = async () => {
+      const savePath = `${projectPath}/${videoId}.mp4`;
+      const exists = await fileExists(savePath);
+
+      if (exists && isMountedRef.current) {
+        // Video already exists locally, set status to completed and skip polling
+        setStatus(videoId, {
+          status: OpenAIVideoJobStatus.COMPLETED,
+          progress: 100,
+          videoSrc: convertFileSrc(savePath),
+        });
+        hasDownloadedRef.current = true; // Mark as already downloaded to skip download logic
+      }
+    };
+
+    checkLocalVideo();
+  }, [videoId, projectPath, fileExists, setStatus]);
 
   // Handle already-completed videos on mount
   const currentStatus = getStatus(videoId);
@@ -77,13 +101,18 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
 
   useEffect(() => {
     isMountedRef.current = true;
-    startPolling(videoId, poll);
+
+    // Only start polling if the video doesn't already exist locally (completed)
+    const status = getStatus(videoId);
+    if (!status || status.status !== OpenAIVideoJobStatus.COMPLETED) {
+      startPolling(videoId, poll);
+    }
 
     return () => {
       isMountedRef.current = false;
       // Don't stop polling on unmount - let other components continue using it
     };
-  }, [videoId, poll, startPolling]);
+  }, [videoId, poll, startPolling, getStatus]);
 
   return getStatus(videoId);
 };
