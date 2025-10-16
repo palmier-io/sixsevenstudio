@@ -12,6 +12,8 @@ import { Plus, ArrowUp, Trash2, Loader2 } from 'lucide-react';
 import { useProjects, type Scene } from '@/hooks/tauri/use-projects';
 import { toast } from 'sonner';
 
+const SAVE_AFTER_IDLE_SECONDS = 5000; // 5 seconds
+
 export default function StoryboardPage() {
   const location = useLocation();
   const { getStoryboard, saveStoryboard } = useProjects();
@@ -79,7 +81,7 @@ export default function StoryboardPage() {
     };
 
     // Debounce save to avoid too many writes
-    const timeoutId = setTimeout(saveData, 500);
+    const timeoutId = setTimeout(saveData, SAVE_AFTER_IDLE_SECONDS);
     return () => clearTimeout(timeoutId);
   }, [scenes, animationStyle, projectName, isLoading, saveStoryboard]);
 
