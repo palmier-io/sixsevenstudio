@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Play, Pause } from "lucide-react";
 import { useVideoPolling } from "@/hooks/useVideoPolling";
 import { OpenAIVideoJobStatus } from "@/types/openai";
@@ -88,82 +89,84 @@ export function VideoPlayer({ src, videoId, projectPath }: VideoPlayerProps) {
   const isVideoReady = status?.status === OpenAIVideoJobStatus.COMPLETED && status?.videoSrc;
 
   return (
-    <Card className="w-full overflow-hidden">
+    <Card className="w-full max-w-4xl overflow-hidden">
       <CardContent className="p-0">
-        <div className="relative bg-black aspect-video">
-          {isVideoReady && (
-            <video
-              ref={videoRef}
-              key={src}
-              src={src}
-              className="w-full aspect-video"
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-              onCanPlay={handleCanPlay}
-              onError={handleError}
-              onEnded={() => setIsPlaying(false)}
-              onClick={togglePlay}
-              preload="metadata"
-            />
-          )}
-
-          {/* Video status overlay (generating/failed) */}
-          {status && (
-            <VideoStatus
-              status={status.status}
-              progress={status.progress}
-              size="large"
-            />
-          )}
-
-          {/* Loading Indicator for video file */}
-          {isVideoReady && isLoading && !error && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-              <div className="text-white text-sm">Loading video...</div>
-            </div>
-          )}
-
-          {/* Error Display for video playback */}
-          {isVideoReady && error && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-              <div className="text-red-400">{error}</div>
-            </div>
-          )}
-
-          {/* Video Controls Overlay - only show when video is ready */}
-          {isVideoReady && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 space-y-2">
-            {/* Seek Bar */}
-            <input
-              type="range"
-              min="0"
-              max={totalDuration || 0}
-              value={currentTime}
-              onChange={handleSeek}
-              className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
-            />
-
-            {/* Control Buttons */}
-            <div className="flex items-center gap-2 text-white">
-              <Button
-                variant="ghost"
-                size="icon-sm"
+        <AspectRatio ratio={16 / 9} className="bg-black">
+          <div className="relative w-full h-full">
+            {isVideoReady && (
+              <video
+                ref={videoRef}
+                key={src}
+                src={src}
+                className="w-full h-full object-contain"
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onCanPlay={handleCanPlay}
+                onError={handleError}
+                onEnded={() => setIsPlaying(false)}
                 onClick={togglePlay}
-                className="text-white hover:bg-white/20"
-              >
-                {isPlaying ? (
-                  <Pause className="size-5" />
-                ) : (
-                  <Play className="size-5" />
-                )}
-              </Button>
-              <span className="text-sm">
-                {formatTime(currentTime)} / {formatTime(totalDuration)}
-              </span>
-            </div>
-            </div>
-          )}
-        </div>
+                preload="metadata"
+              />
+            )}
+
+            {/* Video status overlay (generating/failed) */}
+            {status && (
+              <VideoStatus
+                status={status.status}
+                progress={status.progress}
+                size="large"
+              />
+            )}
+
+            {/* Loading Indicator for video file */}
+            {isVideoReady && isLoading && !error && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                <div className="text-white text-sm">Loading video...</div>
+              </div>
+            )}
+
+            {/* Error Display for video playback */}
+            {isVideoReady && error && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                <div className="text-red-400">{error}</div>
+              </div>
+            )}
+
+            {/* Video Controls Overlay - only show when video is ready */}
+            {isVideoReady && (
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 space-y-2">
+              {/* Seek Bar */}
+              <input
+                type="range"
+                min="0"
+                max={totalDuration || 0}
+                value={currentTime}
+                onChange={handleSeek}
+                className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
+              />
+
+              {/* Control Buttons */}
+              <div className="flex items-center gap-2 text-white">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={togglePlay}
+                  className="text-white hover:bg-white/20"
+                >
+                  {isPlaying ? (
+                    <Pause className="size-5" />
+                  ) : (
+                    <Play className="size-5" />
+                  )}
+                </Button>
+                <span className="text-sm">
+                  {formatTime(currentTime)} / {formatTime(totalDuration)}
+                </span>
+              </div>
+              </div>
+            )}
+          </div>
+        </AspectRatio>
       </CardContent>
     </Card>
   );
