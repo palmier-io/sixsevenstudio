@@ -27,6 +27,10 @@ pub fn run() {
             get_project,
             add_videos_to_project,
             delete_video_from_project,
+            // storyboard commands
+            get_storyboard,
+            save_storyboard,
+            delete_storyboard,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

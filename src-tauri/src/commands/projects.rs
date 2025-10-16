@@ -5,6 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::AppHandle;
+use tauri_plugin_log::log;
 
 // ============================================================================
 // Constants
@@ -13,6 +14,7 @@ use tauri::AppHandle;
 const WORKSPACE_FOLDER: &str = "sixsevenstudio";
 const PROJECT_META_DIR: &str = ".sixseven";
 const PROJECT_META_FILE: &str = "metadata.json";
+const STORYBOARD_FILE: &str = "storyboard.json";
 
 // ============================================================================
 // Types
@@ -40,6 +42,20 @@ pub struct VideoMeta {
     pub resolution: String,
     pub duration: i32,
     pub created_at: i64,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Scene {
+    pub id: String,
+    pub title: String,
+    pub description: String,
+    pub duration: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct StoryboardData {
+    pub scenes: Vec<Scene>,
+    pub animation_style: String,
 }
 
 // ============================================================================
@@ -112,6 +128,28 @@ fn write_project_meta(project_path: &Path, meta: &ProjectMeta) -> Result<(), Str
     let json = serde_json::to_string_pretty(meta)
         .map_err(|e| format!("Failed to serialize metadata: {}", e))?;
     fs::write(&meta_path, json).map_err(|e| format!("Failed to write metadata: {}", e))
+}
+
+fn read_storyboard_data(project_path: &Path) -> Result<Option<StoryboardData>, String> {
+    let storyboard_path = project_path.join(PROJECT_META_DIR).join(STORYBOARD_FILE);
+    if !storyboard_path.exists() {
+        return Ok(None);
+    }
+    let contents = fs::read_to_string(&storyboard_path)
+        .map_err(|e| format!("Failed to read storyboard: {}", e))?;
+    let data = serde_json::from_str(&contents)
+        .map_err(|e| format!("Failed to parse storyboard: {}", e))?;
+    Ok(Some(data))
+}
+
+fn write_storyboard_data(project_path: &Path, data: &StoryboardData) -> Result<(), String> {
+    let meta_dir = project_path.join(PROJECT_META_DIR);
+    ensure_dir(&meta_dir)?;
+    let storyboard_path = meta_dir.join(STORYBOARD_FILE);
+    let json = serde_json::to_string_pretty(data)
+        .map_err(|e| format!("Failed to serialize storyboard: {}", e))?;
+    fs::write(&storyboard_path, json)
+        .map_err(|e| format!("Failed to write storyboard: {}", e))
 }
 
 // ============================================================================
@@ -287,6 +325,62 @@ pub async fn delete_video_from_project(
     if video_file_path.exists() {
         fs::remove_file(&video_file_path)
             .map_err(|e| format!("Failed to delete video file: {}", e))?;
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_storyboard(
+    app: AppHandle,
+    project_name: String,
+) -> Result<Option<StoryboardData>, String> {
+    let ws = safe_workspace(&app)?;
+    let project_name = sanitize_project_name(&project_name)?;
+    let project_path = project_dir(&ws, &project_name);
+
+    if !project_path.exists() {
+        return Err(format!("Project '{}' does not exist", project_name));
+    }
+
+    read_storyboard_data(&project_path)
+}
+
+#[tauri::command]
+pub async fn save_storyboard(
+    app: AppHandle,
+    project_name: String,
+    storyboard_data: StoryboardData,
+) -> Result<(), String> {
+    log::debug!("TRIGGERED SAVE STORYBOARD");
+    let ws = safe_workspace(&app)?;
+    let project_name = sanitize_project_name(&project_name)?;
+    let project_path = project_dir(&ws, &project_name);
+
+    if !project_path.exists() {
+        return Err(format!("Project '{}' does not exist", project_name));
+    }
+
+    write_storyboard_data(&project_path, &storyboard_data)
+}
+
+#[tauri::command]
+pub async fn delete_storyboard(
+    app: AppHandle,
+    project_name: String,
+) -> Result<(), String> {
+    let ws = safe_workspace(&app)?;
+    let project_name = sanitize_project_name(&project_name)?;
+    let project_path = project_dir(&ws, &project_name);
+
+    if !project_path.exists() {
+        return Err(format!("Project '{}' does not exist", project_name));
+    }
+
+    let storyboard_path = project_path.join(PROJECT_META_DIR).join(STORYBOARD_FILE);
+    if storyboard_path.exists() {
+        fs::remove_file(&storyboard_path)
+            .map_err(|e| format!("Failed to delete storyboard file: {}", e))?;
     }
 
     Ok(())
