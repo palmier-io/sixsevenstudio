@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,50 +8,80 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Separator } from '@/components/ui/separator';
-import { Plus, ArrowUp, Trash2 } from 'lucide-react';
-
-interface Scene {
-  id: string;
-  title: string;
-  description: string;
-  duration: string;
-}
+import { Plus, ArrowUp, Trash2, Loader2 } from 'lucide-react';
+import { useProjects, type Scene } from '@/hooks/tauri/use-projects';
+import { toast } from 'sonner';
 
 export default function StoryboardPage() {
-  const [scenes, setScenes] = useState<Scene[]>([
-    {
-      id: '1',
-      title: 'Scene 1',
-      description: 'A low-angle wide shot. Translucent, glowing foxtails fill the foreground, bathed in a soft halo of light. In the middle ground, a boy and a girl stand hand-in-hand, their profiles outlined against the vast, twilight sky as brilliant meteors streak across it. A gentle breeze rustles the field.',
-      duration: '3s',
-    },
-    {
-      id: '2',
-      title: 'Scene 2',
-      description: 'Cut to a close-up of their intertwined hands. The camera slowly focuses, highlighting the subtle pressure of his fingers against hers. The light from a passing meteor briefly illuminates their hands with a blue glow.',
-      duration: '3s',
-    },
-    {
-      id: '3',
-      title: 'Scene 3',
-      description: 'Close-up on the girl\'s face. She turns her head slightly towards him, her eyes reflecting the celestial light. She speaks softly, her voice barely above a whisper. Girl: "Did you see that? It was beautiful."',
-      duration: '3s',
-    },
-    {
-      id: '4',
-      title: 'Scene 4',
-      description: 'The camera shifts to a close-up of the boy\'s face. He doesn\'t look at the sky, but keeps his gaze fixed on her. A small, gentle smile forms on his lips. Boy: "I see something even more beautiful."',
-      duration: '3s',
-    },
-    {
-      id: '5',
-      title: 'Scene 5',
-      description: 'Medium shot of both of them. Hearing his words, she turns to face him fully, a faint blush visible on her cheeks. The wind gently lifts a strand of her hair. He raises his free hand as if to tuck it back.',
-      duration: '3s',
-    },
-  ]);
+  const location = useLocation();
+  const { getStoryboard, saveStoryboard } = useProjects();
 
-  const [animationStyle, setAnimationStyle] = useState('Animation in Japanese anime style');
+  const [scenes, setScenes] = useState<Scene[]>([]);
+  const [animationStyle, setAnimationStyle] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [projectName, setProjectName] = useState<string | null>(null);
+
+  // Load storyboard data on mount
+  useEffect(() => {
+    const loadStoryboard = async () => {
+      try {
+        const state = location.state as { projectName?: string; prompt?: string } | null;
+        const name = state?.projectName;
+
+        if (!name) {
+          toast.error('No project specified');
+          setIsLoading(false);
+          return;
+        }
+
+        setProjectName(name);
+
+        const data = await getStoryboard(name);
+
+        if (data) {
+          setScenes(data.scenes);
+          setAnimationStyle(data.animation_style);
+        } else {
+          // Initialize with default first scene if no data exists
+          setScenes([{
+            id: '1',
+            title: 'Scene 1',
+            description: state?.prompt || '',
+            duration: '3s',
+          }]);
+          setAnimationStyle('Animation in Japanese anime style');
+        }
+      } catch (error) {
+        const errMsg = error instanceof Error ? error.message : String(error);
+        toast.error('Failed to load storyboard', { description: errMsg });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStoryboard();
+  }, [location.state, getStoryboard]);
+
+  // Auto-save storyboard when scenes or animation style changes
+  useEffect(() => {
+    if (!projectName || isLoading) return;
+
+    const saveData = async () => {
+      try {
+        await saveStoryboard(projectName, {
+          scenes,
+          animation_style: animationStyle,
+        });
+      } catch (error) {
+        const errMsg = error instanceof Error ? error.message : String(error);
+        console.error('Failed to save storyboard:', errMsg);
+      }
+    };
+
+    // Debounce save to avoid too many writes
+    const timeoutId = setTimeout(saveData, 500);
+    return () => clearTimeout(timeoutId);
+  }, [scenes, animationStyle, projectName, isLoading, saveStoryboard]);
 
   const addScene = () => {
     const newScene: Scene = {
@@ -71,6 +102,28 @@ export default function StoryboardPage() {
       scene.id === id ? { ...scene, [field]: value } : scene
     ));
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Loading storyboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!projectName) {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="text-center">
+          <h3 className="text-lg font-medium mb-2">No project found</h3>
+          <p className="text-sm text-muted-foreground">Please create a new storyboard from the home page.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full w-full flex flex-col">

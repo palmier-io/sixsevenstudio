@@ -14,7 +14,7 @@ export function Home() {
   } = useVideos();
   const [isGenerating, setIsGenrating] = useState(false);
 
-  const handleStoryboard = (params: {
+  const handleStoryboard = async (params: {
     prompt: string;
     settings: {
       model: string;
@@ -23,12 +23,33 @@ export function Home() {
       samples: number;
     };
   }) => {
-    navigate('/storyboard', {
-      state: {
-        prompt: params.prompt,
-        settings: params.settings,
-      },
-    });
+    try {
+      await ensureWorkspaceExists();
+
+      // Create project name from prompt (first 50 chars, sanitized)
+      const projectName = params.prompt
+        .slice(0, 50)
+        .trim()
+        .replace(/[^a-zA-Z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .toLowerCase() || `storyboard-${Date.now()}`;
+
+      const project = await createProject(projectName);
+
+      navigate('/storyboard', {
+        state: {
+          projectName: project.name,
+          prompt: params.prompt,
+          settings: params.settings,
+        },
+      });
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      toast.error("Failed to create project", {
+        description: errMsg,
+      });
+      logError(`Failed to create project for storyboard: ${errMsg}`);
+    }
   };
 
   const handleGenerate = async (params: {
