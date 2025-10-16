@@ -149,8 +149,16 @@ export default function StoryboardPage() {
 
         {/* Right Panel - Draft Your Video */}
         <Card className="flex flex-col h-full min-h-0">
-          <div className="p-6 flex-shrink-0">
+          <div className="p-6 flex-shrink-0 flex items-center justify-between">
             <h2 className="text-lg font-medium">Draft your video</h2>
+            <Button
+              onClick={addScene}
+              size="icon"
+              variant="outline"
+              className="rounded-full w-8 h-8"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
 
           <ScrollArea className="flex-1 px-6 min-h-0">
@@ -191,15 +199,6 @@ export default function StoryboardPage() {
 
       {/* Bottom Bar */}
       <div className="flex-shrink-0 flex items-center justify-center gap-3 px-6 py-6 border-t">
-        <Button
-          onClick={addScene}
-          size="icon"
-          variant="outline"
-          className="rounded-full w-10 h-10"
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
-
         <div className="relative max-w-2xl w-full">
           <Input
             value={animationStyle}
