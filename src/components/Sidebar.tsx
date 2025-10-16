@@ -26,7 +26,6 @@ export function Sidebar({
   const { projects, deleteProject } = useProjects()
 
   const onDelete = async (name: string) => {
-    if (!confirm(`Move project "${name}" to Trash?`)) return
     try {
       await deleteProject(name, "trash")
     } catch (error) {
