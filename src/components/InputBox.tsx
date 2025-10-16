@@ -45,6 +45,7 @@ function calculateCost(s: { model: Model; duration: number; samples: number; res
 
 type InputBoxProps = {
   onGenerate?: (params: { prompt: string; settings: Settings }) => void
+  onStoryboard?: (params: { prompt: string; settings: Settings }) => void
   onImageSelect?: (file: File) => void
   onImageClear?: () => void
   onSettingsChange?: (settings: Settings) => void
@@ -58,7 +59,7 @@ type Settings = {
   samples: number
 }
 
-export function InputBox({ onGenerate, onImageSelect, onImageClear, onSettingsChange, disabled }: InputBoxProps) {
+export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear, onSettingsChange, disabled }: InputBoxProps) {
   const [value, setValue] = useState("")
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -257,8 +258,13 @@ export function InputBox({ onGenerate, onImageSelect, onImageClear, onSettingsCh
           />
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon-sm" aria-label="Enhance">
-            <Sparkles className="size-4" />
+          <Button
+            variant="outline"
+            onClick={() => onStoryboard?.({ prompt: value, settings })}
+            disabled={!value.trim() || disabled}
+            className="gap-2"
+          >
+            Storyboard
           </Button>
           <Button
             onClick={() => onGenerate?.({ prompt: value, settings })}

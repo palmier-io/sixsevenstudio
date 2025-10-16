@@ -11,6 +11,7 @@ import "./App.css";
 import type { ProjectSummary } from "@/hooks/tauri/use-projects";
 import { Home } from "@/pages/Home";
 import { ProjectPage } from "@/pages/ProjectPage";
+import StoryboardPage from "@/pages/StoryboardPage";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -46,8 +47,8 @@ function AppLayout() {
         selectedProject={selectedProject?.name ?? null}
         onSelectProject={(p) => setSelectedProject(p)}
       />
-      <SidebarInset>
-        <header className="flex items-center justify-between border-b px-4 py-3">
+      <SidebarInset className="flex flex-col h-screen overflow-hidden">
+        <header className="flex-shrink-0 flex items-center justify-between border-b px-4 py-3">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -57,6 +58,14 @@ function AppLayout() {
                   <BreadcrumbLink href="/">Home</BreadcrumbLink>
                 )}
               </BreadcrumbItem>
+              {location.pathname === "/storyboard" && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Storyboard</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              )}
               {selectedProject && (
                 <>
                   <BreadcrumbSeparator />
@@ -81,10 +90,13 @@ function AppLayout() {
         </header>
 
         {/* Routes */}
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/projects/:projectName" element={<ProjectPage />} />
-        </Routes>
+        <div className="flex-1 overflow-hidden min-h-0">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/projects/:projectName" element={<ProjectPage />} />
+            <Route path="/storyboard" element={<StoryboardPage />} />
+          </Routes>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

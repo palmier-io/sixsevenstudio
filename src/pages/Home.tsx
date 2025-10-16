@@ -14,6 +14,23 @@ export function Home() {
   } = useVideos();
   const [isGenerating, setIsGenrating] = useState(false);
 
+  const handleStoryboard = (params: {
+    prompt: string;
+    settings: {
+      model: string;
+      resolution: string;
+      duration: number;
+      samples: number;
+    };
+  }) => {
+    navigate('/storyboard', {
+      state: {
+        prompt: params.prompt,
+        settings: params.settings,
+      },
+    });
+  };
+
   const handleGenerate = async (params: {
     prompt: string;
     settings: {
@@ -94,7 +111,11 @@ export function Home() {
             Describe your video to get started
           </p>
         </div>
-        <InputBox onGenerate={handleGenerate} disabled={isGenerating} />
+        <InputBox
+          onGenerate={handleGenerate}
+          onStoryboard={handleStoryboard}
+          disabled={isGenerating}
+        />
       </div>
     </div>
   );

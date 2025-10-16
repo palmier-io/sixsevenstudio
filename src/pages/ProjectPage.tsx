@@ -92,12 +92,12 @@ export function ProjectPage() {
   }, [projectMeta, selectedVideoId]);
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
+    <ResizablePanelGroup direction="vertical" className="flex-1 overflow-hidden">
       {/* Top Section */}
-      <div className="flex-1 overflow-hidden">
+      <ResizablePanel defaultSize={75} minSize={40}>
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Left Panel: Video Player */}
-          <ResizablePanel defaultSize={65} minSize={40}>
+          <ResizablePanel defaultSize={75} minSize={40}>
             <div className="h-full overflow-auto p-6 flex items-center justify-center">
               {selectedVideoId && projectMeta ? (
                 <VideoPlayer
@@ -117,24 +117,28 @@ export function ProjectPage() {
           <ResizableHandle withHandle />
 
           {/* Right Panel: Video Details */}
-          <ResizablePanel defaultSize={35} minSize={15}>
+          <ResizablePanel defaultSize={25} minSize={15}>
             <VideoDetails video={selectedVideo} />
           </ResizablePanel>
         </ResizablePanelGroup>
-      </div>
+      </ResizablePanel>
 
-      {/* Bottom Panel */}
-      <div className="h-[180px] border-t flex-shrink-0">
-        {projectMeta && (
-          <VideoGallery
-            videos={projectMeta.videos}
-            selectedVideoId={selectedVideoId || undefined}
-            onVideoSelect={handleVideoSelect}
-            onVideoDelete={handleVideoDelete}
-            projectPath={projectMeta.path}
-          />
-        )}
-      </div>
-    </div>
+      <ResizableHandle withHandle />
+
+      {/* Bottom Panel - Video Gallery */}
+      <ResizablePanel defaultSize={25} minSize={10} maxSize={50}>
+        <div className="h-full border-t">
+          {projectMeta && (
+            <VideoGallery
+              videos={projectMeta.videos}
+              selectedVideoId={selectedVideoId || undefined}
+              onVideoSelect={handleVideoSelect}
+              onVideoDelete={handleVideoDelete}
+              projectPath={projectMeta.path}
+            />
+          )}
+        </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 }
