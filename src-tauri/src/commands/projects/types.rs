@@ -41,4 +41,6 @@ pub struct Scene {
 pub struct StoryboardData {
     pub scenes: Vec<Scene>,
     pub animation_style: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub response_id: Option<String>,
 }
