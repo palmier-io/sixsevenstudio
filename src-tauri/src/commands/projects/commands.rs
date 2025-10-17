@@ -36,6 +36,7 @@ pub async fn list_projects(app: AppHandle) -> Result<Vec<ProjectSummary>, String
             videos: Vec::new(),
             path: path.to_string_lossy().to_string(),
             created_at: current_timestamp(),
+            storyboard_response_id: None,
         });
 
         items.push(ProjectSummary {
@@ -68,6 +69,7 @@ pub async fn create_project(app: AppHandle, name: String) -> Result<ProjectSumma
             videos: Vec::new(),
             path: dir.to_string_lossy().to_string(),
             created_at,
+            storyboard_response_id: None,
         })
         .map_err(|e| e.to_string())?;
         fs::write(&meta_path, json).map_err(|e| e.to_string())?;
@@ -125,6 +127,7 @@ pub async fn add_videos_to_project(
         videos: videos_meta,
         path: project_path.to_string_lossy().to_string(),
         created_at: existing_meta.created_at,
+        storyboard_response_id: existing_meta.storyboard_response_id,
     };
     write_project_meta(&project_path, &meta)?;
     Ok(())

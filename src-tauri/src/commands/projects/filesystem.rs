@@ -62,6 +62,7 @@ pub fn read_project_meta(project_path: &Path) -> Result<ProjectMeta, String> {
             videos: Vec::new(),
             path: project_path.to_string_lossy().to_string(),
             created_at: current_timestamp(),
+            storyboard_response_id: None,
         });
     }
     let contents =
