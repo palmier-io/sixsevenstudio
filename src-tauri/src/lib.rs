@@ -18,6 +18,8 @@ pub fn run() {
             get_video_status,
             download_video,
             file_exists,
+            // openai responses commands
+            create_openai_response,
             // workspace & projects commands
             get_workspace_dir,
             ensure_workspace_exists,

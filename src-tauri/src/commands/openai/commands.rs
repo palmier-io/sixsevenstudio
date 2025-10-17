@@ -3,7 +3,11 @@ use tauri_plugin_log::log;
 use tauri_plugin_store::StoreExt;
 
 use super::client::OpenAIClient;
-use super::types::{OpenAIVideoJobResponse, KEY_NAME, STORE_NAME};
+use super::types::{Input, KEY_NAME, STORE_NAME, ResponseData, ResponseRequest, VideoJobResponse};
+
+// ============================================================================
+// API Key Store Commands
+// ============================================================================
 
 #[tauri::command]
 pub async fn save_api_key(app: tauri::AppHandle, api_key: String) -> Result<(), String> {
@@ -25,6 +29,7 @@ pub async fn get_api_key(app: tauri::AppHandle) -> Result<Option<String>, String
     Ok(result)
 }
 
+/// Remove API key from store
 #[tauri::command]
 pub async fn remove_api_key(app: tauri::AppHandle) -> Result<(), String> {
     let store = app.store(STORE_NAME).map_err(|e| e.to_string())?;
@@ -33,11 +38,15 @@ pub async fn remove_api_key(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+// ============================================================================
+// Video Commands
+// ============================================================================
+
 #[tauri::command]
 pub async fn get_video_status(
     app: tauri::AppHandle,
     video_id: String,
-) -> Result<OpenAIVideoJobResponse, String> {
+) -> Result<VideoJobResponse, String> {
     let api_key = get_api_key_from_store(&app).await?;
     let client = OpenAIClient::new(api_key);
     let video_response = client.check_video_status(video_id.clone()).await?;
@@ -63,13 +72,12 @@ pub async fn create_video(
     Ok(video_id)
 }
 
-/// Check if a file exists at the specified path
 #[tauri::command]
 pub fn file_exists(file_path: String) -> bool {
     Path::new(&file_path).exists()
 }
 
-/// Download video from OpenAI API to specified path and save metadata to project
+/// Download video from OpenAI API to specified path
 #[tauri::command]
 pub async fn download_video(
     app: tauri::AppHandle,
@@ -90,6 +98,30 @@ pub async fn download_video(
         .map_err(|e| format!("Failed to save video to {}: {}", save_path, e))?;
 
     Ok(())
+}
+
+// ============================================================================
+// Responses Commands
+// ============================================================================
+
+#[tauri::command]
+pub async fn create_openai_response(
+    app: tauri::AppHandle,
+    model: String,
+    input: Vec<Input>,
+    format: Option<String>,
+) -> Result<ResponseData, String> {
+    let api_key = get_api_key_from_store(&app).await?;
+    let client = OpenAIClient::new(api_key);
+
+    let request = ResponseRequest {
+        model,
+        input,
+        format,
+    };
+
+    let response_data = client.create_response(request).await?;
+    Ok(response_data)
 }
 
 // Helper function with error handling

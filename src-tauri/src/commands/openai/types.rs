@@ -1,12 +1,18 @@
 use serde::{Deserialize, Serialize};
 
+// ============================================================================
+// Store Constants
+// ============================================================================
 
 pub const STORE_NAME: &str = "store.json";
 pub const KEY_NAME: &str = "openai_api_key";
 
+// ============================================================================
+// Video API Types
+// ============================================================================
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct OpenAIVideoRequest {
-    // https://platform.openai.com/docs/api-reference/videos/create
+pub struct VideoRequest {
     pub model: String,
     pub prompt: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -16,10 +22,8 @@ pub struct OpenAIVideoRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct OpenAIVideoJobResponse {
-    // https://platform.openai.com/docs/api-reference/videos/object
+pub struct VideoJobResponse {
     pub id: String,
-
     #[serde(skip_serializing_if = "Option::is_none")]
     pub completed_at: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -42,4 +46,32 @@ pub struct OpenAIVideoJobResponse {
     pub size: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
+}
+
+// ============================================================================
+// Responses API Types
+// ============================================================================
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum Input {
+    Text(String),
+    Image { image_url: String },
+}
+
+#[derive(Serialize)]
+pub struct ResponseRequest {
+    pub model: String,
+    pub input: Vec<Input>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ResponseData {
+    pub id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub output_text: Option<String>,
+    #[serde(default)]
+    pub output: serde_json::Value,
 }

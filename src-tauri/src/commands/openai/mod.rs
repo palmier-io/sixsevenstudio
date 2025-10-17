@@ -1,6 +1,8 @@
 mod client;
 mod commands;
+mod responses;
 mod types;
+mod video;
 
-// Re-export commands for Tauri
+// Re-export all commands for Tauri
 pub use commands::*;
