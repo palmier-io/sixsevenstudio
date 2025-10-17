@@ -109,7 +109,7 @@ pub async fn create_openai_response(
     app: tauri::AppHandle,
     model: String,
     input: Vec<Input>,
-    format: Option<String>,
+    tools: Option<Vec<serde_json::Value>>,
 ) -> Result<ResponseData, String> {
     let api_key = get_api_key_from_store(&app).await?;
     let client = OpenAIClient::new(api_key);
@@ -117,7 +117,7 @@ pub async fn create_openai_response(
     let request = ResponseRequest {
         model,
         input,
-        format,
+        tools,
     };
 
     let response_data = client.create_response(request).await?;
