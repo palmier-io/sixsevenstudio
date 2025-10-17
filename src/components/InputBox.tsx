@@ -259,7 +259,7 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
         </div>
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={() => onStoryboard?.({ prompt: value, settings })}
             disabled={!value.trim() || disabled}
             className="gap-2"
