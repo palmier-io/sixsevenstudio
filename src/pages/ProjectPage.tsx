@@ -1,144 +1,53 @@
-import { useParams } from "react-router-dom";
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { VideoPlayer } from "@/components/VideoPlayer";
-import { VideoGallery } from "@/components/VideoGallery";
-import { VideoDetails } from "@/components/VideoDetails";
-import { useProjects, type VideoMeta, type ProjectMeta } from "@/hooks/tauri/use-projects";
-import { toast } from "sonner";
-import { convertFileSrc } from "@tauri-apps/api/core";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
-
-
-function VideoPlaceholder(props: { title: string; subtitle: string; pulsing?: boolean }) {
-  const { title, subtitle, pulsing } = props;
-  return (
-    <div className="text-center">
-      <div className="mx-auto mb-4 size-16 rounded-full bg-muted flex items-center justify-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          className={`size-8 text-muted-foreground${pulsing ? " animate-pulse" : ""}`}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"
-          />
-        </svg>
-      </div>
-      <h3 className="text-lg font-medium mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground">{subtitle}</p>
-    </div>
-  );
-}
+import { useParams, useSearchParams } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Video, BookOpen } from "lucide-react";
+import { VideosTab } from "@/components/tabs/VideosTab";
+import { StoryboardTab } from "@/components/tabs/StoryboardTab";
 
 export function ProjectPage() {
   const params = useParams<{ projectName: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const { getProject, deleteVideoFromProject } = useProjects();
+  const activeTab = (searchParams.get("tab") || "videos") as "videos" | "storyboard";
 
-  const [projectMeta, setProjectMeta] = useState<ProjectMeta | null>(null);
-  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
 
-  // Load project metadata (videos list + project path)
-  useEffect(() => {
-    const load = async () => {
-      if (!params.projectName) return;
-      try {
-        const meta = await getProject(params.projectName);
-        setProjectMeta(meta);
-        // default select first video
-        if (meta.videos.length > 0) {
-          setSelectedVideoId(meta.videos[0].id);
-        }
-      } catch (error) {
-        toast.error("Failed to load project", {
-          description: error instanceof Error ? error.message : String(error),
-        });
-      }
-    };
-    load();
-  }, [params.projectName]);
-
-  // Handler for selecting a video
-  const handleVideoSelect = useCallback((video: VideoMeta) => {
-    setSelectedVideoId(video.id);
-  }, []);
-
-  const handleVideoDelete = useCallback(async (videoId: string) => {
-    if (!params.projectName) return;
-    try {
-      await deleteVideoFromProject(params.projectName, videoId);
-      const updatedMeta = await getProject(params.projectName);
-      setProjectMeta(updatedMeta);
-      setSelectedVideoId(null);
-      toast.success("Video deleted successfully");
-    } catch (error) {
-      toast.error("Failed to delete video", {
-        description: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }, [params.projectName, deleteVideoFromProject, getProject]);
-
-  const selectedVideo: VideoMeta | undefined = useMemo(() => {
-    return projectMeta?.videos.find(v => v.id === selectedVideoId);
-  }, [projectMeta, selectedVideoId]);
+  if (!params.projectName) {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="text-center">
+          <h3 className="text-lg font-medium mb-2">No project found</h3>
+          <p className="text-sm text-muted-foreground">Please select a project from the sidebar.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <ResizablePanelGroup direction="vertical" className="flex-1 overflow-hidden">
-      {/* Top Section */}
-      <ResizablePanel defaultSize={75} minSize={40}>
-        <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Left Panel: Video Player */}
-          <ResizablePanel defaultSize={75} minSize={40}>
-            <div className="h-full overflow-auto p-6 flex items-center justify-center">
-              {selectedVideoId && projectMeta ? (
-                <VideoPlayer
-                  src={convertFileSrc(`${projectMeta.path}/${selectedVideoId}.mp4`)}
-                  videoId={selectedVideoId}
-                  projectPath={projectMeta.path}
-                />
-              ) : (
-                <VideoPlaceholder
-                  title="No video selected"
-                  subtitle="Click a video from the gallery below to view it"
-                />
-              )}
-            </div>
-          </ResizablePanel>
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
+      {/* Compact tabs with icons */}
+      <div className="px-6 pt-4 pb-2 flex-shrink-0">
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <TabsList className="w-fit h-7 p-[2px]">
+            <TabsTrigger value="videos" className="text-xs h-full px-2 gap-1.5">
+              <Video className="size-3" />
+              Videos
+            </TabsTrigger>
+            <TabsTrigger value="storyboard" className="text-xs h-full px-2 gap-1.5">
+              <BookOpen className="size-3" />
+              Storyboard
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
-          <ResizableHandle withHandle />
-
-          {/* Right Panel: Video Details */}
-          <ResizablePanel defaultSize={25} minSize={15}>
-            <VideoDetails video={selectedVideo} />
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      </ResizablePanel>
-
-      <ResizableHandle withHandle />
-
-      {/* Bottom Panel - Video Gallery */}
-      <ResizablePanel defaultSize={25} minSize={10} maxSize={50}>
-        <div className="h-full border-t">
-          {projectMeta && (
-            <VideoGallery
-              videos={projectMeta.videos}
-              selectedVideoId={selectedVideoId || undefined}
-              onVideoSelect={handleVideoSelect}
-              onVideoDelete={handleVideoDelete}
-              projectPath={projectMeta.path}
-            />
-          )}
-        </div>
-      </ResizablePanel>
-    </ResizablePanelGroup>
+      {/* Tab Content */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {activeTab === "videos" && <VideosTab projectName={params.projectName} />}
+        {activeTab === "storyboard" && <StoryboardTab projectName={params.projectName} />}
+      </div>
+    </div>
   );
 }

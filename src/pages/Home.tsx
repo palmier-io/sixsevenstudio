@@ -36,9 +36,8 @@ export function Home() {
 
       const project = await createProject(projectName);
 
-      navigate('/storyboard', {
+      navigate(`/projects/${project.name}?tab=storyboard`, {
         state: {
-          projectName: project.name,
           prompt: params.prompt,
           settings: params.settings,
         },
@@ -137,6 +136,7 @@ export function Home() {
           onStoryboard={handleStoryboard}
           disabled={isGenerating}
         />
+
       </div>
     </div>
   );

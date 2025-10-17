@@ -11,7 +11,6 @@ import "./App.css";
 import type { ProjectSummary } from "@/hooks/tauri/use-projects";
 import { Home } from "@/pages/Home";
 import { ProjectPage } from "@/pages/ProjectPage";
-import StoryboardPage from "@/pages/StoryboardPage";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -36,6 +35,10 @@ function AppLayout() {
 
   const [selectedProject, setSelectedProject] = useState<ProjectSummary | null>(null);
 
+  // Get current tab from search params
+  const searchParams = new URLSearchParams(location.search);
+  const currentTab = searchParams.get("tab");
+
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
@@ -58,14 +61,6 @@ function AppLayout() {
                   <BreadcrumbLink href="/">Home</BreadcrumbLink>
                 )}
               </BreadcrumbItem>
-              {location.pathname === "/storyboard" && (
-                <>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Storyboard</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </>
-              )}
               {selectedProject && (
                 <>
                   <BreadcrumbSeparator />
@@ -94,7 +89,6 @@ function AppLayout() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/projects/:projectName" element={<ProjectPage />} />
-            <Route path="/storyboard" element={<StoryboardPage />} />
           </Routes>
         </div>
       </SidebarInset>
