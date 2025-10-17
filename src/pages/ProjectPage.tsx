@@ -31,13 +31,13 @@ export function ProjectPage() {
       <div className="px-6 pt-4 pb-2 flex-shrink-0">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="w-fit h-7 p-[2px]">
-            <TabsTrigger value="videos" className="text-xs h-full px-2 gap-1.5">
-              <Video className="size-3" />
-              Videos
-            </TabsTrigger>
             <TabsTrigger value="storyboard" className="text-xs h-full px-2 gap-1.5">
               <BookOpen className="size-3" />
               Storyboard
+            </TabsTrigger>
+            <TabsTrigger value="videos" className="text-xs h-full px-2 gap-1.5">
+              <Video className="size-3" />
+              Videos
             </TabsTrigger>
           </TabsList>
         </Tabs>
