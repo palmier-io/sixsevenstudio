@@ -3,9 +3,9 @@ use tauri::AppHandle;
 use tauri_plugin_log::log;
 
 use super::filesystem::{
-    current_timestamp, ensure_dir, list_project_directories, project_dir, read_project_meta,
-    read_storyboard_data, safe_workspace, sanitize_project_name, write_project_meta,
-    write_storyboard_data,
+    current_timestamp, ensure_dir, get_project_path, list_project_directories, project_dir,
+    read_project_meta, read_storyboard_data, safe_workspace, sanitize_project_name,
+    write_project_meta, write_storyboard_data,
 };
 use super::types::{
     ProjectMeta, ProjectSummary, StoryboardData, VideoMeta, PROJECT_META_DIR, PROJECT_META_FILE,
@@ -107,13 +107,7 @@ pub async fn delete_project(
 
 #[tauri::command]
 pub async fn get_project(app: AppHandle, name: String) -> Result<ProjectMeta, String> {
-    let ws = safe_workspace(&app)?;
-    let name = sanitize_project_name(&name)?;
-    let project_path = project_dir(&ws, &name);
-    if !project_path.exists() {
-        return Err(format!("Project '{}' does not exist", name));
-    }
-
+    let project_path = get_project_path(&app, &name)?;
     let meta = read_project_meta(&project_path)?;
     Ok(meta)
 }
@@ -124,14 +118,7 @@ pub async fn add_videos_to_project(
     project_name: String,
     videos_meta: Vec<VideoMeta>,
 ) -> Result<(), String> {
-    let ws = safe_workspace(&app)?;
-    let project_name = sanitize_project_name(&project_name)?;
-    let project_path = project_dir(&ws, &project_name);
-
-    if !project_path.exists() {
-        return Err(format!("Project '{}' does not exist", project_name));
-    }
-
+    let project_path = get_project_path(&app, &project_name)?;
     let existing_meta = read_project_meta(&project_path)?;
 
     let meta = ProjectMeta {
@@ -149,21 +136,12 @@ pub async fn delete_video_from_project(
     project_name: String,
     video_id: String,
 ) -> Result<(), String> {
-    let ws = safe_workspace(&app)?;
-    let project_name = sanitize_project_name(&project_name)?;
-    let project_path = project_dir(&ws, &project_name);
-
-    if !project_path.exists() {
-        return Err(format!("Project '{}' does not exist", project_name));
-    }
-
-    // Read current metadata
+    let project_path = get_project_path(&app, &project_name)?;
     let mut meta = read_project_meta(&project_path)?;
 
     // Remove video from metadata
     meta.videos.retain(|v| v.id != video_id);
 
-    // Write updated metadata
     write_project_meta(&project_path, &meta)?;
 
     // Delete video file
@@ -181,14 +159,7 @@ pub async fn get_storyboard(
     app: AppHandle,
     project_name: String,
 ) -> Result<Option<StoryboardData>, String> {
-    let ws = safe_workspace(&app)?;
-    let project_name = sanitize_project_name(&project_name)?;
-    let project_path = project_dir(&ws, &project_name);
-
-    if !project_path.exists() {
-        return Err(format!("Project '{}' does not exist", project_name));
-    }
-
+    let project_path = get_project_path(&app, &project_name)?;
     read_storyboard_data(&project_path)
 }
 
@@ -199,26 +170,13 @@ pub async fn save_storyboard(
     storyboard_data: StoryboardData,
 ) -> Result<(), String> {
     log::debug!("TRIGGERED SAVE STORYBOARD");
-    let ws = safe_workspace(&app)?;
-    let project_name = sanitize_project_name(&project_name)?;
-    let project_path = project_dir(&ws, &project_name);
-
-    if !project_path.exists() {
-        return Err(format!("Project '{}' does not exist", project_name));
-    }
-
+    let project_path = get_project_path(&app, &project_name)?;
     write_storyboard_data(&project_path, &storyboard_data)
 }
 
 #[tauri::command]
 pub async fn delete_storyboard(app: AppHandle, project_name: String) -> Result<(), String> {
-    let ws = safe_workspace(&app)?;
-    let project_name = sanitize_project_name(&project_name)?;
-    let project_path = project_dir(&ws, &project_name);
-
-    if !project_path.exists() {
-        return Err(format!("Project '{}' does not exist", project_name));
-    }
+    let project_path = get_project_path(&app, &project_name)?;
 
     let storyboard_path = project_path.join(PROJECT_META_DIR).join(STORYBOARD_FILE);
     if storyboard_path.exists() {

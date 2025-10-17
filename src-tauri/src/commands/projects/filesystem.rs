@@ -122,3 +122,15 @@ pub fn list_project_directories(workspace: &Path) -> Result<Vec<(String, PathBuf
 
     Ok(items)
 }
+
+pub fn get_project_path(app: &AppHandle, project_name: &str) -> Result<PathBuf, String> {
+    let ws = safe_workspace(app)?;
+    let name = sanitize_project_name(project_name)?;
+    let project_path = project_dir(&ws, &name);
+
+    if !project_path.exists() {
+        return Err(format!("Project '{}' does not exist", project_name));
+    }
+
+    Ok(project_path)
+}
