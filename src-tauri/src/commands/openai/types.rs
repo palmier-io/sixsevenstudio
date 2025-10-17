@@ -71,7 +71,7 @@ pub struct ResponseRequest {
     pub model: String,
     pub input: Vec<Input>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<String>,
+    pub tools: Option<Vec<serde_json::Value>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

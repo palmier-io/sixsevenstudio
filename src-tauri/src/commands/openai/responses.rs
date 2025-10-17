@@ -2,7 +2,6 @@ use super::client::OpenAIClient;
 use super::types::{ResponseData, ResponseRequest};
 
 impl OpenAIClient {
-    /// Create a response using the OpenAI Responses API
     pub async fn create_response(
         &self,
         request: ResponseRequest,
