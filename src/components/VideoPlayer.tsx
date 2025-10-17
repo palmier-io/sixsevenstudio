@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Play, Pause } from "lucide-react";
-import { useVideoPolling } from "@/hooks/useVideoPolling";
+import { useVideoPolling } from "@/hooks/use-video-polling";
 import { OpenAIVideoJobStatus } from "@/types/openai";
 import { VideoStatus } from "@/components/VideoStatus";
 

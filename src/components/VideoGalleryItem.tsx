@@ -3,7 +3,7 @@ import { Play, Trash2 } from "lucide-react";
 import { VideoMeta } from "@/hooks/tauri/use-projects";
 import { OpenAIVideoJobStatus } from "@/types/openai";
 import { Button } from "@/components/ui/button";
-import { useVideoPolling } from "@/hooks/useVideoPolling";
+import { useVideoPolling } from "@/hooks/use-video-polling";
 import { VideoStatus } from "@/components/VideoStatus";
 
 interface VideoGalleryItemProps {
