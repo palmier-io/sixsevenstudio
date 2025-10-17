@@ -20,6 +20,7 @@ export interface ProjectMeta {
   path: string;
   videos: VideoMeta[];
   created_at: number;
+  storyboard_response_id?: string;
 }
 
 export interface Scene {
@@ -85,6 +86,18 @@ const deleteStoryboard = async (projectName: string): Promise<void> => {
   await invoke("delete_storyboard", { projectName });
 };
 
+const generateStoryboard = async (
+  projectName: string,
+  prompt: string,
+  model?: string
+): Promise<StoryboardData> => {
+  return await invoke<StoryboardData>("generate_storyboard", {
+    projectName,
+    prompt,
+    model: model ?? "gpt-4o",
+  });
+};
+
 // React Query hook
 export function useProjects() {
   const queryClient = useQueryClient();
@@ -140,6 +153,7 @@ export function useProjects() {
     getStoryboard,
     saveStoryboard,
     deleteStoryboard,
+    generateStoryboard,
   };
 }
 
