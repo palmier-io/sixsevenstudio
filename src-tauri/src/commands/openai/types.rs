@@ -53,10 +53,17 @@ pub struct VideoJobResponse {
 // ============================================================================
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(untagged)]
-pub enum Input {
-    Text(String),
-    Image { image_url: String },
+pub struct Input {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub role: Option<String>,
+    pub content: Vec<ContentPart>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ContentPart {
+    InputText { text: String },
+    InputImage { image_url: String },
 }
 
 #[derive(Serialize)]
