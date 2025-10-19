@@ -110,6 +110,7 @@ pub async fn create_openai_response(
     model: String,
     input: Vec<Input>,
     tools: Option<Vec<serde_json::Value>>,
+    previous_response_id: Option<String>,
 ) -> Result<ResponseData, String> {
     let api_key = get_api_key_from_store(&app).await?;
     let client = OpenAIClient::new(api_key);
@@ -118,6 +119,7 @@ pub async fn create_openai_response(
         model,
         input,
         tools,
+        previous_response_id,
     };
 
     let response_data = client.create_response(request).await?;

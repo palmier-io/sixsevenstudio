@@ -60,10 +60,12 @@ pub struct Input {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(tag = "type", rename_all = "snake_case")]
+#[serde(tag = "type")]
 pub enum ContentPart {
-    InputText { text: String },
-    InputImage { image_url: String },
+    #[serde(rename = "input_text")]
+    Text { text: String },
+    #[serde(rename = "input_image")]
+    Image { image_url: String },
 }
 
 #[derive(Serialize)]
@@ -72,6 +74,8 @@ pub struct ResponseRequest {
     pub input: Vec<Input>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tools: Option<Vec<serde_json::Value>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub previous_response_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
