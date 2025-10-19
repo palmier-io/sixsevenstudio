@@ -18,11 +18,14 @@ interface StoryboardTabProps {
 }
 
 export function StoryboardTab({ projectName }: StoryboardTabProps) {
-  const { getStoryboard, saveStoryboard } = useProjects();
+  const { getStoryboard, saveStoryboard, getProject, generateStoryboard } = useProjects();
 
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [animationStyle, setAnimationStyle] = useState('');
+  const [responseId, setResponseId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefining, setIsRefining] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
 
   // Load storyboard data when component mounts
   useEffect(() => {
@@ -36,6 +39,14 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
         if (data) {
           setScenes(data.scenes);
           setAnimationStyle(data.animation_style);
+
+          // Load response_id from project metadata
+          try {
+            const projectMeta = await getProject(projectName);
+            setResponseId(projectMeta.storyboard_response_id ?? null);
+          } catch (err) {
+            console.error('Failed to load project metadata:', err);
+          }
         } else {
           // Initialize with default first scene if no data exists
           setScenes([{
@@ -98,6 +109,30 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
     ));
   };
 
+  const handleRefineStoryboard = async () => {
+    if (!projectName || !feedbackMessage.trim() || isRefining) return;
+
+    try {
+      setIsRefining(true);
+      toast.info('Refining storyboard with AI...');
+
+      // Use generateStoryboard - it will automatically detect refinement mode
+      const refinedData = await generateStoryboard(projectName, feedbackMessage);
+
+      // Update the scenes and animation style with refined data
+      setScenes(refinedData.scenes);
+      setAnimationStyle(refinedData.animation_style);
+      setFeedbackMessage('');
+
+      toast.success('Storyboard refined successfully!');
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      toast.error('Failed to refine storyboard', { description: errMsg });
+    } finally {
+      setIsRefining(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="h-full w-full flex items-center justify-center">
@@ -133,20 +168,36 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
 
         {/* Right Panel - Draft Your Video */}
         <Card className="flex flex-col h-full min-h-0">
-          <div className="p-6 flex-shrink-0 flex items-center justify-between">
-            <h2 className="text-lg font-medium">Draft your video</h2>
-            <Button
-              onClick={addScene}
-              size="icon"
-              variant="outline"
-              className="rounded-full w-8 h-8"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+          <div className="p-6 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium">Draft your video</h2>
+              <Button
+                onClick={addScene}
+                size="icon"
+                variant="outline"
+                className="rounded-full w-8 h-8"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <ScrollArea className="flex-1 px-6 min-h-0">
             <div className="space-y-6 pb-6">
+              {/* Animation Style Section */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Animation Style</h3>
+                <Textarea
+                  value={animationStyle}
+                  onChange={(e) => setAnimationStyle(e.target.value)}
+                  className="min-h-[80px] resize-none"
+                  placeholder="Describe the overall animation style..."
+                />
+              </div>
+
+              <Separator />
+
+              {/* Scenes Section */}
               {scenes.map((scene, index) => (
                 <div key={scene.id} className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -181,21 +232,54 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
         </Card>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="flex-shrink-0 flex items-center justify-center gap-3 px-6 py-6 border-t">
-        <div className="relative max-w-2xl w-full">
-          <Input
-            value={animationStyle}
-            onChange={(e) => setAnimationStyle(e.target.value)}
-            className="w-full pr-12 h-12 rounded-full"
-            placeholder="Describe your animation style..."
-          />
-          <Button
-            size="icon"
-            className="absolute right-1 top-1 h-10 w-10 rounded-full"
-          >
-            <ArrowUp className="h-5 w-5" />
-          </Button>
+      {/* Bottom Bar - AI Feedback Input */}
+      <div className="flex-shrink-0 border-t bg-background">
+        <div className="px-6 py-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-start gap-3">
+              <div className="flex-1">
+                <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                  Refine with AI
+                </label>
+                <div className="relative">
+                  <Input
+                    value={feedbackMessage}
+                    onChange={(e) => setFeedbackMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleRefineStoryboard();
+                      }
+                    }}
+                    className="w-full pr-12 h-11"
+                    placeholder={
+                      !responseId
+                        ? "Generate a storyboard first to enable AI refinement..."
+                        : "Type feedback to refine your storyboard (e.g., 'Make it more dramatic')"
+                    }
+                    disabled={isRefining || !responseId}
+                  />
+                  <Button
+                    size="icon"
+                    className="absolute right-1 top-1 h-9 w-9"
+                    onClick={handleRefineStoryboard}
+                    disabled={isRefining || !feedbackMessage.trim() || !responseId}
+                  >
+                    {isRefining ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ArrowUp className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+            {!responseId && (
+              <p className="text-xs text-muted-foreground mt-2">
+                AI refinement is available after the initial storyboard is generated
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

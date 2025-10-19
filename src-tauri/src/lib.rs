@@ -33,6 +33,7 @@ pub fn run() {
             get_storyboard,
             save_storyboard,
             delete_storyboard,
+            generate_storyboard,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

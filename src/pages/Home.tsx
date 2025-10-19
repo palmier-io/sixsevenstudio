@@ -31,7 +31,7 @@ function createProjectNameFromPrompt(
 
 export function Home() {
   const navigate = useNavigate();
-  const { createProject, ensureWorkspaceExists, addVideosToProject, projects } = useProjects();
+  const { createProject, ensureWorkspaceExists, addVideosToProject, projects, generateStoryboard } = useProjects();
   const {
     createVideo,
   } = useVideos();
@@ -53,6 +53,20 @@ export function Home() {
       const projectName = createProjectNameFromPrompt(params.prompt, "storyboard", existingProjectNames);
       const project = await createProject(projectName);
 
+      // Trigger AI storyboard generation (fire and forget)
+      toast.info("Generating storyboard...");
+      generateStoryboard(project.name, params.prompt)
+        .then(() => {
+          toast.success("Storyboard generated!");
+          logInfo(`Storyboard generated for project ${project.name}`);
+        })
+        .catch((err) => {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          toast.error("Failed to generate storyboard", { description: errMsg });
+          logError(`Failed to generate storyboard: ${errMsg}`);
+        });
+
+      // Navigate immediately (loading state will be handled in StoryboardTab)
       navigate(`/projects/${project.name}?tab=storyboard`, {
         state: {
           prompt: params.prompt,
