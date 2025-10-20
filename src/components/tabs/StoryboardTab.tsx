@@ -196,7 +196,7 @@ function StartingFramePanel({
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
-          <AspectRatio ratio={getAspectRatio(videoSettings.resolution)} className="bg-muted rounded-lg overflow-hidden w-full relative max-h-full max-w-full">
+          <AspectRatio ratio={1 / 1} className="bg-muted rounded-lg overflow-hidden w-full relative">
             {imagePreviewUrl ? (
               <img
                 src={imagePreviewUrl}
