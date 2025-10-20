@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Image as ImageIcon, X } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { VideoSettingsButton, type VideoSettings, RESOLUTIONS_BY_MODEL } from "./VideoSettings"
+import { DEFAULT_VIDEO_SETTINGS } from "@/types/constants"
 
 type InputBoxProps = {
   onGenerate?: (params: { prompt: string; settings: VideoSettings }) => void
@@ -18,12 +19,7 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
   const [value, setValue] = useState("")
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [settings, setSettings] = useState<VideoSettings>({
-    model: "sora-2",
-    resolution: "1280x720",
-    duration: 4,
-    samples: 1,
-  })
+  const [settings, setSettings] = useState<VideoSettings>(DEFAULT_VIDEO_SETTINGS)
 
   useEffect(() => {
     return () => {
