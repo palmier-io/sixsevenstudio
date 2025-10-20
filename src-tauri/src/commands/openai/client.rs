@@ -16,14 +16,16 @@ impl OpenAIClient {
         }
     }
 
-    pub fn headers(&self) -> HeaderMap {
+    pub fn headers(&self, content_type: Option<&'static str>) -> HeaderMap {
         let mut headers = HeaderMap::new();
 
         if let Ok(auth_value) = HeaderValue::from_str(&format!("Bearer {}", self.api_key)) {
             headers.insert(AUTHORIZATION, auth_value);
         }
 
-        headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+        if let Some(ct) = content_type {
+            headers.insert(CONTENT_TYPE, HeaderValue::from_static(ct));
+        }
 
         headers
     }

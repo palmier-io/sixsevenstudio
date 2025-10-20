@@ -11,7 +11,7 @@ impl OpenAIClient {
         let req = self
             .http
             .post(&url)
-            .headers(self.headers())
+            .headers(self.headers(Some("application/json")))
             .json(&request);
 
         let body = self.exec_request(req, "POST", &url).await?;

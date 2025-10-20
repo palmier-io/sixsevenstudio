@@ -65,10 +65,11 @@ pub async fn create_video(
     prompt: String,
     size: Option<String>,
     seconds: Option<String>,
+    input_reference_path: Option<String>,
 ) -> Result<String, String> {
     let api_key = get_api_key_from_store(&app).await?;
     let client = OpenAIClient::new(api_key);
-    let video_id = client.create_video(model, prompt, size, seconds).await?;
+    let video_id = client.create_video(model, prompt, size, seconds, input_reference_path).await?;
     Ok(video_id)
 }
 
