@@ -11,6 +11,7 @@ use super::types::{
     ProjectMeta, ProjectSummary, StoryboardData, VideoMeta, PROJECT_META_DIR, PROJECT_META_FILE,
     STORYBOARD_FILE,
 };
+use super::storyboard::create_storyboard;
 
 #[tauri::command]
 pub async fn get_workspace_dir(app: AppHandle) -> Result<Option<String>, String> {
@@ -188,4 +189,39 @@ pub async fn delete_storyboard(app: AppHandle, project_name: String) -> Result<(
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn generate_storyboard(
+    app: AppHandle,
+    project_name: String,
+    prompt: String,
+    model: Option<String>,
+) -> Result<StoryboardData, String> {
+    create_storyboard(app, project_name, prompt, model).await
+}
+
+#[tauri::command]
+pub async fn get_prompt_from_storyboard(
+    app: AppHandle,
+    project_name: String,
+) -> Result<String, String> {
+    let project_path = get_project_path(&app, &project_name)?;
+    let storyboard = read_storyboard_data(&project_path)?
+        .ok_or_else(|| "No storyboard found for this project".to_string())?;
+
+    let mut prompt_parts = vec![storyboard.animation_style.clone()];
+
+    for (idx, scene) in storyboard.scenes.iter().enumerate() {
+        let scene_text = format!(
+            "Scene {} ({}): {}",
+            idx + 1,
+            scene.duration,
+            scene.description
+        );
+        prompt_parts.push(scene_text);
+    }
+
+    let final_prompt = prompt_parts.join("\n\n");
+    Ok(final_prompt)
 }

@@ -34,6 +34,7 @@ pub fn run() {
             save_storyboard,
             delete_storyboard,
             generate_storyboard,
+            get_prompt_from_storyboard
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
