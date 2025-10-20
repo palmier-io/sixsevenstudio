@@ -7,9 +7,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Separator } from '@/components/ui/separator';
-import { Plus, ArrowUp, Trash2, Loader2 } from 'lucide-react';
+import { Plus, ArrowUp, Trash2, Loader2, Video } from 'lucide-react';
 import { useProjects, type Scene } from '@/hooks/tauri/use-projects';
 import { toast } from 'sonner';
+import { useVideos } from '@/hooks/tauri/use-videos';
+import { VideoSettingsButton, type VideoSettings } from '@/components/VideoSettings';
 
 const SAVE_AFTER_IDLE_SECONDS = 5000; // 5 seconds
 
@@ -18,14 +20,22 @@ interface StoryboardTabProps {
 }
 
 export function StoryboardTab({ projectName }: StoryboardTabProps) {
-  const { getStoryboard, saveStoryboard, getProject, generateStoryboard } = useProjects();
+  const { getStoryboard, saveStoryboard, getProject, generateStoryboard, getPromptFromStoryboard, addVideosToProject } = useProjects();
+  const { createVideo } = useVideos();
 
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [animationStyle, setAnimationStyle] = useState('');
   const [responseId, setResponseId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefining, setIsRefining] = useState(false);
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [videoSettings, setVideoSettings] = useState<VideoSettings>({
+    model: 'sora-2',
+    resolution: '1280x720',
+    duration: 12,
+    samples: 1,
+  });
 
   // Load storyboard data when component mounts
   useEffect(() => {
@@ -133,6 +143,41 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
     }
   };
 
+  const handleGenerateVideo = async () => {
+    if (!projectName || isGeneratingVideo) return;
+
+    try {
+      setIsGeneratingVideo(true);
+      toast.info('Generating video from storyboard...');
+
+      const prompt = await getPromptFromStoryboard(projectName);
+      const videoId = await createVideo({
+        model: videoSettings.model,
+        prompt: prompt,
+        size: videoSettings.resolution,
+        seconds: String(videoSettings.duration),
+      });
+
+      await addVideosToProject(projectName, [{
+        id: videoId,
+        prompt: '',
+        model: videoSettings.model,
+        resolution: videoSettings.resolution,
+        duration: videoSettings.duration,
+        created_at: Date.now(),
+      }]);
+
+      toast.success('Video generation started!', {
+        description: `Video ID: ${videoId}`,
+      });
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      toast.error('Failed to generate video', { description: errMsg });
+    } finally {
+      setIsGeneratingVideo(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="h-full w-full flex items-center justify-center">
@@ -169,7 +214,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
         {/* Right Panel - Draft Your Video */}
         <Card className="flex flex-col h-full min-h-0">
           <div className="p-6 flex-shrink-0">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-medium">Draft your video</h2>
               <Button
                 onClick={addScene}
@@ -236,10 +281,9 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
       <div className="flex-shrink-0 border-t bg-background">
         <div className="px-6 py-4">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-start gap-3">
+            <div className="flex items-end gap-3">
               <div className="flex-1">
                 <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  Refine with AI
                 </label>
                 <div className="relative">
                   <Input
@@ -273,12 +317,35 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
                   </Button>
                 </div>
               </div>
+              <div className="flex items-center">
+                <Button
+                  onClick={handleGenerateVideo}
+                  disabled={isGeneratingVideo || scenes.length === 0}
+                  variant="default"
+                  className="gap-2 h-11 rounded-r-none border-r-0"
+                >
+                  {isGeneratingVideo ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Video className="h-4 w-4" />
+                      Generate Video
+                    </>
+                  )}
+                </Button>
+                <VideoSettingsButton
+                  settings={videoSettings}
+                  onSettingsChange={setVideoSettings}
+                  variant="default"
+                  size="icon"
+                  showSamples={false}
+                  className="rounded-l-none h-11"
+                />
+              </div>
             </div>
-            {!responseId && (
-              <p className="text-xs text-muted-foreground mt-2">
-                AI refinement is available after the initial storyboard is generated
-              </p>
-            )}
           </div>
         </div>
       </div>

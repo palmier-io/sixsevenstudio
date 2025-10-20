@@ -98,6 +98,14 @@ const generateStoryboard = async (
   });
 };
 
+const getPromptFromStoryboard = async (
+  projectName: string,
+): Promise<string> => {
+  return await invoke<string>("get_prompt_from_storyboard", {
+    projectName,
+  });
+};
+
 // React Query hook
 export function useProjects() {
   const queryClient = useQueryClient();
@@ -154,6 +162,7 @@ export function useProjects() {
     saveStoryboard,
     deleteStoryboard,
     generateStoryboard,
+    getPromptFromStoryboard,
   };
 }
 
