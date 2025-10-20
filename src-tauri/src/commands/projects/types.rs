@@ -4,6 +4,7 @@ pub const WORKSPACE_FOLDER: &str = "sixsevenstudio";
 pub const PROJECT_META_DIR: &str = ".sixseven";
 pub const PROJECT_META_FILE: &str = "metadata.json";
 pub const STORYBOARD_FILE: &str = "storyboard.json";
+pub const IMAGES_FOLDER: &str = "images";
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ProjectSummary {
@@ -19,6 +20,8 @@ pub struct ProjectMeta {
     pub created_at: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub storyboard_response_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image_path: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]

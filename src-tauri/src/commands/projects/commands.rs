@@ -3,9 +3,10 @@ use tauri::AppHandle;
 use tauri_plugin_log::log;
 
 use super::filesystem::{
-    current_timestamp, ensure_dir, get_project_path, list_project_directories, project_dir,
-    read_project_meta, read_storyboard_data, safe_workspace, sanitize_project_name,
-    write_project_meta, write_storyboard_data,
+    current_timestamp, delete_image_file, ensure_dir, get_image_path, get_project_path,
+    list_project_directories, project_dir, read_project_meta, read_storyboard_data,
+    safe_workspace, sanitize_project_name, save_image_file, write_project_meta,
+    write_storyboard_data,
 };
 use super::types::{
     ProjectMeta, ProjectSummary, StoryboardData, VideoMeta, PROJECT_META_DIR, PROJECT_META_FILE,
@@ -38,6 +39,7 @@ pub async fn list_projects(app: AppHandle) -> Result<Vec<ProjectSummary>, String
             path: path.to_string_lossy().to_string(),
             created_at: current_timestamp(),
             storyboard_response_id: None,
+            image_path: None,
         });
 
         items.push(ProjectSummary {
@@ -71,6 +73,7 @@ pub async fn create_project(app: AppHandle, name: String) -> Result<ProjectSumma
             path: dir.to_string_lossy().to_string(),
             created_at,
             storyboard_response_id: None,
+            image_path: None,
         })
         .map_err(|e| e.to_string())?;
         fs::write(&meta_path, json).map_err(|e| e.to_string())?;
@@ -129,6 +132,7 @@ pub async fn add_videos_to_project(
         path: project_path.to_string_lossy().to_string(),
         created_at: existing_meta.created_at,
         storyboard_response_id: existing_meta.storyboard_response_id,
+        image_path: existing_meta.image_path,
     };
     write_project_meta(&project_path, &meta)?;
     Ok(())
@@ -224,4 +228,52 @@ pub async fn get_prompt_from_storyboard(
 
     let final_prompt = prompt_parts.join("\n\n");
     Ok(final_prompt)
+}
+
+#[tauri::command]
+pub async fn save_image(
+    app: AppHandle,
+    project_name: String,
+    image_name: String,
+    image_data: String,
+) -> Result<String, String> {
+    let project_path = get_project_path(&app, &project_name)?;
+
+    let bytes = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, &image_data)
+        .map_err(|e| format!("Failed to decode base64 image: {}", e))?;
+
+    let saved_path = save_image_file(&project_path, &image_name, &bytes)?;
+
+    let mut meta = read_project_meta(&project_path)?;
+    meta.image_path = Some(saved_path.clone());
+    write_project_meta(&project_path, &meta)?;
+
+    Ok(saved_path)
+}
+
+#[tauri::command]
+pub async fn get_image(
+    app: AppHandle,
+    project_name: String,
+    image_name: String,
+) -> Result<Option<String>, String> {
+    let project_path = get_project_path(&app, &project_name)?;
+    get_image_path(&project_path, &image_name)
+}
+
+#[tauri::command]
+pub async fn delete_image(
+    app: AppHandle,
+    project_name: String,
+    image_name: String,
+) -> Result<(), String> {
+    let project_path = get_project_path(&app, &project_name)?;
+    delete_image_file(&project_path, &image_name)?;
+
+    // Update project metadata to remove image path
+    let mut meta = read_project_meta(&project_path)?;
+    meta.image_path = None;
+    write_project_meta(&project_path, &meta)?;
+
+    Ok(())
 }
