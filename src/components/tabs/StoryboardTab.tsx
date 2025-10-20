@@ -178,6 +178,15 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
     }
   };
 
+  // Calculate total seconds from all scenes
+  const calculateTotalSeconds = () => {
+    return scenes.reduce((total, scene) => {
+      const match = scene.duration.match(/(\d+)s/);
+      const seconds = match ? parseInt(match[1], 10) : 0;
+      return total + seconds;
+    }, 0);
+  };
+
   if (isLoading) {
     return (
       <div className="h-full w-full flex items-center justify-center">
@@ -188,6 +197,8 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
       </div>
     );
   }
+
+  const totalSeconds = calculateTotalSeconds();
 
   return (
     <div className="h-full w-full flex flex-col">
@@ -216,14 +227,19 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
           <div className="p-6 flex-shrink-0">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-medium">Draft your video</h2>
-              <Button
-                onClick={addScene}
-                size="icon"
-                variant="outline"
-                className="rounded-full w-8 h-8"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">
+                  {totalSeconds}s total
+                </span>
+                <Button
+                  onClick={addScene}
+                  size="icon"
+                  variant="outline"
+                  className="rounded-full w-8 h-8"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -246,7 +262,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
               {scenes.map((scene, index) => (
                 <div key={scene.id} className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-muted-foreground">{scene.title}</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground">Scene {index + 1}: {scene.title}</h3>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">
                         {scene.duration}
