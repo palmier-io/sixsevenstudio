@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Separator } from '@/components/ui/separator';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Plus, ArrowUp, Trash2, Loader2, Video, Image as ImageIcon, X } from 'lucide-react';
 import { useProjects, type Scene } from '@/hooks/tauri/use-projects';
 import { toast } from 'sonner';
@@ -555,71 +556,86 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
   }
 
   return (
-    <div className="h-full w-full flex flex-col">
-      {/* Main Content */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 min-h-0">
-        <StartingFramePanel
-          projectName={projectName}
-          videoSettings={videoSettings}
-          onImageUpload={async (base64Data) => {
-            return await saveImage(projectName, 'starting_frame.png', base64Data);
-          }}
-          onImageDelete={async () => {
-            await deleteImage(projectName, 'starting_frame.png');
-          }}
-          onImageLoad={async () => {
-            try {
-              return await getImage(projectName, 'starting_frame.png');
-            } catch (err) {
-              console.error('Failed to load image:', err);
-              return null;
-            }
-          }}
-        />
-        <StoryboardEditor
-          scenes={scenes}
-          globalStyle={globalStyle}
-          totalSeconds={calculateTotalSeconds()}
-          onGlobalStyleChange={setGlobalStyle}
-          onAddScene={addScene}
-          onDeleteScene={deleteScene}
-          onUpdateScene={updateScene}
-        />
-      </div>
+    <div className="h-full w-full flex flex-col overflow-hidden">
+      <ResizablePanelGroup direction="vertical">
+        {/* Main Content */}
+        <ResizablePanel defaultSize={75} minSize={40}>
+          <div className="h-full p-6">
+            <ResizablePanelGroup direction="horizontal" className="gap-6">
+              <ResizablePanel defaultSize={50} minSize={30}>
+                <StartingFramePanel
+                  projectName={projectName}
+                  videoSettings={videoSettings}
+                  onImageUpload={async (base64Data) => {
+                    return await saveImage(projectName, 'starting_frame.png', base64Data);
+                  }}
+                  onImageDelete={async () => {
+                    await deleteImage(projectName, 'starting_frame.png');
+                  }}
+                  onImageLoad={async () => {
+                    try {
+                      return await getImage(projectName, 'starting_frame.png');
+                    } catch (err) {
+                      console.error('Failed to load image:', err);
+                      return null;
+                    }
+                  }}
+                />
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel defaultSize={50} minSize={30}>
+                <StoryboardEditor
+                  scenes={scenes}
+                  globalStyle={globalStyle}
+                  totalSeconds={calculateTotalSeconds()}
+                  onGlobalStyleChange={setGlobalStyle}
+                  onAddScene={addScene}
+                  onDeleteScene={deleteScene}
+                  onUpdateScene={updateScene}
+                />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
+        </ResizablePanel>
 
-      <ActionBar
-        responseId={responseId}
-        scenes={scenes}
-        videoSettings={videoSettings}
-        onVideoSettingsChange={setVideoSettings}
-        onRefineStoryboard={async (feedback: string) => {
-          const refinedData = await generateStoryboard(projectName, feedback);
-          setScenes(refinedData.scenes);
-          setGlobalStyle(refinedData.global_style);
-        }}
-        onGenerateVideo={async (settings: VideoSettings) => {
-          const prompt = await getPromptFromStoryboard(projectName);
-          const projectMeta = await getProject(projectName);
-          const imagePath = projectMeta.image_path ? await getImage(projectName, 'starting_frame.png') : undefined;
+        <ResizableHandle />
 
-          const videoId = await createVideo({
-            model: settings.model,
-            prompt: prompt,
-            size: settings.resolution,
-            seconds: String(settings.duration),
-            inputReferencePath: imagePath || undefined,
-          });
+        <ResizablePanel defaultSize={10} minSize={10}>
+          <ActionBar
+            responseId={responseId}
+            scenes={scenes}
+            videoSettings={videoSettings}
+            onVideoSettingsChange={setVideoSettings}
+            onRefineStoryboard={async (feedback: string) => {
+              const refinedData = await generateStoryboard(projectName, feedback);
+              setScenes(refinedData.scenes);
+              setGlobalStyle(refinedData.global_style);
+            }}
+            onGenerateVideo={async (settings: VideoSettings) => {
+              const prompt = await getPromptFromStoryboard(projectName);
+              const projectMeta = await getProject(projectName);
+              const imagePath = projectMeta.image_path ? await getImage(projectName, 'starting_frame.png') : undefined;
 
-          await addVideosToProject(projectName, [{
-            id: videoId,
-            prompt: '',
-            model: settings.model,
-            resolution: settings.resolution,
-            duration: settings.duration,
-            created_at: Date.now(),
-          }]);
-        }}
-      />
+              const videoId = await createVideo({
+                model: settings.model,
+                prompt: prompt,
+                size: settings.resolution,
+                seconds: String(settings.duration),
+                inputReferencePath: imagePath || undefined,
+              });
+
+              await addVideosToProject(projectName, [{
+                id: videoId,
+                prompt: '',
+                model: settings.model,
+                resolution: settings.resolution,
+                duration: settings.duration,
+                created_at: Date.now(),
+              }]);
+            }}
+          />
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 }
