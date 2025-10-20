@@ -18,12 +18,6 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 
 const SAVE_AFTER_IDLE_SECONDS = 5000; // 5 seconds
 
-// Helper function to calculate aspect ratio from resolution string (e.g., "1280x720" -> 16/9)
-const getAspectRatio = (resolution: string): number => {
-  const [width, height] = resolution.split('x').map(Number);
-  return width / height;
-};
-
 interface StoryboardTabProps {
   projectName: string;
 }
@@ -31,13 +25,11 @@ interface StoryboardTabProps {
 // Starting Frame Panel Component
 function StartingFramePanel({
   projectName,
-  videoSettings,
   onImageUpload,
   onImageDelete,
   onImageLoad,
 }: {
   projectName: string;
-  videoSettings: VideoSettings;
   onImageUpload: (base64Data: string) => Promise<string>;
   onImageDelete: () => Promise<void>;
   onImageLoad: () => Promise<string | null>;
@@ -565,7 +557,6 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
               <ResizablePanel defaultSize={50} minSize={30}>
                 <StartingFramePanel
                   projectName={projectName}
-                  videoSettings={videoSettings}
                   onImageUpload={async (base64Data) => {
                     return await saveImage(projectName, 'starting_frame.png', base64Data);
                   }}
