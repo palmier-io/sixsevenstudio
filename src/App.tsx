@@ -35,10 +35,6 @@ function AppLayout() {
 
   const [selectedProject, setSelectedProject] = useState<ProjectSummary | null>(null);
 
-  // Get current tab from search params
-  const searchParams = new URLSearchParams(location.search);
-  const currentTab = searchParams.get("tab");
-
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
