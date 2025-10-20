@@ -42,5 +42,5 @@ pub struct Scene {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct StoryboardData {
     pub scenes: Vec<Scene>,
-    pub animation_style: String,
+    pub global_style: String,
 }

@@ -32,7 +32,7 @@ export interface Scene {
 
 export interface StoryboardData {
   scenes: Scene[];
-  animation_style: string;
+  global_style: string;
 }
 
 // Query keys

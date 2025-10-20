@@ -24,7 +24,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
   const { createVideo } = useVideos();
 
   const [scenes, setScenes] = useState<Scene[]>([]);
-  const [animationStyle, setAnimationStyle] = useState('');
+  const [globalStyle, setGlobalStyle] = useState('');
   const [responseId, setResponseId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefining, setIsRefining] = useState(false);
@@ -48,7 +48,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
 
         if (data) {
           setScenes(data.scenes);
-          setAnimationStyle(data.animation_style);
+          setGlobalStyle(data.global_style);
 
           // Load response_id from project metadata
           try {
@@ -65,7 +65,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
             description: '',
             duration: '3s',
           }]);
-          setAnimationStyle('Animation in Japanese anime style');
+          setGlobalStyle('Global in Japanese anime style');
         }
       } catch (error) {
         const errMsg = error instanceof Error ? error.message : String(error);
@@ -78,7 +78,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
     loadStoryboard();
   }, [projectName, getStoryboard]);
 
-  // Auto-save storyboard when scenes or animation style changes
+  // Auto-save storyboard when scenes or global style changes
   useEffect(() => {
     if (!projectName || isLoading) return;
 
@@ -86,7 +86,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
       try {
         await saveStoryboard(projectName, {
           scenes,
-          animation_style: animationStyle,
+          global_style: globalStyle,
         });
       } catch (error) {
         const errMsg = error instanceof Error ? error.message : String(error);
@@ -97,7 +97,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
     // Debounce save to avoid too many writes
     const timeoutId = setTimeout(saveData, SAVE_AFTER_IDLE_SECONDS);
     return () => clearTimeout(timeoutId);
-  }, [scenes, animationStyle, projectName, isLoading, saveStoryboard]);
+  }, [scenes, globalStyle, projectName, isLoading, saveStoryboard]);
 
   const addScene = () => {
     const newScene: Scene = {
@@ -129,9 +129,9 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
       // Use generateStoryboard - it will automatically detect refinement mode
       const refinedData = await generateStoryboard(projectName, feedbackMessage);
 
-      // Update the scenes and animation style with refined data
+      // Update the scenes and global style with refined data
       setScenes(refinedData.scenes);
-      setAnimationStyle(refinedData.animation_style);
+      setGlobalStyle(refinedData.global_style);
       setFeedbackMessage('');
 
       toast.success('Storyboard refined successfully!');
@@ -229,14 +229,14 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
 
           <ScrollArea className="flex-1 px-6 min-h-0">
             <div className="space-y-6 pb-6">
-              {/* Animation Style Section */}
+              {/* Global Style Section */}
               <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Animation Style</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Global Style</h3>
                 <Textarea
-                  value={animationStyle}
-                  onChange={(e) => setAnimationStyle(e.target.value)}
+                  value={globalStyle}
+                  onChange={(e) => setGlobalStyle(e.target.value)}
                   className="min-h-[80px] resize-none"
-                  placeholder="Describe the overall animation style..."
+                  placeholder="Describe the overall global style..."
                 />
               </div>
 

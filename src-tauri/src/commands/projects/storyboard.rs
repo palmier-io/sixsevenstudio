@@ -2,33 +2,45 @@ use super::filesystem;
 use super::types::{Scene, StoryboardData};
 use crate::commands::openai::{create_openai_response, ContentPart, Input};
 
-const STORYBOARD_SYSTEM_INSTRUCTION: &str = r#"You are a video storyboard expert. Generate a structured storyboard in JSON format.
+const STORYBOARD_SYSTEM_INSTRUCTION: &str = r#"
+<role>
+You are an expert creative director and visual storyteller specializing in AI-driven video generation using Sora 2. 
+You excel at translating imaginative ideas into cinematic, visually detailed, and production-ready Sora 2 prompts. 
+Your responses use natural, descriptive language that balances artistic vision with technical precision.
+</role>
 
-Required structure:
+<required_structure>
 {
   "scenes": [
     {
       "id": "1",
       "title": "Opening Scene",
-      "description": "Detailed visual description of what happens in this scene",
+      "description": "Describe the scene using vivid sensory and spatial details — setting, lighting, camera movement, composition, character actions, and atmosphere.",
       "duration": "3s"
     }
   ],
-  "animation_style": "Overall animation style description"
+  "global_style": "Describe the overall visual tone, art direction, color palette, mood, and realism level — for example: 'cinematic photorealism with soft natural lighting', 'vintage 16mm film aesthetic', or 'stylized watercolor global with fluid camera motion'."
 }
+</required_structure>
 
-Guidelines:
-- Create 3-6 scenes that form a cohesive narrative arc
-- Each scene should be 2-5 seconds long (use format like "3s" or "4s")
-- Scene descriptions should be visual, specific, and actionable
-- Focus on storytelling flow, pacing, and visual continuity
-- The animation_style should describe the overall aesthetic and mood
-- Ensure the storyboard tells a complete, engaging story
+<guidelines>
+- Create 3–6 scenes forming a cohesive and emotionally engaging narrative arc.
+- Each scene should last between 2–8 seconds ("4s", "6s", etc.).
+- Scene descriptions must be visual, specific, and cinematic — focus on concrete imagery and motion rather than abstract ideas.
+- Include sensory elements: lighting, texture, camera movement, pacing, and transitions.
+- Maintain visual and tonal continuity across all scenes.
+- Ensure story progression feels natural and visually coherent.
+- The "global_style" defines the aesthetic through-line — ensure all scenes align with this global tone and visual language.
+</guidelines>
 
-Return ONLY the JSON object, no additional text or markdown formatting."#;
+<output_instructions>
+Return ONLY the JSON object in valid JSON format.
+Do not include any commentary, explanation, or markdown formatting.
+</output_instructions>
 
-#[tauri::command]
-pub async fn generate_storyboard(
+"#;
+
+pub async fn create_storyboard(
     app: tauri::AppHandle,
     project_name: String,
     prompt: String,
@@ -133,11 +145,11 @@ fn parse_storyboard_from_json(json: &serde_json::Value) -> Result<StoryboardData
         .collect::<Result<Vec<_>, &str>>()
         .map_err(|e| e.to_string())?;
 
-    let animation_style = json
-        .get("animation_style")
+    let global_style = json
+        .get("global_style")
         .and_then(|v| v.as_str())
-        .unwrap_or("Cinematic animation with smooth transitions")
+        .unwrap_or("Cinematic global with smooth transitions")
         .to_string();
 
-    Ok(StoryboardData { scenes, animation_style })
+    Ok(StoryboardData { scenes, global_style })
 }
