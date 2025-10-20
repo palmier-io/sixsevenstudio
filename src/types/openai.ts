@@ -25,5 +25,6 @@ export interface OpenAIVideoJobResponse {
     prompt: string;
     size?: string;
     seconds?: string;
+    inputReferencePath?: string;
   }
 

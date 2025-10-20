@@ -21,6 +21,7 @@ export interface ProjectMeta {
   videos: VideoMeta[];
   created_at: number;
   storyboard_response_id?: string;
+  image_path?: string;
 }
 
 export interface Scene {
@@ -106,6 +107,39 @@ const getPromptFromStoryboard = async (
   });
 };
 
+const saveImage = async (
+  projectName: string,
+  imageName: string,
+  imageData: string
+): Promise<string> => {
+  return await invoke<string>("save_image", {
+    projectName,
+    imageName,
+    imageData,
+  });
+};
+
+const getImage = async (
+  projectName: string,
+  imageName: string
+): Promise<string | null> => {
+  return await invoke<string | null>("get_image", {
+    projectName,
+    imageName,
+  });
+};
+
+
+const deleteImage = async (
+  projectName: string,
+  imageName: string
+): Promise<void> => {
+  await invoke("delete_image", {
+    projectName,
+    imageName,
+  });
+};
+
 // React Query hook
 export function useProjects() {
   const queryClient = useQueryClient();
@@ -163,6 +197,11 @@ export function useProjects() {
     deleteStoryboard,
     generateStoryboard,
     getPromptFromStoryboard,
+
+    // Image API calls
+    saveImage,
+    getImage,
+    deleteImage,
   };
 }
 

@@ -12,6 +12,7 @@ export function useVideos() {
           prompt: params.prompt,
           size: params.size,
           seconds: params.seconds,
+          inputReferencePath: params.inputReferencePath,
         });
 
         return videoId;
