@@ -95,7 +95,7 @@ const generateStoryboard = async (
   return await invoke<StoryboardData>("generate_storyboard", {
     projectName,
     prompt,
-    model: model ?? "gpt-4o",
+    model,
   });
 };
 
