@@ -1,4 +1,4 @@
-import { Folder, MoreHorizontal, Trash2 } from "lucide-react"
+import { Folder, MoreHorizontal, Trash2, Sun, Moon } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
 import {
   Sidebar as UISidebar,
@@ -10,16 +10,22 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar"
 import { useProjects, ProjectSummary } from "@/hooks/tauri/use-projects"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ApiKey } from "@/components/ApiKey"
 
 export function Sidebar({
   onSelectProject,
+  theme,
+  onThemeChange,
 }: {
   selectedProject?: string | null
   onSelectProject?: (project: ProjectSummary) => void
+  theme: "light" | "dark"
+  onThemeChange: (theme: "light" | "dark") => void
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -92,6 +98,19 @@ export function Sidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="p-2">
+        <div className="flex flex-col items-stretch gap-2">
+          <ApiKey />
+          <Button
+            variant="outline"
+            size="icon-sm"
+            aria-label="Toggle theme"
+            onClick={() => onThemeChange(theme === "dark" ? "light" : "dark")}
+          >
+            {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </Button>
+        </div>
+      </SidebarFooter>
       <SidebarRail />
     </UISidebar>
   )
