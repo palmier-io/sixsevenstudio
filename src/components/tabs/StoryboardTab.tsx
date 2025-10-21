@@ -13,7 +13,7 @@ import { useProjects, type Scene } from '@/hooks/tauri/use-projects';
 import { toast } from 'sonner';
 import { useVideos } from '@/hooks/tauri/use-videos';
 import { VideoSettingsButton, type VideoSettings } from '@/components/VideoSettings';
-import { DEFAULT_VIDEO_SETTINGS } from '@/types/constants';
+import { DEFAULT_VIDEO_SETTINGS, STARTING_FRAME_FILENAME } from '@/types/constants';
 import { convertFileSrc } from '@tauri-apps/api/core';
 
 const SAVE_AFTER_IDLE_SECONDS = 5000; // 5 seconds
@@ -465,7 +465,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
             description: '',
             duration: '3s',
           }]);
-          setGlobalStyle('Global in Japanese anime style');
+          setGlobalStyle('');
         }
 
         // Load response_id from project metadata
@@ -558,14 +558,14 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
                 <StartingFramePanel
                   projectName={projectName}
                   onImageUpload={async (base64Data) => {
-                    return await saveImage(projectName, 'starting_frame.png', base64Data);
+                    return await saveImage(projectName, STARTING_FRAME_FILENAME, base64Data);
                   }}
                   onImageDelete={async () => {
-                    await deleteImage(projectName, 'starting_frame.png');
+                    await deleteImage(projectName, STARTING_FRAME_FILENAME);
                   }}
                   onImageLoad={async () => {
                     try {
-                      return await getImage(projectName, 'starting_frame.png');
+                      return await getImage(projectName, STARTING_FRAME_FILENAME);
                     } catch (err) {
                       console.error('Failed to load image:', err);
                       return null;
@@ -605,7 +605,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
             onGenerateVideo={async (settings: VideoSettings) => {
               const prompt = await getPromptFromStoryboard(projectName);
               const projectMeta = await getProject(projectName);
-              const imagePath = projectMeta.image_path ? await getImage(projectName, 'starting_frame.png') : undefined;
+              const imagePath = projectMeta.image_path ? await getImage(projectName, STARTING_FRAME_FILENAME) : undefined;
 
               const videoId = await createVideo({
                 model: settings.model,

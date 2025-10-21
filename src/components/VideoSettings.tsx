@@ -10,26 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-// CONSTANTS
-export const SORA_MODELS = ["sora-2", "sora-2-pro"] as const
-export type Model = typeof SORA_MODELS[number]
-export const RESOLUTIONS_BY_MODEL: Record<
-  Model,
-  ReadonlyArray<{ value: string; isLandscape: boolean }>
-> = {
-  "sora-2": [
-    { value: "1280x720", isLandscape: true },
-    { value: "720x1280", isLandscape: false },
-  ],
-  "sora-2-pro": [
-    { value: "1280x720", isLandscape: true },
-    { value: "720x1280", isLandscape: false },
-    { value: "1792x1024", isLandscape: true },
-    { value: "1024x1792", isLandscape: false },
-  ],
-}
-export const DURATIONS = [4, 8, 12] as const
+import { SORA_MODELS, RESOLUTIONS_BY_MODEL, DURATIONS, Model } from "@/types/constants"
 
 export type VideoSettings = {
   model: Model

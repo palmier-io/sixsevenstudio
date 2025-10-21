@@ -5,6 +5,7 @@ import { useVideos } from "@/hooks/tauri/use-videos";
 import { useProjects, VideoMeta } from "@/hooks/tauri/use-projects";
 import { toast } from "sonner";
 import { info as logInfo , error as logError} from "@tauri-apps/plugin-log";
+import { STARTING_FRAME_FILENAME } from "@/types/constants";
 
 function createProjectNameFromPrompt(
   prompt: string,
@@ -31,11 +32,12 @@ function createProjectNameFromPrompt(
 
 export function Home() {
   const navigate = useNavigate();
-  const { createProject, ensureWorkspaceExists, addVideosToProject, projects, generateStoryboard } = useProjects();
+  const { createProject, ensureWorkspaceExists, addVideosToProject, projects, generateStoryboard, saveImage } = useProjects();
   const {
     createVideo,
   } = useVideos();
   const [isGenerating, setIsGenrating] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const handleStoryboard = async (params: {
     prompt: string;
@@ -53,7 +55,28 @@ export function Home() {
       const projectName = createProjectNameFromPrompt(params.prompt, "storyboard", existingProjectNames);
       const project = await createProject(projectName);
 
-      // Trigger AI storyboard generation (fire and forget)
+      if (selectedImage) {
+        try {
+          const reader = new FileReader();
+          const imageDataPromise = new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => {
+              const base64String = reader.result as string;
+              const base64Data = base64String.split(',')[1]; // Remove data:image/...;base64, prefix
+              resolve(base64Data);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(selectedImage);
+          });
+          const imageData = await imageDataPromise;
+          await saveImage(project.name, STARTING_FRAME_FILENAME, imageData);
+          logInfo(`Reference image saved for project ${project.name}`);
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          logError(`Failed to save reference image: ${errMsg}`);
+          // Continue with storyboard generation even if image save fails
+        }
+      }
+
       toast.info("Generating storyboard...");
       generateStoryboard(project.name, params.prompt)
         .then(() => {
@@ -159,6 +182,8 @@ export function Home() {
         <InputBox
           onGenerate={handleGenerate}
           onStoryboard={handleStoryboard}
+          onImageSelect={(file) => setSelectedImage(file)}
+          onImageClear={() => setSelectedImage(null)}
           disabled={isGenerating}
         />
 
