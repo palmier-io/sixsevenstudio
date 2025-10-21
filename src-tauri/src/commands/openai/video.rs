@@ -31,7 +31,10 @@ impl OpenAIClient {
     /// Check the status of a video generation
     pub async fn check_video_status(&self, video_id: String) -> Result<VideoJobResponse, String> {
         let url = format!("{}/videos/{}", self.base_url, video_id);
-        let req = self.http.get(&url).headers(self.headers(Some("application/json")));
+        let req = self
+            .http
+            .get(&url)
+            .headers(self.headers(Some("application/json")));
         let body = self.exec_request(req, "GET", &url).await?;
         let video_response: VideoJobResponse = serde_json::from_str(&body)
             .map_err(|e| format!("Failed to parse video status response: {}", e))?;
@@ -77,9 +80,7 @@ async fn build_form(
     seconds: Option<String>,
     input_reference_path: Option<String>,
 ) -> Result<Form, String> {
-    let mut form = Form::new()
-        .text("model", model)
-        .text("prompt", prompt);
+    let mut form = Form::new().text("model", model).text("prompt", prompt);
 
     if let Some(ref size_val) = size {
         form = form.text("size", size_val.clone());
@@ -106,7 +107,8 @@ async fn build_form(
             // Parse the expected dimensions from size (e.g., "1280x720")
             if let Some((width_str, height_str)) = size_val.split_once('x') {
                 if let (Ok(target_width), Ok(target_height)) =
-                    (width_str.parse::<u32>(), height_str.parse::<u32>()) {
+                    (width_str.parse::<u32>(), height_str.parse::<u32>())
+                {
                     image_bytes = resize_image(image_bytes, target_width, target_height)?;
                 }
             }
@@ -138,7 +140,11 @@ async fn build_form(
     Ok(form)
 }
 
-fn resize_image(image_bytes: Vec<u8>, target_width: u32, target_height: u32) -> Result<Vec<u8>, String> {
+fn resize_image(
+    image_bytes: Vec<u8>,
+    target_width: u32,
+    target_height: u32,
+) -> Result<Vec<u8>, String> {
     // Load image to check/adjust dimensions
     let mut img = image::load_from_memory(&image_bytes)
         .map_err(|e| format!("Failed to load image: {}", e))?;
@@ -148,7 +154,11 @@ fn resize_image(image_bytes: Vec<u8>, target_width: u32, target_height: u32) -> 
     // Only resize if dimensions don't match
     if current_width != target_width || current_height != target_height {
         // Use Fill resize - this will crop to fit the aspect ratio
-        img = img.resize_to_fill(target_width, target_height, image::imageops::FilterType::Lanczos3);
+        img = img.resize_to_fill(
+            target_width,
+            target_height,
+            image::imageops::FilterType::Lanczos3,
+        );
 
         // Re-encode the image to bytes
         let mut buffer = std::io::Cursor::new(Vec::new());

@@ -1,4 +1,6 @@
 mod commands;
+mod utils;
+
 use commands::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

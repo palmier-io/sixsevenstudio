@@ -4,15 +4,14 @@ use tauri_plugin_log::log;
 
 use super::filesystem::{
     current_timestamp, delete_image_file, ensure_dir, get_image_path, get_project_path,
-    list_project_directories, project_dir, read_project_meta, read_storyboard_data,
-    safe_workspace, sanitize_project_name, save_image_file, write_project_meta,
-    write_storyboard_data,
+    list_project_directories, project_dir, read_project_meta, read_storyboard_data, safe_workspace,
+    sanitize_project_name, save_image_file, write_project_meta, write_storyboard_data,
 };
+use super::storyboard::create_storyboard;
 use super::types::{
     ProjectMeta, ProjectSummary, StoryboardData, VideoMeta, PROJECT_META_DIR, PROJECT_META_FILE,
     STORYBOARD_FILE,
 };
-use super::storyboard::create_storyboard;
 
 #[tauri::command]
 pub async fn get_workspace_dir(app: AppHandle) -> Result<Option<String>, String> {

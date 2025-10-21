@@ -2,10 +2,7 @@ use super::client::OpenAIClient;
 use super::types::{ResponseData, ResponseRequest};
 
 impl OpenAIClient {
-    pub async fn create_response(
-        &self,
-        request: ResponseRequest,
-    ) -> Result<ResponseData, String> {
+    pub async fn create_response(&self, request: ResponseRequest) -> Result<ResponseData, String> {
         let url = format!("{}/responses", self.base_url);
 
         let req = self

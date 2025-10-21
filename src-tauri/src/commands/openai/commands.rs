@@ -3,7 +3,7 @@ use tauri_plugin_log::log;
 use tauri_plugin_store::StoreExt;
 
 use super::client::OpenAIClient;
-use super::types::{Input, KEY_NAME, STORE_NAME, ResponseData, ResponseRequest, VideoJobResponse};
+use super::types::{Input, ResponseData, ResponseRequest, VideoJobResponse, KEY_NAME, STORE_NAME};
 
 // ============================================================================
 // API Key Store Commands
@@ -69,7 +69,9 @@ pub async fn create_video(
 ) -> Result<String, String> {
     let api_key = get_api_key_from_store(&app).await?;
     let client = OpenAIClient::new(api_key);
-    let video_id = client.create_video(model, prompt, size, seconds, input_reference_path).await?;
+    let video_id = client
+        .create_video(model, prompt, size, seconds, input_reference_path)
+        .await?;
     Ok(video_id)
 }
 

@@ -6,8 +6,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::AppHandle;
 
 use super::types::{
-    ProjectMeta, StoryboardData, PROJECT_META_DIR, PROJECT_META_FILE, STORYBOARD_FILE,
-    WORKSPACE_FOLDER, IMAGES_FOLDER,
+    ProjectMeta, StoryboardData, IMAGES_FOLDER, PROJECT_META_DIR, PROJECT_META_FILE,
+    STORYBOARD_FILE, WORKSPACE_FOLDER,
 };
 
 pub fn sanitize_project_name(name: &str) -> Result<String, String> {
@@ -137,12 +137,15 @@ pub fn get_project_path(app: &AppHandle, project_name: &str) -> Result<PathBuf, 
     Ok(project_path)
 }
 
-pub fn save_image_file(project_path: &Path, image_name: &str, image_data: &[u8]) -> Result<String, String> {
+pub fn save_image_file(
+    project_path: &Path,
+    image_name: &str,
+    image_data: &[u8],
+) -> Result<String, String> {
     let images_dir = project_path.join(IMAGES_FOLDER);
     ensure_dir(&images_dir)?;
     let image_path = images_dir.join(image_name);
-    fs::write(&image_path, image_data)
-        .map_err(|e| format!("Failed to write image: {}", e))?;
+    fs::write(&image_path, image_data).map_err(|e| format!("Failed to write image: {}", e))?;
     Ok(image_path.to_string_lossy().to_string())
 }
 
@@ -158,8 +161,7 @@ pub fn get_image_path(project_path: &Path, image_name: &str) -> Result<Option<St
 pub fn delete_image_file(project_path: &Path, image_name: &str) -> Result<(), String> {
     let image_path = project_path.join(IMAGES_FOLDER).join(image_name);
     if image_path.exists() {
-        fs::remove_file(&image_path)
-            .map_err(|e| format!("Failed to delete image: {}", e))?;
+        fs::remove_file(&image_path).map_err(|e| format!("Failed to delete image: {}", e))?;
     }
     Ok(())
 }
