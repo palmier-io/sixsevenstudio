@@ -5,6 +5,8 @@ use crate::utils::image::read_image_as_data_url;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+const DEFAULT_MODEL: &str = "gpt-5-mini";
+
 fn get_storyboard_system_instruction() -> Result<String, String> {
     let prompt_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("prompts")
@@ -77,12 +79,14 @@ pub async fn create_storyboard(
         },
     ];
 
+    let default_tools = vec![serde_json::json!({ "type": "web_search_preview" })];
+
     // Call OpenAI and parse response
     let response = create_openai_response(
         app.clone(),
-        model.unwrap_or_else(|| "gpt-4o".to_string()),
+        model.unwrap_or_else(|| DEFAULT_MODEL.to_string()),
         input,
-        None,
+        Some(default_tools),
         response_id,
     )
     .await?;
