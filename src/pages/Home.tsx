@@ -3,6 +3,8 @@ import { useState } from "react";
 import { InputBox } from "@/components/InputBox";
 import { useVideos } from "@/hooks/tauri/use-videos";
 import { useProjects, VideoMeta } from "@/hooks/tauri/use-projects";
+import { generateStoryboardAPI } from "@/hooks/tauri/use-storyboard";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { info as logInfo , error as logError} from "@tauri-apps/plugin-log";
 import { STARTING_FRAME_FILENAME } from "@/types/constants";
@@ -32,7 +34,8 @@ function createProjectNameFromPrompt(
 
 export function Home() {
   const navigate = useNavigate();
-  const { createProject, ensureWorkspaceExists, addVideosToProject, projects, generateStoryboard, saveImage } = useProjects();
+  const queryClient = useQueryClient();
+  const { createProject, ensureWorkspaceExists, addVideosToProject, projects, saveImage } = useProjects();
   const {
     createVideo,
   } = useVideos();
@@ -78,8 +81,10 @@ export function Home() {
       }
 
       toast.info("Generating storyboard...");
-      generateStoryboard(project.name, params.prompt)
+      generateStoryboardAPI(project.name, params.prompt)
         .then(() => {
+          // Invalidate storyboard query to trigger refetch in StoryboardTab
+          queryClient.invalidateQueries({ queryKey: ["storyboard", project.name] });
           toast.success("Storyboard generated!");
           logInfo(`Storyboard generated for project ${project.name}`);
         })

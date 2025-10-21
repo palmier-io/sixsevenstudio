@@ -24,17 +24,6 @@ export interface ProjectMeta {
   image_path?: string;
 }
 
-export interface Scene {
-  id: string;
-  title: string;
-  description: string;
-  duration: string;
-}
-
-export interface StoryboardData {
-  scenes: Scene[];
-  global_style: string;
-}
 
 // Query keys
 const PROJECTS_QUERY_KEY = ["projects"];
@@ -73,38 +62,6 @@ const addVideosToProject = async (projectName: string, videosMeta: VideoMeta[]):
 
 const deleteVideoFromProject = async (projectName: string, videoId: string): Promise<void> => {
   await invoke("delete_video_from_project", { projectName, videoId });
-};
-
-const getStoryboard = async (projectName: string): Promise<StoryboardData | null> => {
-  return await invoke<StoryboardData | null>("get_storyboard", { projectName });
-};
-
-const saveStoryboard = async (projectName: string, storyboardData: StoryboardData): Promise<void> => {
-  await invoke("save_storyboard", { projectName, storyboardData });
-};
-
-const deleteStoryboard = async (projectName: string): Promise<void> => {
-  await invoke("delete_storyboard", { projectName });
-};
-
-const generateStoryboard = async (
-  projectName: string,
-  prompt: string,
-  model?: string
-): Promise<StoryboardData> => {
-  return await invoke<StoryboardData>("generate_storyboard", {
-    projectName,
-    prompt,
-    model,
-  });
-};
-
-const getPromptFromStoryboard = async (
-  projectName: string,
-): Promise<string> => {
-  return await invoke<string>("get_prompt_from_storyboard", {
-    projectName,
-  });
 };
 
 const saveImage = async (
@@ -190,13 +147,6 @@ export function useProjects() {
     getProject,
     addVideosToProject,
     deleteVideoFromProject,
-
-    // Storyboard API calls
-    getStoryboard,
-    saveStoryboard,
-    deleteStoryboard,
-    generateStoryboard,
-    getPromptFromStoryboard,
 
     // Image API calls
     saveImage,

@@ -9,7 +9,8 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Separator } from '@/components/ui/separator';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Plus, ArrowUp, Trash2, Loader2, Video, Image as ImageIcon, X } from 'lucide-react';
-import { useProjects, type Scene } from '@/hooks/tauri/use-projects';
+import { useProjects } from '@/hooks/tauri/use-projects';
+import { useStoryboard, type Scene } from '@/hooks/tauri/use-storyboard';
 import { toast } from 'sonner';
 import { useVideos } from '@/hooks/tauri/use-videos';
 import { VideoSettingsButton, type VideoSettings } from '@/components/VideoSettings';
@@ -436,63 +437,53 @@ function ActionBar({
 }
 
 export function StoryboardTab({ projectName }: StoryboardTabProps) {
-  const { getStoryboard, saveStoryboard, getProject, generateStoryboard, getPromptFromStoryboard, addVideosToProject, saveImage, getImage, deleteImage } = useProjects();
+  const { getProject, addVideosToProject, saveImage, getImage, deleteImage } = useProjects();
+  const { storyboard, isLoading: isLoadingStoryboard, generateStoryboard, saveStoryboard, getPromptFromStoryboard } = useStoryboard(projectName);
   const { createVideo } = useVideos();
 
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [globalStyle, setGlobalStyle] = useState('');
   const [responseId, setResponseId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [videoSettings, setVideoSettings] = useState<VideoSettings>(DEFAULT_VIDEO_SETTINGS);
 
-  // Load storyboard data when component mounts
+  // Sync storyboard data from query to local state
   useEffect(() => {
-    const loadStoryboard = async () => {
+    if (storyboard) {
+      setScenes(storyboard.scenes);
+      setGlobalStyle(storyboard.global_style);
+    } else if (!isLoadingStoryboard) {
+      // Initialize with default first scene if no data exists
+      setScenes([{
+        id: '1',
+        title: 'Scene 1',
+        description: '',
+        duration: '3s',
+      }]);
+      setGlobalStyle('');
+    }
+  }, [storyboard, isLoadingStoryboard]);
+
+  // Load response_id from project metadata
+  useEffect(() => {
+    const loadResponseId = async () => {
       if (!projectName) return;
-
-      setIsLoading(true);
       try {
-        const data = await getStoryboard(projectName);
-
-        if (data) {
-          setScenes(data.scenes);
-          setGlobalStyle(data.global_style);
-        } else {
-          // Initialize with default first scene if no data exists
-          setScenes([{
-            id: '1',
-            title: 'Scene 1',
-            description: '',
-            duration: '3s',
-          }]);
-          setGlobalStyle('');
-        }
-
-        // Load response_id from project metadata
-        try {
-          const projectMeta = await getProject(projectName);
-          setResponseId(projectMeta.storyboard_response_id ?? null);
-        } catch (err) {
-          console.error('Failed to load project metadata:', err);
-        }
-      } catch (error) {
-        const errMsg = error instanceof Error ? error.message : String(error);
-        toast.error('Failed to load storyboard', { description: errMsg });
-      } finally {
-        setIsLoading(false);
+        const projectMeta = await getProject(projectName);
+        setResponseId(projectMeta.storyboard_response_id ?? null);
+      } catch (err) {
+        console.error('Failed to load project metadata:', err);
       }
     };
-
-    loadStoryboard();
-  }, [projectName, getStoryboard, getProject]);
+    loadResponseId();
+  }, [projectName, getProject]);
 
   // Auto-save storyboard when scenes or global style changes
   useEffect(() => {
-    if (!projectName || isLoading) return;
+    if (!projectName || isLoadingStoryboard) return;
 
     const saveData = async () => {
       try {
-        await saveStoryboard(projectName, {
+        await saveStoryboard({
           scenes,
           global_style: globalStyle,
         });
@@ -505,7 +496,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
     // Debounce save to avoid too many writes
     const timeoutId = setTimeout(saveData, SAVE_AFTER_IDLE_SECONDS);
     return () => clearTimeout(timeoutId);
-  }, [scenes, globalStyle, projectName, isLoading, saveStoryboard]);
+  }, [scenes, globalStyle, projectName, isLoadingStoryboard, saveStoryboard]);
 
   const addScene = () => {
     const newScene: Scene = {
@@ -536,7 +527,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
     }, 0);
   };
 
-  if (isLoading) {
+  if (isLoadingStoryboard) {
     return (
       <div className="h-full w-full flex items-center justify-center">
         <div className="flex flex-col items-center gap-2">
@@ -598,12 +589,12 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
             videoSettings={videoSettings}
             onVideoSettingsChange={setVideoSettings}
             onRefineStoryboard={async (feedback: string) => {
-              const refinedData = await generateStoryboard(projectName, feedback);
+              const refinedData = await generateStoryboard({ prompt: feedback });
               setScenes(refinedData.scenes);
               setGlobalStyle(refinedData.global_style);
             }}
             onGenerateVideo={async (settings: VideoSettings) => {
-              const prompt = await getPromptFromStoryboard(projectName);
+              const prompt = await getPromptFromStoryboard();
               const projectMeta = await getProject(projectName);
               const imagePath = projectMeta.image_path ? await getImage(projectName, STARTING_FRAME_FILENAME) : undefined;
 
