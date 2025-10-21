@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,7 @@ import { useVideos } from '@/hooks/tauri/use-videos';
 import { VideoSettingsButton, type VideoSettings } from '@/components/VideoSettings';
 import { DEFAULT_VIDEO_SETTINGS, STARTING_FRAME_FILENAME } from '@/types/constants';
 import { convertFileSrc } from '@tauri-apps/api/core';
+import { GeneratingStatus } from '@/components/GeneratingStatus';
 
 const SAVE_AFTER_IDLE_SECONDS = 5000; // 5 seconds
 
@@ -236,6 +238,7 @@ function StoryboardEditor({
   onAddScene,
   onDeleteScene,
   onUpdateScene,
+  isGenerating,
 }: {
   scenes: Scene[];
   globalStyle: string;
@@ -244,9 +247,15 @@ function StoryboardEditor({
   onAddScene: () => void;
   onDeleteScene: (id: string) => void;
   onUpdateScene: (id: string, field: keyof Scene, value: string) => void;
+  isGenerating?: boolean;
 }) {
   return (
-    <Card className="flex flex-col h-full min-h-0">
+    <Card className="flex flex-col h-full min-h-0 relative">
+      <GeneratingStatus isGenerating={isGenerating || false} className="text-base">
+        <div className="text-xs text-white/70">
+          Generating your storyboard
+        </div>
+      </GeneratingStatus>
       <div className="p-6 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-medium">Draft your video</h2>
@@ -321,6 +330,7 @@ function ActionBar({
   onVideoSettingsChange,
   onRefineStoryboard,
   onGenerateVideo,
+  onRefiningChange,
 }: {
   responseId: string | null;
   scenes: Scene[];
@@ -328,10 +338,16 @@ function ActionBar({
   onVideoSettingsChange: (settings: VideoSettings) => void;
   onRefineStoryboard: (feedback: string) => Promise<void>;
   onGenerateVideo: (settings: VideoSettings) => Promise<void>;
+  onRefiningChange?: (isRefining: boolean) => void;
 }) {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [isRefining, setIsRefining] = useState(false);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+
+  // Notify parent when refining state changes
+  useEffect(() => {
+    onRefiningChange?.(isRefining);
+  }, [isRefining, onRefiningChange]);
 
   const handleRefineClick = async () => {
     if (!feedbackMessage.trim() || isRefining) return;
@@ -437,6 +453,7 @@ function ActionBar({
 }
 
 export function StoryboardTab({ projectName }: StoryboardTabProps) {
+  const location = useLocation();
   const { getProject, addVideosToProject, saveImage, getImage, deleteImage } = useProjects();
   const { storyboard, isLoading: isLoadingStoryboard, generateStoryboard, saveStoryboard, getPromptFromStoryboard } = useStoryboard(projectName);
   const { createVideo } = useVideos();
@@ -445,6 +462,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
   const [globalStyle, setGlobalStyle] = useState('');
   const [responseId, setResponseId] = useState<string | null>(null);
   const [videoSettings, setVideoSettings] = useState<VideoSettings>(DEFAULT_VIDEO_SETTINGS);
+  const [isRefining, setIsRefining] = useState(false);
 
   // Sync storyboard data from query to local state
   useEffect(() => {
@@ -527,16 +545,10 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
     }, 0);
   };
 
-  if (isLoadingStoryboard) {
-    return (
-      <div className="h-full w-full flex items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Loading storyboard...</p>
-        </div>
-      </div>
-    );
-  }
+  // Show generating state when:
+  // 1. Coming from Home.tsx and generation is in progress (prompt in state but no storyboard)
+  // 2. Actively refining the storyboard
+  const isGenerating = (!!location.state?.prompt && !storyboard) || isRefining;
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
@@ -574,6 +586,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
                   onAddScene={addScene}
                   onDeleteScene={deleteScene}
                   onUpdateScene={updateScene}
+                  isGenerating={isGenerating}
                 />
               </ResizablePanel>
             </ResizablePanelGroup>
@@ -588,6 +601,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
             scenes={scenes}
             videoSettings={videoSettings}
             onVideoSettingsChange={setVideoSettings}
+            onRefiningChange={setIsRefining}
             onRefineStoryboard={async (feedback: string) => {
               const refinedData = await generateStoryboard({ prompt: feedback });
               setScenes(refinedData.scenes);
