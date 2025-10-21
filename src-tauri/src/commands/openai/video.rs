@@ -1,5 +1,6 @@
 use super::client::OpenAIClient;
 use super::types::VideoJobResponse;
+use crate::utils::image::resize_image;
 use reqwest::multipart::{Form, Part};
 use std::path::Path;
 
@@ -138,34 +139,4 @@ async fn build_form(
     }
 
     Ok(form)
-}
-
-fn resize_image(
-    image_bytes: Vec<u8>,
-    target_width: u32,
-    target_height: u32,
-) -> Result<Vec<u8>, String> {
-    // Load image to check/adjust dimensions
-    let mut img = image::load_from_memory(&image_bytes)
-        .map_err(|e| format!("Failed to load image: {}", e))?;
-
-    let (current_width, current_height) = (img.width(), img.height());
-
-    // Only resize if dimensions don't match
-    if current_width != target_width || current_height != target_height {
-        // Use Fill resize - this will crop to fit the aspect ratio
-        img = img.resize_to_fill(
-            target_width,
-            target_height,
-            image::imageops::FilterType::Lanczos3,
-        );
-
-        // Re-encode the image to bytes
-        let mut buffer = std::io::Cursor::new(Vec::new());
-        img.write_to(&mut buffer, image::ImageFormat::Png)
-            .map_err(|e| format!("Failed to re-encode image: {}", e))?;
-        return Ok(buffer.into_inner());
-    }
-
-    Ok(image_bytes)
 }
