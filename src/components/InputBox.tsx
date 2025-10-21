@@ -19,6 +19,7 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
   const [value, setValue] = useState("")
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [settings, setSettings] = useState<VideoSettings>(DEFAULT_VIDEO_SETTINGS)
 
   useEffect(() => {
@@ -63,12 +64,36 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
     onImageClear?.()
   }
 
+  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.type.startsWith("image/")) {
+        e.preventDefault()
+        const file = item.getAsFile()
+        if (file) {
+          const url = URL.createObjectURL(file)
+          setImagePreviewUrl((prev) => {
+            if (prev) URL.revokeObjectURL(prev)
+            return url
+          })
+          onImageSelect?.(file)
+        }
+        break
+      }
+    }
+  }
+
   return (
     <div className="mx-auto mt-6 rounded-xl border bg-card text-card-foreground shadow-sm">
       <div className="p-4">
         <Textarea
+          ref={textareaRef}
           value={value}
           onChange={(e) => setValue(e.currentTarget.value)}
+          onPaste={handlePaste}
           placeholder="Describe your video... (e.g., 'A serene sunset over the ocean with waves gently crashing')"
           className="min-h-24 resize-none border-0 p-0 shadow-none focus-visible:ring-0"
         />
