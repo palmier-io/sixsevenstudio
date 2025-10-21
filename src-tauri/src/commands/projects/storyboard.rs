@@ -2,45 +2,17 @@ use super::filesystem;
 use super::types::{Scene, StoryboardData};
 use crate::commands::openai::{create_openai_response, ContentPart, Input};
 use crate::utils::image::read_image_as_data_url;
-use std::path::Path;
+use std::fs;
+use std::path::{Path, PathBuf};
 
-const STORYBOARD_SYSTEM_INSTRUCTION: &str = r#"
-<role>
-You are an expert creative director and visual storyteller specializing in AI-driven video generation using Sora 2. 
-You excel at translating imaginative ideas into cinematic, visually detailed, and production-ready Sora 2 prompts. 
-Your responses use natural, descriptive language that balances artistic vision with technical precision.
-</role>
+fn get_storyboard_system_instruction() -> Result<String, String> {
+    let prompt_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("prompts")
+        .join("storyboard_system_instruction.txt");
 
-<required_structure>
-{
-  "scenes": [
-    {
-      "id": "1",
-      "title": "Opening Scene",
-      "description": "Describe the scene using vivid sensory and spatial details — setting, lighting, camera movement, composition, character actions, and atmosphere.",
-      "duration": "3s"
-    }
-  ],
-  "global_style": "Describe the overall visual tone, art direction, color palette, mood, and realism level — for example: 'cinematic photorealism with soft natural lighting', 'vintage 16mm film aesthetic', or 'stylized watercolor global with fluid camera motion'."
+    fs::read_to_string(&prompt_path)
+        .map_err(|e| format!("Failed to read storyboard system instruction: {}", e))
 }
-</required_structure>
-
-<guidelines>
-- Create 3–6 scenes forming a cohesive and emotionally engaging narrative arc.
-- Each scene should last between 2–8 seconds ("4s", "6s", etc.).
-- Scene descriptions must be visual, specific, and cinematic — focus on concrete imagery and motion rather than abstract ideas.
-- Include sensory elements: lighting, texture, camera movement, pacing, and transitions.
-- Maintain visual and tonal continuity across all scenes.
-- Ensure story progression feels natural and visually coherent.
-- The "global_style" defines the aesthetic through-line — ensure all scenes align with this global tone and visual language.
-</guidelines>
-
-<output_instructions>
-Return ONLY the JSON object in valid JSON format.
-Do not include any commentary, explanation, or markdown formatting.
-</output_instructions>
-
-"#;
 
 pub async fn create_storyboard(
     app: tauri::AppHandle,
@@ -86,16 +58,17 @@ pub async fn create_storyboard(
         }
     }
 
-    // Add text prompt
     user_content.push(ContentPart::Text {
         text: user_message.to_string(),
     });
+
+    let system_instruction = get_storyboard_system_instruction()?;
 
     let input = vec![
         Input {
             role: Some("system".to_string()),
             content: vec![ContentPart::Text {
-                text: STORYBOARD_SYSTEM_INSTRUCTION.to_string(),
+                text: system_instruction,
             }],
         },
         Input {

@@ -3,8 +3,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Image as ImageIcon, X } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
-import { VideoSettingsButton, type VideoSettings, RESOLUTIONS_BY_MODEL } from "./VideoSettings"
-import { DEFAULT_VIDEO_SETTINGS } from "@/types/constants"
+import { VideoSettingsButton, type VideoSettings } from "./VideoSettings"
+import { RESOLUTIONS_BY_MODEL, DEFAULT_VIDEO_SETTINGS } from "@/types/constants"
 
 type InputBoxProps = {
   onGenerate?: (params: { prompt: string; settings: VideoSettings }) => void
