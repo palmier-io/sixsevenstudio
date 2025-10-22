@@ -213,7 +213,7 @@ pub async fn get_prompt_from_storyboard(
     let storyboard = read_storyboard_data(&project_path)?
         .ok_or_else(|| "No storyboard found for this project".to_string())?;
 
-    let mut prompt_parts = vec![storyboard.global_style.clone()];
+    let mut prompt_parts = vec![storyboard.global_context.clone()];
 
     for (idx, scene) in storyboard.scenes.iter().enumerate() {
         let scene_text = format!(

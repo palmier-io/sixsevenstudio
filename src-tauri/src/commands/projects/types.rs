@@ -32,6 +32,10 @@ pub struct VideoMeta {
     pub resolution: String,
     pub duration: i32,
     pub created_at: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scene_number: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scene_title: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -45,5 +49,5 @@ pub struct Scene {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct StoryboardData {
     pub scenes: Vec<Scene>,
-    pub global_style: String,
+    pub global_context: String,
 }

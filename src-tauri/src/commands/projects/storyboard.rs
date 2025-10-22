@@ -140,6 +140,20 @@ fn parse_storyboard_from_json(json: &serde_json::Value) -> Result<StoryboardData
         .ok_or("Missing 'scenes' field")?
         .iter()
         .map(|s| {
+            let duration = s
+                .get("duration")
+                .and_then(|v| v.as_str())
+                .unwrap_or("4s")
+                .to_string();
+
+            // Validate duration is one of 4s, 8s, or 12s
+            if duration != "4s" && duration != "8s" && duration != "12s" {
+                return Err(format!(
+                    "Invalid duration '{}'. Must be '4s', '8s', or '12s'",
+                    duration
+                ));
+            }
+
             Ok(Scene {
                 id: s
                     .get("id")
@@ -156,24 +170,19 @@ fn parse_storyboard_from_json(json: &serde_json::Value) -> Result<StoryboardData
                     .and_then(|v| v.as_str())
                     .ok_or("Missing 'description'")?
                     .to_string(),
-                duration: s
-                    .get("duration")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("3s")
-                    .to_string(),
+                duration,
             })
         })
-        .collect::<Result<Vec<_>, &str>>()
-        .map_err(|e| e.to_string())?;
+        .collect::<Result<Vec<_>, String>>()?;
 
-    let global_style = json
-        .get("global_style")
+    let global_context = json
+        .get("global_context")
         .and_then(|v| v.as_str())
-        .unwrap_or("Cinematic global with smooth transitions")
+        .unwrap_or("Cinematic style with smooth transitions")
         .to_string();
 
     Ok(StoryboardData {
         scenes,
-        global_style,
+        global_context,
     })
 }
