@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Image as ImageIcon, X } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Image as ImageIcon, X, Send } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { VideoSettingsButton, type VideoSettings } from "./VideoSettings"
 import { RESOLUTIONS_BY_MODEL, DEFAULT_VIDEO_SETTINGS } from "@/types/constants"
+
+type InputMode = "storyboard" | "video"
 
 type InputBoxProps = {
   onGenerate?: (params: { prompt: string; settings: VideoSettings }) => void
@@ -16,6 +19,7 @@ type InputBoxProps = {
 }
 
 export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear, onSettingsChange, disabled }: InputBoxProps) {
+  const [mode, setMode] = useState<InputMode>("video")
   const [value, setValue] = useState("")
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -86,77 +90,102 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
     }
   }
 
+  const placeholderText = mode === "storyboard"
+    ? "Describe the video you want to create... (e.g., 'A promotional video about sustainable coffee farming')"
+    : "Describe your video scene... (e.g., 'A serene sunset over the ocean with waves gently crashing')"
+
+  const handleSend = () => {
+    if (mode === "storyboard") {
+      onStoryboard?.({ prompt: value, settings })
+    } else {
+      onGenerate?.({ prompt: value, settings })
+    }
+  }
+
   return (
-    <div className="mx-auto mt-6 rounded-xl border bg-card text-card-foreground shadow-sm">
-      <div className="p-4">
-        <Textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(e) => setValue(e.currentTarget.value)}
-          onPaste={handlePaste}
-          placeholder="Describe your video... (e.g., 'A serene sunset over the ocean with waves gently crashing')"
-          className="min-h-24 resize-none border-0 p-0 shadow-none focus-visible:ring-0"
-        />
-      </div>
-      <div className="flex items-center justify-between gap-2 border-t px-4 py-3">
-        <div className="flex items-center gap-1.5">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon-sm" aria-label="Upload image" onClick={handlePickImage}>
-                  <ImageIcon className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Add image</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <VideoSettingsButton
-            settings={settings}
-            onSettingsChange={setSettings}
-          />
-          {imagePreviewUrl ? (
-            <div className="relative">
-              <img
-                src={imagePreviewUrl}
-                alt="Selected"
-                className="size-8 rounded-md object-cover ring-1 ring-border"
-              />
-              <button
-                type="button"
-                onClick={handleClearImage}
-                className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-background text-foreground ring-1 ring-border hover:bg-accent"
-                aria-label="Remove image"
-              >
-                <X className="size-3" />
-              </button>
-            </div>
-          ) : null}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => onStoryboard?.({ prompt: value, settings })}
-            disabled={!value.trim() || disabled}
-            className="gap-2"
+    <Tabs value={mode} onValueChange={(value) => setMode(value as InputMode)} className="mx-auto mt-6">
+      <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+        {/* Tab Switcher */}
+        <TabsList className="w-full h-auto p-0 bg-transparent rounded-none border-b gap-0">
+          <TabsTrigger
+            value="storyboard"
+            className="flex-1 rounded-none !bg-secondary !text-secondary-foreground data-[state=active]:!bg-secondary data-[state=active]:!text-secondary-foreground data-[state=inactive]:!bg-secondary/50 data-[state=inactive]:!text-secondary-foreground/70 hover:data-[state=inactive]:!bg-secondary/60 data-[state=active]:shadow-none px-4 py-3 border-0"
           >
             Storyboard
-          </Button>
-          <Button
-            onClick={() => onGenerate?.({ prompt: value, settings })}
-            disabled={!value.trim() || disabled}
+          </TabsTrigger>
+          <TabsTrigger
+            value="video"
+            className="flex-1 rounded-none !bg-primary !text-primary-foreground data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=inactive]:!bg-primary/50 data-[state=inactive]:!text-primary-foreground/70 hover:data-[state=inactive]:!bg-primary/60 data-[state=active]:shadow-none px-4 py-3 border-0"
           >
-            Generate
-          </Button>
+            Video
+          </TabsTrigger>
+        </TabsList>
+
+        <div className="p-4">
+          <Textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => setValue(e.currentTarget.value)}
+            onPaste={handlePaste}
+            placeholder={placeholderText}
+            className="min-h-24 resize-none border-0 p-0 shadow-none focus-visible:ring-0"
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2 border-t px-4 py-3">
+          <div className="flex items-center gap-1.5">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon-sm" aria-label="Upload image" onClick={handlePickImage}>
+                    <ImageIcon className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Add image</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {mode === "video" && (
+              <VideoSettingsButton
+                settings={settings}
+                onSettingsChange={setSettings}
+              />
+            )}
+            {imagePreviewUrl ? (
+              <div className="relative">
+                <img
+                  src={imagePreviewUrl}
+                  alt="Selected"
+                  className="size-8 rounded-md object-cover ring-1 ring-border"
+                />
+                <button
+                  type="button"
+                  onClick={handleClearImage}
+                  className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-background text-foreground ring-1 ring-border hover:bg-accent"
+                  aria-label="Remove image"
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            ) : null}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="icon"
+              onClick={handleSend}
+              disabled={!value.trim() || disabled}
+            >
+              <Send className="size-4" />
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </Tabs>
   )
 }
 
