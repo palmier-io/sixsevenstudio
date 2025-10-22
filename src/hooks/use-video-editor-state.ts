@@ -1,0 +1,94 @@
+import { useState, useCallback } from 'react';
+import type { TimelineClip, VideoClip } from '@/types/video-editor';
+
+export function useVideoEditorState() {
+  const [clips, setClips] = useState<TimelineClip[]>([]);
+  const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
+
+  // Calculate total duration
+  const totalDuration = clips.length > 0
+    ? Math.max(...clips.map(c => c.position + c.duration))
+    : 0;
+
+  // Add clip to end of timeline
+  const addClip = useCallback((clip: VideoClip, position: number) => {
+    const timelineClip: TimelineClip = {
+      ...clip,
+      position,
+      trimStart: 0,
+      trimEnd: clip.originalDuration,
+      duration: clip.originalDuration,
+    };
+    setClips(prev => [...prev, timelineClip]);
+    setSelectedClipId(timelineClip.id);
+  }, []);
+
+  // Remove clip
+  const removeClip = useCallback((clipId: string) => {
+    setClips(prev => prev.filter(c => c.id !== clipId));
+    setSelectedClipId(prev => prev === clipId ? null : prev);
+  }, []);
+
+  // Select clip
+  const selectClip = useCallback((clipId: string | null) => {
+    setSelectedClipId(clipId);
+  }, []);
+
+  // Split clip at a given time (relative to the timeline)
+  const splitClip = useCallback((clipId: string, splitTimelinePosition: number) => {
+    setClips(prev => {
+      const clipIndex = prev.findIndex(c => c.id === clipId);
+      if (clipIndex === -1) return prev;
+
+      const clip = prev[clipIndex];
+
+      // Calculate where the split occurs within this clip
+      const clipStartTime = prev.slice(0, clipIndex).reduce((sum, c) => sum + c.duration, 0);
+      const clipEndTime = clipStartTime + clip.duration;
+
+      // Check if split time is within this clip
+      if (splitTimelinePosition <= clipStartTime || splitTimelinePosition >= clipEndTime) {
+        return prev;
+      }
+
+      // Calculate split point relative to the clip's start
+      const splitPointInClip = splitTimelinePosition - clipStartTime;
+
+      // Create first clip (before split)
+      const firstClip: TimelineClip = {
+        ...clip,
+        id: `${clip.id}-1`,
+        duration: splitPointInClip,
+        trimEnd: clip.trimStart + splitPointInClip,
+      };
+
+      // Create second clip (after split)
+      const secondClip: TimelineClip = {
+        ...clip,
+        id: `${clip.id}-2`,
+        position: clip.position + splitPointInClip,
+        duration: clip.duration - splitPointInClip,
+        trimStart: clip.trimStart + splitPointInClip,
+      };
+
+      // Replace the original clip with the two new clips
+      const newClips = [...prev];
+      newClips.splice(clipIndex, 1, firstClip, secondClip);
+
+      return newClips;
+    });
+
+    // Deselect after split
+    setSelectedClipId(null);
+  }, []);
+
+  return {
+    clips,
+    selectedClipId,
+    totalDuration,
+    addClip,
+    removeClip,
+    selectClip,
+    splitClip,
+  };
+}
