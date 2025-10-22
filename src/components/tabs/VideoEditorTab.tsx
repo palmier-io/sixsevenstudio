@@ -31,10 +31,14 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
         const project = await getProject(projectName);
         const videoClips: VideoClip[] = project.videos.map((video) => ({
           id: video.id,
-          name: `Video ${video.id.slice(0, 8)}`,
+          name: video.scene_number && video.scene_title
+            ? `Scene ${video.scene_number}: ${video.scene_title}`
+            : `Video ${video.id.slice(0, 8)}`,
           videoPath: `${project.path}/${video.id}.mp4`,
           originalDuration: video.duration,
           createdAt: video.created_at,
+          sceneNumber: video.scene_number,
+          sceneTitle: video.scene_title,
         }));
         setLibraryClips(videoClips);
       } catch (error) {

@@ -232,18 +232,18 @@ function StartingFramePanel({
 // Storyboard Editor Component
 function StoryboardEditor({
   scenes,
-  globalStyle,
+  globalContext,
   totalSeconds,
-  onGlobalStyleChange,
+  onGlobalContextChange,
   onAddScene,
   onDeleteScene,
   onUpdateScene,
   isGenerating,
 }: {
   scenes: Scene[];
-  globalStyle: string;
+  globalContext: string;
   totalSeconds: number;
-  onGlobalStyleChange: (value: string) => void;
+  onGlobalContextChange: (value: string) => void;
   onAddScene: () => void;
   onDeleteScene: (id: string) => void;
   onUpdateScene: (id: string, field: keyof Scene, value: string) => void;
@@ -275,14 +275,14 @@ function StoryboardEditor({
 
       <ScrollArea className="flex-1 px-6 min-h-0">
         <div className="space-y-6 pb-6">
-          {/* Global Style Section */}
+          {/* Global Context Section */}
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-muted-foreground">Global Style</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">Global Context</h3>
             <Textarea
-              value={globalStyle}
-              onChange={(e) => onGlobalStyleChange(e.target.value)}
-              className="min-h-[80px] resize-none"
-              placeholder="Describe the overall global style..."
+              value={globalContext}
+              onChange={(e) => onGlobalContextChange(e.target.value)}
+              className="min-h-[120px] resize-none"
+              placeholder="Describe the global context (style, characters, setting)..."
             />
           </div>
 
@@ -441,7 +441,7 @@ function ActionBar({
                 onSettingsChange={onVideoSettingsChange}
                 variant="default"
                 size="icon"
-                showSamples={false}
+                showDuration={false}
                 className="rounded-l-none h-11"
               />
             </div>
@@ -455,11 +455,11 @@ function ActionBar({
 export function StoryboardTab({ projectName }: StoryboardTabProps) {
   const location = useLocation();
   const { getProject, addVideosToProject, saveImage, getImage, deleteImage } = useProjects();
-  const { storyboard, isLoading: isLoadingStoryboard, generateStoryboard, saveStoryboard, getPromptFromStoryboard } = useStoryboard(projectName);
+  const { storyboard, isLoading: isLoadingStoryboard, generateStoryboard, saveStoryboard } = useStoryboard(projectName);
   const { createVideo } = useVideos();
 
   const [scenes, setScenes] = useState<Scene[]>([]);
-  const [globalStyle, setGlobalStyle] = useState('');
+  const [globalContext, setGlobalContext] = useState('');
   const [responseId, setResponseId] = useState<string | null>(null);
   const [videoSettings, setVideoSettings] = useState<VideoSettings>(DEFAULT_VIDEO_SETTINGS);
   const [isRefining, setIsRefining] = useState(false);
@@ -468,7 +468,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
   useEffect(() => {
     if (storyboard) {
       setScenes(storyboard.scenes);
-      setGlobalStyle(storyboard.global_style);
+      setGlobalContext(storyboard.global_context);
     } else if (!isLoadingStoryboard) {
       // Initialize with default first scene if no data exists
       setScenes([{
@@ -477,7 +477,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
         description: '',
         duration: '3s',
       }]);
-      setGlobalStyle('');
+      setGlobalContext('');
     }
   }, [storyboard, isLoadingStoryboard]);
 
@@ -495,7 +495,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
     loadResponseId();
   }, [projectName, getProject]);
 
-  // Auto-save storyboard when scenes or global style changes
+  // Auto-save storyboard when scenes or global context changes
   useEffect(() => {
     if (!projectName || isLoadingStoryboard) return;
 
@@ -503,7 +503,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
       try {
         await saveStoryboard({
           scenes,
-          global_style: globalStyle,
+          global_context: globalContext,
         });
       } catch (error) {
         const errMsg = error instanceof Error ? error.message : String(error);
@@ -514,7 +514,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
     // Debounce save to avoid too many writes
     const timeoutId = setTimeout(saveData, SAVE_AFTER_IDLE_SECONDS);
     return () => clearTimeout(timeoutId);
-  }, [scenes, globalStyle, projectName, isLoadingStoryboard, saveStoryboard]);
+  }, [scenes, globalContext, projectName, isLoadingStoryboard, saveStoryboard]);
 
   const addScene = () => {
     const newScene: Scene = {
@@ -580,9 +580,9 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
               <ResizablePanel defaultSize={50} minSize={30}>
                 <StoryboardEditor
                   scenes={scenes}
-                  globalStyle={globalStyle}
+                  globalContext={globalContext}
                   totalSeconds={calculateTotalSeconds()}
-                  onGlobalStyleChange={setGlobalStyle}
+                  onGlobalContextChange={setGlobalContext}
                   onAddScene={addScene}
                   onDeleteScene={deleteScene}
                   onUpdateScene={updateScene}
@@ -605,29 +605,40 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
             onRefineStoryboard={async (feedback: string) => {
               const refinedData = await generateStoryboard({ prompt: feedback });
               setScenes(refinedData.scenes);
-              setGlobalStyle(refinedData.global_style);
+              setGlobalContext(refinedData.global_context);
             }}
             onGenerateVideo={async (settings: VideoSettings) => {
-              const prompt = await getPromptFromStoryboard();
               const projectMeta = await getProject(projectName);
               const imagePath = projectMeta.image_path ? await getImage(projectName, STARTING_FRAME_FILENAME) : undefined;
 
-              const videoId = await createVideo({
-                model: settings.model,
-                prompt: prompt,
-                size: settings.resolution,
-                seconds: String(settings.duration),
-                inputReferencePath: imagePath || undefined,
+              // Create parallel API calls for each scene
+              const videoPromises = scenes.map(async (scene, index) => {
+                const scenePrompt = `${globalContext}\n\n${scene.description}`;
+
+                const sceneDuration = parseInt(scene.duration.replace('s', ''), 10);
+
+                const videoId = await createVideo({
+                  model: settings.model,
+                  prompt: scenePrompt,
+                  size: settings.resolution,
+                  seconds: String(sceneDuration),
+                  inputReferencePath: imagePath || undefined,
+                });
+
+                return {
+                  id: videoId,
+                  prompt: scenePrompt,
+                  model: settings.model,
+                  resolution: settings.resolution,
+                  duration: sceneDuration,
+                  created_at: Date.now(),
+                  scene_number: index + 1,
+                  scene_title: scene.title,
+                };
               });
 
-              await addVideosToProject(projectName, [{
-                id: videoId,
-                prompt: '',
-                model: settings.model,
-                resolution: settings.resolution,
-                duration: settings.duration,
-                created_at: Date.now(),
-              }]);
+              const videosMeta = await Promise.all(videoPromises);
+              await addVideosToProject(projectName, videosMeta);
             }}
           />
         </ResizablePanel>

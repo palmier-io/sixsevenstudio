@@ -64,9 +64,11 @@ export function VideoGalleryItem({
           </div>
         )}
 
-        {/* Video ID overlay */}
+        {/* Video metadata overlay */}
         <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded text-white text-[10px] font-mono max-w-[calc(100%-6rem)] truncate">
-          {video.id}
+          {video.scene_number && video.scene_title
+            ? `Scene ${video.scene_number}: ${video.scene_title}`
+            : video.id}
         </div>
 
         {/* Delete button overlay */}

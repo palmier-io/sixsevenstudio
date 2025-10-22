@@ -6,6 +6,8 @@ export interface VideoClip {
   thumbnail?: string; // Optional thumbnail URL
   originalDuration: number; // Duration of the original video in seconds
   createdAt: number;
+  sceneNumber?: number; // Optional scene number if this is a scene video
+  sceneTitle?: string; // Optional scene title if this is a scene video
 }
 
 // Clip on the timeline (extends VideoClip with editing information)

@@ -10,7 +10,7 @@ export interface Scene {
 
 export interface StoryboardData {
   scenes: Scene[];
-  global_style: string;
+  global_context: string;
 }
 
 // Query key

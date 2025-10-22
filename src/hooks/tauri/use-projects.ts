@@ -14,6 +14,8 @@ export interface VideoMeta {
   resolution: string;
   duration: number;
   created_at: number;
+  scene_number?: number;
+  scene_title?: string;
 }
 
 export interface ProjectMeta {

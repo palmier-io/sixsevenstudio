@@ -41,10 +41,14 @@ function AspectRatioIcon({ isLandscape }: { isLandscape: boolean }) {
 interface VideoSettingsFormProps {
   settings: VideoSettings
   onSettingsChange: (settings: VideoSettings) => void
-  showSamples?: boolean
+  showDuration?: boolean
 }
 
-export function VideoSettingsForm({ settings, onSettingsChange, showSamples = true }: VideoSettingsFormProps) {
+export function VideoSettingsForm({
+  settings,
+  onSettingsChange,
+  showDuration = true
+}: VideoSettingsFormProps) {
   const updateSettings = (updates: Partial<VideoSettings>) => {
     onSettingsChange({ ...settings, ...updates })
   }
@@ -88,38 +92,38 @@ export function VideoSettingsForm({ settings, onSettingsChange, showSamples = tr
           </SelectContent>
         </Select>
       </div>
-      <div className={showSamples ? "grid grid-cols-2 gap-3" : "grid gap-1.5"}>
-        <div className="grid gap-1.5">
-          <Label className="text-xs">Duration</Label>
-          <Select
-            value={String(settings.duration)}
-            onValueChange={(v) => updateSettings({ duration: Number(v) })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DURATIONS.map((d) => (
-                <SelectItem key={d} value={String(d)}>{d}s</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {showSamples && (
+      <div className={showDuration ? "grid grid-cols-2 gap-3" : "grid gap-1.5"}>
+        {showDuration && (
           <div className="grid gap-1.5">
-            <Label className="text-xs">Samples</Label>
-            <Input
-              type="number"
-              min={1}
-              max={8}
-              value={settings.samples}
-              onChange={(e) => {
-                const val = Math.max(1, Math.min(8, Number(e.target.value)))
-                updateSettings({ samples: val })
-              }}
-            />
+            <Label className="text-xs">Duration</Label>
+            <Select
+              value={String(settings.duration)}
+              onValueChange={(v) => updateSettings({ duration: Number(v) })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DURATIONS.map((d) => (
+                  <SelectItem key={d} value={String(d)}>{d}s</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
+        <div className="grid gap-1.5">
+          <Label className="text-xs">Samples</Label>
+          <Input
+            type="number"
+            min={1}
+            max={8}
+            defaultValue={settings.samples}
+            onBlur={(e) => {
+              const val = e.target.value === '' ? 1 : Number(e.target.value)
+              updateSettings({ samples: val })
+            }}
+          />
+        </div>
       </div>
       <div className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
         Estimated cost: <span className="font-medium">${calculateCost(settings).toFixed(2)}</span>
@@ -133,7 +137,7 @@ interface VideoSettingsButtonProps {
   onSettingsChange: (settings: VideoSettings) => void
   variant?: "outline" | "ghost" | "default" | "secondary"
   size?: "icon-sm" | "icon" | "sm" | "default"
-  showSamples?: boolean
+  showDuration?: boolean
   className?: string
 }
 
@@ -142,7 +146,7 @@ export function VideoSettingsButton({
   onSettingsChange,
   variant = "outline",
   size = "icon-sm",
-  showSamples = true,
+  showDuration = true,
   className
 }: VideoSettingsButtonProps) {
   return (
@@ -158,7 +162,7 @@ export function VideoSettingsButton({
         <VideoSettingsForm
           settings={settings}
           onSettingsChange={onSettingsChange}
-          showSamples={showSamples}
+          showDuration={showDuration}
         />
       </DropdownMenuContent>
     </DropdownMenu>

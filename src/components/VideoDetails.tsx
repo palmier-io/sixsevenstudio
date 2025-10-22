@@ -19,6 +19,13 @@ export function VideoDetails({ video }: VideoDetailsProps) {
   return (
     <div className="h-full overflow-auto p-6">
       <div className="space-y-6">
+        {/* Scene Information (if available) */}
+        {video.scene_number && video.scene_title && (
+          <div>
+            <p className="text-sm font-medium">Scene {video.scene_number} - {video.scene_title}</p>
+          </div>
+        )}
+
         <div>
           <h2 className="text-lg font-semibold mb-2">Original Prompt</h2>
           <p className="text-sm text-muted-foreground">
