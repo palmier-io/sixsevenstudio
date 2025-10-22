@@ -30,4 +30,7 @@ trash = "5"
 tauri-plugin-log = "2"
 base64 = "0.22"
 image = "0.25"
+uuid = { version = "1", features = ["v4"] }
+dirs = "5"
+chrono = "0.4"
 

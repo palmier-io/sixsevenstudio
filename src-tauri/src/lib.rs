@@ -38,7 +38,9 @@ pub fn run() {
             // image commands
             save_image,
             get_image,
-            delete_image
+            delete_image,
+            // video editor commands
+            create_preview_video
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
