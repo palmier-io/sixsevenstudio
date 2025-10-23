@@ -4,6 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Scissors, Download, Loader2 } from "lucide-react";
 import { TimelineClip } from "./TimelineClip";
 import type { TimelineClip as TimelineClipType } from "@/types/video-editor";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface TimelineProps {
   clips: TimelineClipType[];
@@ -11,6 +26,7 @@ interface TimelineProps {
   onClipSelect: (clipId: string | null) => void;
   onClipDelete: () => void;
   onClipSplit?: (clipId: string, splitTime: number) => void;
+  onClipReorder: (clips: TimelineClipType[]) => void;
   currentTime?: number; // Current playback position in timeline seconds
   onTimelineClick?: (time: number) => void;
   onExport?: () => void;
@@ -19,11 +35,30 @@ interface TimelineProps {
 }
 
 export const Timeline = memo(function Timeline({
-  clips, selectedClipId, onClipSelect, onClipDelete, onClipSplit, currentTime, onTimelineClick, onExport, isExporting, canExport,
+  clips, selectedClipId, onClipSelect, onClipDelete, onClipSplit, onClipReorder, currentTime, onTimelineClick, onExport, isExporting, canExport,
 }: TimelineProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const timelineRef = useRef<HTMLDivElement>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = clips.findIndex((clip) => clip.id === active.id);
+      const newIndex = clips.findIndex((clip) => clip.id === over.id);
+
+      const reorderedClips = arrayMove(clips, oldIndex, newIndex);
+      onClipReorder(reorderedClips);
+    }
+  }, [clips, onClipReorder]);
 
   const totalDuration = useMemo(() =>
     clips.reduce((sum, clip) => sum + clip.duration, 0), [clips]);
@@ -181,30 +216,41 @@ export const Timeline = memo(function Timeline({
             </div>
           </div>
         ) : (
-          <div className="space-y-4" ref={timelineRef}>
-            <div className="relative h-6 border-b border-border cursor-pointer" onClick={handleTimelineClick}>
-              {timeMarkers.map((time) => (
-                <div key={time} className="absolute top-0 flex flex-col items-center" style={{ left: `${time * pixelsPerSecond}px` }}>
-                  <div className="w-px h-3 bg-border" />
-                  <span className="text-xs text-muted-foreground mt-1">{formatTime(time)}</span>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="space-y-4" ref={timelineRef}>
+              <div className="relative h-6 border-b border-border cursor-pointer" onClick={handleTimelineClick}>
+                {timeMarkers.map((time) => (
+                  <div key={time} className="absolute top-0 flex flex-col items-center" style={{ left: `${time * pixelsPerSecond}px` }}>
+                    <div className="w-px h-3 bg-border" />
+                    <span className="text-xs text-muted-foreground mt-1">{formatTime(time)}</span>
+                  </div>
+                ))}
+                <Playhead showHandle />
+              </div>
+              <SortableContext
+                items={clips.map((clip) => clip.id)}
+                strategy={horizontalListSortingStrategy}
+              >
+                <div className="relative h-16">
+                  {clips.map((clip, index) => (
+                    <TimelineClip
+                      key={clip.id}
+                      clip={clip}
+                      isSelected={selectedClipId === clip.id}
+                      onClick={() => onClipSelect(clip.id)}
+                      position={clips.slice(0, index).reduce((sum, c) => sum + c.duration, 0)}
+                      pixelsPerSecond={pixelsPerSecond}
+                    />
+                  ))}
+                  <Playhead />
                 </div>
-              ))}
-              <Playhead showHandle />
+              </SortableContext>
             </div>
-            <div className="relative h-16">
-              {clips.map((clip, index) => (
-                <TimelineClip
-                  key={clip.id}
-                  clip={clip}
-                  isSelected={selectedClipId === clip.id}
-                  onClick={() => onClipSelect(clip.id)}
-                  position={clips.slice(0, index).reduce((sum, c) => sum + c.duration, 0)}
-                  pixelsPerSecond={pixelsPerSecond}
-                />
-              ))}
-              <Playhead />
-            </div>
-          </div>
+          </DndContext>
         )}
       </CardContent>
     </Card>

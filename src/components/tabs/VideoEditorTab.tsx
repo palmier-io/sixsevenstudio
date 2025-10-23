@@ -27,7 +27,8 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
     addClip,
     removeClip,
     selectClip,
-    splitClip
+    splitClip,
+    reorderClips
   } = useVideoEditorState(projectName, previewVideoPath);
   const { createPreviewVideo, exportVideo } = useVideoEditor();
 
@@ -176,6 +177,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
             onClipSelect={selectClip}
             onClipDelete={handleDelete}
             onClipSplit={handleSplit}
+            onClipReorder={reorderClips}
             currentTime={currentPlaybackTime ?? undefined}
             onTimelineClick={handleTimelineClick}
             onExport={handleExport}

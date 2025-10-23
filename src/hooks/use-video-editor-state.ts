@@ -71,13 +71,11 @@ export function useVideoEditorState(projectName: string, previewVideoPath: strin
     setSelectedClipId(timelineClip.id);
   }, []);
 
-  // Remove clip
   const removeClip = useCallback((clipId: string) => {
     setClips(prev => prev.filter(c => c.id !== clipId));
     setSelectedClipId(prev => prev === clipId ? null : prev);
   }, []);
 
-  // Select clip
   const selectClip = useCallback((clipId: string | null) => {
     setSelectedClipId(clipId);
   }, []);
@@ -130,6 +128,11 @@ export function useVideoEditorState(projectName: string, previewVideoPath: strin
     setSelectedClipId(null);
   }, []);
 
+  // Reorder clips for drag and drop
+  const reorderClips = useCallback((newClips: TimelineClip[]) => {
+    setClips(newClips);
+  }, []);
+
   return {
     clips,
     selectedClipId,
@@ -140,5 +143,6 @@ export function useVideoEditorState(projectName: string, previewVideoPath: strin
     removeClip,
     selectClip,
     splitClip,
+    reorderClips,
   };
 }
