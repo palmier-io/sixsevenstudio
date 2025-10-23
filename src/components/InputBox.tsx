@@ -104,18 +104,18 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
 
   return (
     <Tabs value={mode} onValueChange={(value) => setMode(value as InputMode)} className="mx-auto mt-6">
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
+      <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
         {/* Tab Switcher */}
         <TabsList className="w-full h-auto p-0 bg-transparent rounded-none border-b gap-0">
           <TabsTrigger
             value="storyboard"
-            className="flex-1 rounded-none !bg-secondary !text-secondary-foreground data-[state=active]:!bg-secondary data-[state=active]:!text-secondary-foreground data-[state=inactive]:!bg-secondary/50 data-[state=inactive]:!text-secondary-foreground/70 hover:data-[state=inactive]:!bg-secondary/60 data-[state=active]:shadow-none px-4 py-3 border-0"
+            className="flex-1 rounded-none data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=inactive]:!bg-muted data-[state=inactive]:!text-muted-foreground hover:data-[state=inactive]:!bg-muted/80 data-[state=active]:shadow-none px-4 py-3 border-0"
           >
             Storyboard
           </TabsTrigger>
           <TabsTrigger
             value="video"
-            className="flex-1 rounded-none !bg-primary !text-primary-foreground data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=inactive]:!bg-primary/50 data-[state=inactive]:!text-primary-foreground/70 hover:data-[state=inactive]:!bg-primary/60 data-[state=active]:shadow-none px-4 py-3 border-0"
+            className="flex-1 rounded-none data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=inactive]:!bg-muted data-[state=inactive]:!text-muted-foreground hover:data-[state=inactive]:!bg-muted/80 data-[state=active]:shadow-none px-4 py-3 border-0"
           >
             Quick Video
           </TabsTrigger>
