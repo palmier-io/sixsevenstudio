@@ -15,6 +15,7 @@ interface VideoGalleryProps {
   onVideoSelect: (video: VideoMeta) => void;
   onVideoDelete?: (videoId: string) => void;
   onVideoRegenerate?: (video: VideoMeta) => void;
+  onVideoRemix?: (video: VideoMeta, remixPrompt: string) => void;
   projectPath: string;
 }
 
@@ -24,6 +25,7 @@ export function VideoGallery({
   onVideoSelect,
   onVideoDelete,
   onVideoRegenerate,
+  onVideoRemix,
   projectPath,
 }: VideoGalleryProps) {
   const [api, setApi] = useState<CarouselApi>();
@@ -75,6 +77,7 @@ export function VideoGallery({
                       onClick={() => onVideoSelect(video)}
                       onDelete={onVideoDelete ? () => onVideoDelete(video.id) : undefined}
                       onRegenerate={onVideoRegenerate ? () => onVideoRegenerate(video) : undefined}
+                      onRemix={onVideoRemix ? (remixPrompt: string) => onVideoRemix(video, remixPrompt) : undefined}
                     />
                   </div>
                 </CarouselItem>

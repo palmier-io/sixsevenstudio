@@ -47,7 +47,7 @@ interface VideosTabProps {
 
 export function VideosTab({ projectName }: VideosTabProps) {
   const { getProject, deleteVideoFromProject, addVideosToProject, getImage } = useProjects();
-  const { createVideo } = useVideos();
+  const { createVideo, remixVideo } = useVideos();
   const { getStatus } = useVideoStatusStore();
 
   const [projectMeta, setProjectMeta] = useState<ProjectMeta | null>(null);
@@ -148,6 +148,43 @@ export function VideosTab({ projectName }: VideosTabProps) {
     }
   }, [projectName, projectMeta, createVideo, getStatus, getImage, addVideosToProject, deleteVideoFromProject, getProject]);
 
+  const handleVideoRemix = useCallback(async (video: VideoMeta, remixPrompt: string) => {
+    if (!projectName || !projectMeta) return;
+    try {
+      toast.loading("Remixing video...", { id: "remix" });
+
+      const newVideoId = await remixVideo(video.id, remixPrompt);
+
+      const sampleNumber = (video.sample_number || 1) + 1;
+
+      const newVideoMeta: VideoMeta = {
+        id: newVideoId,
+        prompt: video.prompt, // Keep original prompt
+        model: video.model,
+        resolution: video.resolution,
+        duration: video.duration,
+        created_at: Date.now(),
+        scene_number: video.scene_number,
+        scene_title: video.scene_title,
+        sample_number: sampleNumber,
+        remixed_from_video_id: video.id,
+        remix_prompt: remixPrompt,
+      };
+
+      await addVideosToProject(projectName, [newVideoMeta]);
+
+      const updatedMeta = await getProject(projectName);
+      setProjectMeta(updatedMeta);
+
+      toast.success("Video remix started", { id: "remix" });
+    } catch (error) {
+      toast.error("Failed to remix video", {
+        id: "remix",
+        description: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }, [projectName, projectMeta, remixVideo, addVideosToProject, getProject]);
+
   const selectedVideo: VideoMeta | undefined = useMemo(() => {
     return projectMeta?.videos.find(v => v.id === selectedVideoId);
   }, [projectMeta, selectedVideoId]);
@@ -182,6 +219,7 @@ export function VideosTab({ projectName }: VideosTabProps) {
             <VideoDetails
               video={selectedVideo}
               onRegenerate={selectedVideo ? () => handleVideoRegenerate(selectedVideo) : undefined}
+              onRemix={selectedVideo ? (remixPrompt: string) => handleVideoRemix(selectedVideo, remixPrompt) : undefined}
             />
           </ResizablePanel>
         </ResizablePanelGroup>
@@ -199,6 +237,7 @@ export function VideosTab({ projectName }: VideosTabProps) {
               onVideoSelect={handleVideoSelect}
               onVideoDelete={handleVideoDelete}
               onVideoRegenerate={handleVideoRegenerate}
+              onVideoRemix={handleVideoRemix}
               projectPath={projectMeta.path}
             />
           )}

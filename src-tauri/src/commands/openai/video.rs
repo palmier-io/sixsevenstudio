@@ -69,6 +69,32 @@ impl OpenAIClient {
 
         Ok(bytes.to_vec())
     }
+
+    /// Remix an existing video with a new prompt
+    pub async fn remix_video(
+        &self,
+        video_id: String,
+        remix_prompt: String,
+    ) -> Result<String, String> {
+        let url = format!("{}/videos/{}/remix", self.base_url, video_id);
+
+        let body = serde_json::json!({
+            "prompt": remix_prompt
+        });
+
+        let req = self
+            .http
+            .post(&url)
+            .headers(self.headers(Some("application/json")))
+            .json(&body);
+
+        let response_body = self.exec_request(req, "POST", &url).await?;
+
+        let video_response: VideoJobResponse = serde_json::from_str(&response_body)
+            .map_err(|e| format!("Failed to parse remix video response: {}", e))?;
+
+        Ok(video_response.id)
+    }
 }
 
 /* Helper functions */

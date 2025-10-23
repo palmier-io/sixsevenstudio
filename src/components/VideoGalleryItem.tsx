@@ -3,6 +3,7 @@ import { Play, Trash2, RotateCw } from "lucide-react";
 import { VideoMeta } from "@/hooks/tauri/use-projects";
 import { OpenAIVideoJobStatus } from "@/types/openai";
 import { Button } from "@/components/ui/button";
+import { RemixPopover } from "@/components/RemixPopover";
 import { useVideoPolling } from "@/hooks/use-video-polling";
 import { VideoStatus } from "@/components/VideoStatus";
 
@@ -13,6 +14,7 @@ interface VideoGalleryItemProps {
   onClick?: () => void;
   onDelete?: () => void;
   onRegenerate?: () => void;
+  onRemix?: (remixPrompt: string) => void;
 }
 
 export function VideoGalleryItem({
@@ -22,6 +24,7 @@ export function VideoGalleryItem({
   onClick,
   onDelete,
   onRegenerate,
+  onRemix,
 }: VideoGalleryItemProps) {
   const status = useVideoPolling({
     videoId: video.id,
@@ -73,8 +76,16 @@ export function VideoGalleryItem({
             : video.id}
         </div>
 
-        {/* Action buttons overlay */}
-        <div className="absolute top-2 right-2 flex gap-1">
+        {/* Action buttons overlay - vertical stack */}
+        <div className="absolute top-2 right-2 flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
+          {onRemix && (
+            <RemixPopover
+              onRemix={onRemix}
+              buttonSize="icon"
+              buttonClassName="bg-black/60 hover:bg-purple-600/80 text-white h-8 w-8"
+              compact
+            />
+          )}
           {onRegenerate && (
             <Button
               variant="ghost"

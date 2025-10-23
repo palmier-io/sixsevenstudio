@@ -18,6 +18,7 @@ pub fn run() {
             // openai video commands
             create_video,
             get_video_status,
+            remix_video,
             download_video,
             file_exists,
             // workspace & projects commands

@@ -1,13 +1,15 @@
 import { VideoMeta } from "@/hooks/tauri/use-projects";
 import { Button } from "@/components/ui/button";
+import { RemixPopover } from "@/components/RemixPopover";
 import { RotateCw } from "lucide-react";
 
 interface VideoDetailsProps {
   video?: VideoMeta;
   onRegenerate?: () => void;
+  onRemix?: (remixPrompt: string) => void;
 }
 
-export function VideoDetails({ video, onRegenerate }: VideoDetailsProps) {
+export function VideoDetails({ video, onRegenerate, onRemix }: VideoDetailsProps) {
   if (!video) {
     return (
       <div className="h-full overflow-auto p-6">
@@ -22,18 +24,21 @@ export function VideoDetails({ video, onRegenerate }: VideoDetailsProps) {
   return (
     <div className="h-full overflow-auto p-6">
       <div className="space-y-6">
-        {/* Regenerate Button */}
-        {onRegenerate && (
-          <Button
-            onClick={onRegenerate}
-            variant="outline"
-            size="sm"
-            className="w-fit"
-          >
-            <RotateCw className="size-3 mr-1.5" />
-            Regenerate
-          </Button>
-        )}
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          {onRegenerate && (
+            <Button
+              onClick={onRegenerate}
+              variant="outline"
+              size="sm"
+              className="w-fit"
+            >
+              <RotateCw className="size-3 mr-1.5" />
+              Regenerate
+            </Button>
+          )}
+          {onRemix && <RemixPopover onRemix={onRemix} />}
+        </div>
 
         {/* Scene Information (if available) */}
         {video.scene_number && video.scene_title && (
@@ -70,8 +75,23 @@ export function VideoDetails({ video, onRegenerate }: VideoDetailsProps) {
                 <dd className="font-medium">#{video.sample_number}</dd>
               </div>
             )}
+            {video.remixed_from_video_id && (
+              <div className="flex justify-between text-sm">
+                <dt className="text-muted-foreground">Remixed from:</dt>
+                <dd className="font-medium text-xs truncate">{video.remixed_from_video_id}</dd>
+              </div>
+            )}
           </dl>
         </div>
+
+        {video.remix_prompt && (
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Remix Prompt</h2>
+            <p className="text-sm text-muted-foreground">
+              {video.remix_prompt}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

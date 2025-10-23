@@ -39,6 +39,10 @@ pub struct VideoMeta {
     pub scene_title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sample_number: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remixed_from_video_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remix_prompt: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]

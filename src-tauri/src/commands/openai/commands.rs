@@ -76,6 +76,18 @@ pub async fn create_video(
 }
 
 #[tauri::command]
+pub async fn remix_video(
+    app: tauri::AppHandle,
+    video_id: String,
+    remix_prompt: String,
+) -> Result<String, String> {
+    let api_key = get_api_key_from_store(&app).await?;
+    let client = OpenAIClient::new(api_key);
+    let new_video_id = client.remix_video(video_id, remix_prompt).await?;
+    Ok(new_video_id)
+}
+
+#[tauri::command]
 pub fn file_exists(file_path: String) -> bool {
     Path::new(&file_path).exists()
 }

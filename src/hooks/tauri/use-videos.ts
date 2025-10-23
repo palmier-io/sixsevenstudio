@@ -45,10 +45,27 @@ export function useVideos() {
     return await invoke<boolean>("file_exists", { filePath });
   }, []);
 
+  const remixVideo = useCallback(
+    async (videoId: string, remixPrompt: string): Promise<string> => {
+      try {
+        const newVideoId = await invoke<string>("remix_video", {
+          videoId,
+          remixPrompt,
+        });
+
+        return newVideoId;
+      } catch (error) {
+        throw error;
+      }
+    },
+    []
+  );
+
   return {
     createVideo,
     downloadVideo,
     getVideoStatus,
     fileExists,
+    remixVideo,
   };
 }
