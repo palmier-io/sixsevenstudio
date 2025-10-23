@@ -91,8 +91,8 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
   }
 
   const placeholderText = mode === "storyboard"
-    ? "Describe the video you want to create... (e.g., 'A promotional video about sustainable coffee farming')"
-    : "Describe your video scene... (e.g., 'A serene sunset over the ocean with waves gently crashing')"
+    ? "Describe the idea you have in mind for your storyboard..."
+    : "Describe your video scene..."
 
   const handleSend = () => {
     if (mode === "storyboard") {
@@ -117,7 +117,7 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
             value="video"
             className="flex-1 rounded-none !bg-primary !text-primary-foreground data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=inactive]:!bg-primary/50 data-[state=inactive]:!text-primary-foreground/70 hover:data-[state=inactive]:!bg-primary/60 data-[state=active]:shadow-none px-4 py-3 border-0"
           >
-            Video
+            Quick Video
           </TabsTrigger>
         </TabsList>
 
