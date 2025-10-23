@@ -5,7 +5,7 @@ use crate::utils::image::read_image_as_data_url;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const DEFAULT_MODEL: &str = "gpt-5-mini";
+const DEFAULT_MODEL: &str = "gpt-4.1";
 
 fn get_storyboard_system_instruction() -> Result<String, String> {
     let prompt_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))

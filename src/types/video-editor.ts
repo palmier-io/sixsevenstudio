@@ -17,3 +17,11 @@ export interface TimelineClip extends VideoClip {
   trimEnd: number; // Trim end time in seconds (relative to original video)
   duration: number; // Effective duration after trim (trimEnd - trimStart)
 }
+
+// Editor state that gets persisted to disk
+export interface EditorState {
+  clips: TimelineClip[];
+  selectedClipId: string | null;
+  currentPlaybackTime: number | null;
+  previewVideoPath: string | null;
+}

@@ -4,6 +4,7 @@ pub const WORKSPACE_FOLDER: &str = "sixsevenstudio";
 pub const PROJECT_META_DIR: &str = ".sixseven";
 pub const PROJECT_META_FILE: &str = "metadata.json";
 pub const STORYBOARD_FILE: &str = "storyboard.json";
+pub const EDITOR_STATE_FILE: &str = "editor_state.json";
 pub const IMAGES_FOLDER: &str = "images";
 
 #[derive(Serialize, Deserialize, Clone)]

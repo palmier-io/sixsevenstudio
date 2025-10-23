@@ -1,9 +1,57 @@
-import { useState, useCallback } from 'react';
-import type { TimelineClip, VideoClip } from '@/types/video-editor';
+import { useState, useCallback, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { debug, error as logError } from '@tauri-apps/plugin-log';
+import type { TimelineClip, VideoClip, EditorState } from '@/types/video-editor';
 
-export function useVideoEditorState() {
+export function useVideoEditorState(projectName: string, previewVideoPath: string | null = null) {
   const [clips, setClips] = useState<TimelineClip[]>([]);
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
+  const [currentPlaybackTime, setCurrentPlaybackTime] = useState<number | null>(null);
+
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load saved state when component mounts or project changes
+  useEffect(() => {
+    debug(`[EditorState] Loading state for project: ${projectName}`);
+    setIsLoaded(false);
+
+    invoke<EditorState | null>('load_editor_state', { projectName })
+      .then(savedState => {
+        if (savedState) {
+          setClips(savedState.clips);
+          setSelectedClipId(savedState.selectedClipId);
+          setCurrentPlaybackTime(savedState.currentPlaybackTime);
+        }
+        setIsLoaded(true);
+      })
+      .catch(err => {
+        logError(`[EditorState] Failed to load state: ${err}`);
+        console.error(err);
+        setIsLoaded(true);
+      });
+  }, [projectName]);
+
+  // Auto-save whenever state changes (after initial load)
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const state: EditorState = {
+      clips,
+      selectedClipId,
+      currentPlaybackTime,
+      previewVideoPath,
+    };
+
+
+    invoke('save_editor_state', { projectName, state })
+      .then(() => {
+        debug(`[EditorState] Successfully saved state for project: ${projectName}`);
+      })
+      .catch(err => {
+        logError(`[EditorState] Failed to save state: ${err}`);
+        console.error(err);
+      });
+  }, [clips, selectedClipId, currentPlaybackTime, previewVideoPath, projectName, isLoaded]);
 
   // Calculate total duration
   const totalDuration = clips.length > 0
@@ -85,6 +133,8 @@ export function useVideoEditorState() {
   return {
     clips,
     selectedClipId,
+    currentPlaybackTime,
+    setCurrentPlaybackTime,
     totalDuration,
     addClip,
     removeClip,

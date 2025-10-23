@@ -2,10 +2,13 @@ use tauri::{AppHandle, Emitter};
 
 use crate::commands::video_editor::{
     ffmpeg,
-    types::{TimelineClip, ExportProgress},
+    types::{TimelineClip, ExportProgress, EditorState},
 };
 
-use crate::commands::projects::filesystem::get_project_path;
+use crate::commands::projects::{
+    filesystem::get_project_path,
+    types::{PROJECT_META_DIR, EDITOR_STATE_FILE},
+};
 
 /// Create a stitched preview video from timeline clips
 #[tauri::command]
@@ -61,4 +64,45 @@ pub async fn create_preview_video(
             Err(e)
         }
     }
+}
+
+/// Save the video editor state to disk
+#[tauri::command]
+pub async fn save_editor_state(
+    app: AppHandle,
+    project_name: String,
+    state: EditorState,
+) -> Result<(), String> {
+    let project_path = get_project_path(&app, &project_name)?;
+    let editor_state_file = project_path.join(PROJECT_META_DIR).join(EDITOR_STATE_FILE);
+
+    let json = serde_json::to_string_pretty(&state)
+        .map_err(|e| format!("Failed to serialize editor state: {}", e))?;
+
+    std::fs::write(&editor_state_file, json)
+        .map_err(|e| format!("Failed to write editor state: {}", e))?;
+
+    Ok(())
+}
+
+/// Load the video editor state from disk
+#[tauri::command]
+pub async fn load_editor_state(
+    app: AppHandle,
+    project_name: String,
+) -> Result<Option<EditorState>, String> {
+    let project_path = get_project_path(&app, &project_name)?;
+    let editor_state_file = project_path.join(PROJECT_META_DIR).join(EDITOR_STATE_FILE);
+
+    if !editor_state_file.exists() {
+        return Ok(None);
+    }
+
+    let json = std::fs::read_to_string(&editor_state_file)
+        .map_err(|e| format!("Failed to read editor state: {}", e))?;
+
+    let state: EditorState = serde_json::from_str(&json)
+        .map_err(|e| format!("Failed to parse editor state: {}", e))?;
+
+    Ok(Some(state))
 }

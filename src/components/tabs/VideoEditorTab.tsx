@@ -15,13 +15,23 @@ interface VideoEditorTabProps {
 
 export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
   const { getProject } = useProjects();
-  const { clips, selectedClipId, totalDuration, addClip, removeClip, selectClip, splitClip } = useVideoEditorState();
+  const [previewVideoPath, setPreviewVideoPath] = useState<string | null>(null);
+
+  const {
+    clips,
+    selectedClipId,
+    currentPlaybackTime,
+    setCurrentPlaybackTime,
+    totalDuration,
+    addClip,
+    removeClip,
+    selectClip,
+    splitClip
+  } = useVideoEditorState(projectName, previewVideoPath);
   const { createPreviewVideo } = useVideoEditor();
 
   const [libraryClips, setLibraryClips] = useState<VideoClip[]>([]);
-  const [currentPlaybackTime, setCurrentPlaybackTime] = useState<number | null>(null);
   const [seekToTime, setSeekToTime] = useState<number | undefined>(undefined);
-  const [previewVideoPath, setPreviewVideoPath] = useState<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
 
   // Load videos from project
@@ -93,7 +103,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
   // Handle video time update - timeline time directly from stitched video
   const handleVideoTimeUpdate = useCallback((videoTime: number) => {
     setCurrentPlaybackTime(videoTime);
-  }, []);
+  }, [setCurrentPlaybackTime]);
 
   // Handle timeline click - seek to position in stitched video
   const handleTimelineClick = useCallback((clickedTime: number) => {

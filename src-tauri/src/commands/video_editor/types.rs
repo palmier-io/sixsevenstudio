@@ -16,6 +16,15 @@ pub struct TimelineClip {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EditorState {
+    pub clips: Vec<TimelineClip>,
+    pub selected_clip_id: Option<String>,
+    pub current_playback_time: Option<f64>,
+    pub preview_video_path: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExportProgress {
     pub progress: f64,
     pub message: String,
