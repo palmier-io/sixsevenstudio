@@ -1,4 +1,5 @@
 import { useState, useEffect, ReactNode } from "react";
+import { AnimatedCat } from "@/components/AnimatedCat";
 
 interface GeneratingStatusProps {
   isGenerating: boolean;
@@ -6,18 +7,6 @@ interface GeneratingStatusProps {
   children?: ReactNode;
   className?: string;
 }
-
-const catFrames = [
-  ` /\\_/\\
-( o.o )
- > ^ < `,
-  ` /\\_/\\
-( ^.^ )
- > ^ < `,
-  ` /\\_/\\
-( -.o )
- > ^ < `,
-];
 
 const messages = [
   "cooking...",
@@ -32,17 +21,7 @@ export function GeneratingStatus({
   children,
   className = "text-sm"
 }: GeneratingStatusProps) {
-  const [catFrame, setCatFrame] = useState(0);
   const [messageIndex, setMessageIndex] = useState(0);
-
-  // Animate cat frames (blinking effect)
-  useEffect(() => {
-    if (!isGenerating) return;
-    const interval = setInterval(() => {
-      setCatFrame((prev) => (prev + 1) % catFrames.length);
-    }, 500);
-    return () => clearInterval(interval);
-  }, [isGenerating]);
 
   // Rotate messages
   useEffect(() => {
@@ -60,9 +39,7 @@ export function GeneratingStatus({
   return (
     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 text-white rounded-lg z-10">
       <div className="flex items-center gap-4">
-        <pre className={`${className} font-mono select-none`}>
-          {catFrames[catFrame]}
-        </pre>
+        <AnimatedCat className={className} animate={isGenerating} />
         <span className={`${className} font-medium`}>
           {message || messages[messageIndex]}
         </span>
