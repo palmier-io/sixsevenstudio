@@ -176,13 +176,12 @@ export function Home() {
   };
 
   return (
-    <div className="flex flex-1 items-center justify-center p-6">
+    <div className="flex h-screen items-center justify-center p-6 -mt-16">
       <div className="mx-auto w-full max-w-2xl space-y-4">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Generate Video</h1>
-          <p className="text-muted-foreground">
-            Describe your video to get started
-          </p>
+          <div className="flex items-center justify-center gap-4 mb-2">
+            <h1 className="text-3xl">Let's create.</h1>
+          </div>
         </div>
         <InputBox
           onGenerate={handleGenerate}
