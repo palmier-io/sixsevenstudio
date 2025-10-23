@@ -12,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { useProjects, ProjectSummary } from "@/hooks/tauri/use-projects"
 import { Button } from "@/components/ui/button"
@@ -47,6 +48,9 @@ export function Sidebar({
       <SidebarHeader className="px-4 py-3">
         <div className="flex items-center justify-center">
           <span className="text-sm font-semibold leading-tight group-data-[collapsible=icon]:hidden">sixsevenstudio</span>
+          <div className="flex gap-2 ml-auto">
+            <SidebarTrigger />
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
