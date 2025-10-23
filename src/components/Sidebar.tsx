@@ -1,5 +1,6 @@
-import { Folder, MoreHorizontal, Trash2, Sun, Moon } from "lucide-react"
+import { Folder, MoreHorizontal, Trash2, Sun, Moon, ChevronRight } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
+import { useState } from "react"
 import {
   Sidebar as UISidebar,
   SidebarRail,
@@ -30,6 +31,7 @@ export function Sidebar({
   const navigate = useNavigate()
   const location = useLocation()
   const { projects, deleteProject } = useProjects()
+  const [isProjectsExpanded, setIsProjectsExpanded] = useState(true)
 
   const onDelete = async (name: string) => {
     try {
@@ -52,10 +54,18 @@ export function Sidebar({
           <SidebarGroupContent>
             <SidebarMenu>
                 <>
-                  <div className="mt-2 flex items-center justify-between px-3 group-data-[collapsible=icon]:hidden">
+                  <div
+                    className="mt-2 flex items-center gap-1 px-3 group-data-[collapsible=icon]:hidden cursor-pointer hover:bg-accent rounded-md py-1"
+                    onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
+                  >
                     <div className="text-xs font-medium text-muted-foreground">Projects</div>
+                    <ChevronRight
+                      className={`size-4 text-muted-foreground transition-transform ${
+                        isProjectsExpanded ? 'rotate-90' : ''
+                      }`}
+                    />
                   </div>
-                  {projects.map((p) => (
+                  {isProjectsExpanded && projects.map((p) => (
                     <SidebarMenuItem key={p.path}>
                       <SidebarMenuButton
                         className="gap-2"
