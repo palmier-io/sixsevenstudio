@@ -6,6 +6,7 @@ import { Timeline } from "@/components/editor/Timeline";
 import { useVideoEditorState } from "@/hooks/use-video-editor-state";
 import { useVideoEditor } from "@/hooks/tauri/use-video-editor";
 import { useProjects } from "@/hooks/tauri/use-projects";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import type { VideoClip } from "@/types/video-editor";
 
@@ -40,17 +41,19 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
     const loadVideos = async () => {
       try {
         const project = await getProject(projectName);
-        const videoClips: VideoClip[] = project.videos.map((video) => ({
-          id: video.id,
-          name: video.scene_number && video.scene_title
-            ? `Scene ${video.scene_number}: ${video.scene_title}`
-            : `Video ${video.id.slice(0, 8)}`,
-          videoPath: `${project.path}/${video.id}.mp4`,
-          originalDuration: video.duration,
-          createdAt: video.created_at,
-          sceneNumber: video.scene_number,
-          sceneTitle: video.scene_title,
-        }));
+        const videoClips: VideoClip[] = project.videos.map((video) => {
+          return {
+            id: video.id,
+            name: video.scene_number && video.scene_title
+              ? `Scene ${video.scene_number}: ${video.scene_title}`
+              : `Video ${video.id.slice(0, 8)}`,
+            videoPath: convertFileSrc(`${project.path}/${video.id}.mp4`),
+            originalDuration: video.duration,
+            createdAt: video.created_at,
+            sceneNumber: video.scene_number,
+            sceneTitle: video.scene_title,
+          };
+        });
         setLibraryClips(videoClips);
       } catch (error) {
         console.error('Failed to load videos:', error);

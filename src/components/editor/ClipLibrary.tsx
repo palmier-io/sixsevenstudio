@@ -33,7 +33,14 @@ function ClipItem({ clip, onAdd }: ClipItemProps) {
         )}
       >
       <AspectRatio ratio={16 / 9} className="bg-muted">
-        {clip.thumbnail ? (
+        {clip.videoPath ? (
+          <video
+            src={`${clip.videoPath}#t=0.1`}
+            className="w-full h-full object-cover"
+            preload="metadata"
+            muted
+          />
+        ) : clip.thumbnail ? (
           <img src={clip.thumbnail} alt={clip.name} className="object-cover w-full h-full" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
