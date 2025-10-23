@@ -14,7 +14,7 @@ import { useProjects } from '@/hooks/tauri/use-projects';
 import { useStoryboard, type Scene } from '@/hooks/tauri/use-storyboard';
 import { toast } from 'sonner';
 import { useVideos } from '@/hooks/tauri/use-videos';
-import { VideoSettingsButton, type VideoSettings } from '@/components/VideoSettings';
+import { VideoSettingsButton, type VideoSettings, calculateCost } from '@/components/VideoSettings';
 import { DEFAULT_VIDEO_SETTINGS, STARTING_FRAME_FILENAME } from '@/types/constants';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { GeneratingStatus } from '@/components/GeneratingStatus';
@@ -234,6 +234,7 @@ function StoryboardEditor({
   scenes,
   globalContext,
   totalSeconds,
+  videoSettings,
   onGlobalContextChange,
   onAddScene,
   onDeleteScene,
@@ -243,12 +244,22 @@ function StoryboardEditor({
   scenes: Scene[];
   globalContext: string;
   totalSeconds: number;
+  videoSettings: VideoSettings;
   onGlobalContextChange: (value: string) => void;
   onAddScene: () => void;
   onDeleteScene: (id: string) => void;
   onUpdateScene: (id: string, field: keyof Scene, value: string) => void;
   isGenerating?: boolean;
 }) {
+
+  const totalCost = scenes.reduce((total, scene) => {
+    const sceneDuration = parseInt(scene.duration.replace('s', ''), 10);
+    const sceneCost = calculateCost({
+      ...videoSettings,
+      duration: sceneDuration,
+    });
+    return total + sceneCost;
+  }, 0);
   return (
     <Card className="flex flex-col h-full min-h-0 relative">
       <GeneratingStatus isGenerating={isGenerating || false} className="text-base">
@@ -260,7 +271,8 @@ function StoryboardEditor({
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-medium">Draft your video</h2>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">{totalSeconds}s total</span>
+            <span className="text-sm text-muted-foreground">duration: {totalSeconds}s</span>
+            <span className="text-sm text-muted-foreground">cost: ${totalCost.toFixed(2)}</span>
             <Button
               onClick={onAddScene}
               size="icon"
@@ -274,14 +286,14 @@ function StoryboardEditor({
       </div>
 
       <ScrollArea className="flex-1 px-6 min-h-0">
-        <div className="space-y-6 pb-6">
+        <div className="space-y-4 pb-6">
           {/* Global Context Section */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <h3 className="text-sm font-medium text-muted-foreground">Global Context</h3>
             <Textarea
               value={globalContext}
               onChange={(e) => onGlobalContextChange(e.target.value)}
-              className="min-h-[120px] resize-none"
+              className="min-h-[150px] resize-none"
               placeholder="Describe the global context (style, characters, setting)..."
             />
           </div>
@@ -290,7 +302,7 @@ function StoryboardEditor({
 
           {/* Scenes Section */}
           {scenes.map((scene, index) => (
-            <div key={scene.id} className="space-y-3">
+            <div key={scene.id} className="space-y-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium text-muted-foreground">
                   Scene {index + 1}: {scene.title}
@@ -310,7 +322,7 @@ function StoryboardEditor({
               <Textarea
                 value={scene.description}
                 onChange={(e) => onUpdateScene(scene.id, 'description', e.target.value)}
-                className="min-h-[100px] resize-none"
+                className="min-h-[150px] resize-none"
                 placeholder="Describe this scene..."
               />
               {index < scenes.length - 1 && <Separator />}
@@ -557,7 +569,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
         <ResizablePanel defaultSize={75} minSize={40}>
           <div className="h-full p-6">
             <ResizablePanelGroup direction="horizontal" className="gap-6">
-              <ResizablePanel defaultSize={50} minSize={30}>
+              <ResizablePanel defaultSize={30} minSize={15}>
                 <StartingFramePanel
                   projectName={projectName}
                   onImageUpload={async (base64Data) => {
@@ -577,11 +589,12 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
                 />
               </ResizablePanel>
               <ResizableHandle />
-              <ResizablePanel defaultSize={50} minSize={30}>
+              <ResizablePanel defaultSize={70} minSize={50}>
                 <StoryboardEditor
                   scenes={scenes}
                   globalContext={globalContext}
                   totalSeconds={calculateTotalSeconds()}
+                  videoSettings={videoSettings}
                   onGlobalContextChange={setGlobalContext}
                   onAddScene={addScene}
                   onDeleteScene={deleteScene}
