@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "@/components/Sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { WelcomeDialog } from "@/components/WelcomeDialog";
+import { useApiKey } from "@/hooks/tauri/use-api-key";
 import "./App.css";
 import type { ProjectSummary } from "@/hooks/tauri/use-projects";
 import { Home } from "@/pages/Home";
@@ -22,6 +24,7 @@ function AppLayout() {
   });
 
   const [selectedProject, setSelectedProject] = useState<ProjectSummary | null>(null);
+  const { apiKey, isLoading: isCheckingApiKey } = useApiKey();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -45,6 +48,9 @@ function AppLayout() {
           </Routes>
         </div>
       </SidebarInset>
+      <WelcomeDialog
+        open={!isCheckingApiKey && !apiKey}
+      />
     </SidebarProvider>
   );
 }

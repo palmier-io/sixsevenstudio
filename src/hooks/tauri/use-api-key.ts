@@ -1,60 +1,74 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-export interface UseApiKeyReturn {
-  // API Key management
-  saveApiKey: (apiKey: string) => Promise<void>;
-  getApiKey: () => Promise<string | null>;
-  removeApiKey: () => Promise<void>;
+export const API_KEY_QUERY_KEY = ["api-key"];
 
-  // State
-  error: string | null;
+async function fetchApiKey(): Promise<string | null> {
+  try {
+    return await invoke<string | null>("get_api_key");
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    throw new Error(errorMessage);
+  }
 }
 
-/**
- * Hook for managing OpenAI API keys.
- */
+async function saveApiKey(apiKey: string): Promise<void> {
+  try {
+    await invoke("save_api_key", { apiKey });
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    throw new Error(errorMessage);
+  }
+}
+
+async function removeApiKey(): Promise<void> {
+  try {
+    await invoke("remove_api_key");
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    throw new Error(errorMessage);
+  }
+}
+
+export interface UseApiKeyReturn {
+  // Query state
+  apiKey: string | null;
+  isLoading: boolean;
+  error: Error | null;
+
+  // Mutations
+  saveApiKey: (apiKey: string) => Promise<void>;
+  removeApiKey: () => Promise<void>;
+}
+
 export function useApiKey(): UseApiKeyReturn {
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const saveApiKey = useCallback(async (apiKey: string) => {
-    try {
-      await invoke("save_api_key", { apiKey });
-      setError(null);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    }
-  }, []);
+  const { data: apiKey, isLoading, error } = useQuery<string | null, Error>({
+    queryKey: API_KEY_QUERY_KEY,
+    queryFn: fetchApiKey,
+    staleTime: Infinity, // API key doesn't change often
+  });
 
-  const getApiKey = useCallback(async (): Promise<string | null> => {
-    try {
-      const key = await invoke<string | null>("get_api_key");
-      setError(null);
-      return key;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    }
-  }, []);
+  const saveApiKeyMutation = useMutation({
+    mutationFn: saveApiKey,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: API_KEY_QUERY_KEY });
+    },
+  });
 
-  const removeApiKey = useCallback(async () => {
-    try {
-      await invoke("remove_api_key");
-      setError(null);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    }
-  }, []);
+  const removeApiKeyMutation = useMutation({
+    mutationFn: removeApiKey,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: API_KEY_QUERY_KEY });
+    },
+  });
 
   return {
-    saveApiKey,
-    getApiKey,
-    removeApiKey,
-    error,
+    apiKey: apiKey ?? null,
+    isLoading,
+    error: error as Error | null,
+    saveApiKey: saveApiKeyMutation.mutateAsync,
+    removeApiKey: removeApiKeyMutation.mutateAsync,
   };
 }

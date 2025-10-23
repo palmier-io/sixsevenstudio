@@ -11,37 +11,26 @@ import { Key, Trash2, AlertCircle, Save } from "lucide-react";
 import { toast } from "sonner";
 
 export function ApiKey() {
-  const [apiKey, setApiKey] = useState("");
-  const [hasApiKey, setHasApiKey] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { saveApiKey, getApiKey, removeApiKey } = useApiKey();
+  const { apiKey, saveApiKey, removeApiKey } = useApiKey();
+  const hasApiKey = !!apiKey;
 
   useEffect(() => {
-    loadApiKey();
-  }, []);
-
-  const loadApiKey = async () => {
-    try {
-      const key = await getApiKey();
-      if (key) {
-        setApiKey(key);
-        setHasApiKey(true);
-      }
-    } catch (error) {
-      console.error("Failed to load API key:", error);
+    if (apiKey) {
+      setApiKeyInput(apiKey);
     }
-  };
+  }, [apiKey]);
 
   const handleSave = async () => {
-    if (!apiKey.trim()) {
+    if (!apiKeyInput.trim()) {
       toast.error("Please enter an API key");
       return;
     }
 
     setIsLoading(true);
     try {
-      await saveApiKey(apiKey);
-      setHasApiKey(true);
+      await saveApiKey(apiKeyInput);
       toast.success("API key saved successfully");
     } catch (error) {
       toast.error("Failed to save API key", {
@@ -56,8 +45,7 @@ export function ApiKey() {
     setIsLoading(true);
     try {
       await removeApiKey();
-      setApiKey("");
-      setHasApiKey(false);
+      setApiKeyInput("");
       toast.success("API key deleted successfully");
     } catch (error) {
       toast.error("Failed to delete API key", {
@@ -87,8 +75,8 @@ export function ApiKey() {
             <Input
               type="password"
               placeholder="sk-..."
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
+              value={apiKeyInput}
+              onChange={(e) => setApiKeyInput(e.target.value)}
               className="h-9 flex-1"
             />
             <Button
