@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, Scissors } from "lucide-react";
+import { Trash2, Scissors, Download, Loader2 } from "lucide-react";
 import { TimelineClip } from "./TimelineClip";
 import type { TimelineClip as TimelineClipType } from "@/types/video-editor";
 
@@ -13,10 +13,13 @@ interface TimelineProps {
   onClipSplit?: (clipId: string, splitTime: number) => void;
   currentTime?: number; // Current playback position in timeline seconds
   onTimelineClick?: (time: number) => void;
+  onExport?: () => void;
+  isExporting?: boolean;
+  canExport?: boolean;
 }
 
 export const Timeline = memo(function Timeline({
-  clips, selectedClipId, onClipSelect, onClipDelete, onClipSplit, currentTime, onTimelineClick,
+  clips, selectedClipId, onClipSelect, onClipDelete, onClipSplit, currentTime, onTimelineClick, onExport, isExporting, canExport,
 }: TimelineProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -145,6 +148,26 @@ export const Timeline = memo(function Timeline({
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </Button>
+            {onExport && (
+              <Button
+                size="sm"
+                variant="default"
+                onClick={onExport}
+                disabled={!canExport || isExporting}
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>

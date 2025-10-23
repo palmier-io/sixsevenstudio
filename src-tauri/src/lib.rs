@@ -42,7 +42,8 @@ pub fn run() {
             // video editor commands
             create_preview_video,
             save_editor_state,
-            load_editor_state
+            load_editor_state,
+            export_video
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

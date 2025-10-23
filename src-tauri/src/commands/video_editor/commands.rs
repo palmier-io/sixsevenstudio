@@ -1,4 +1,5 @@
 use tauri::{AppHandle, Emitter};
+use tauri_plugin_dialog::DialogExt;
 
 use crate::commands::video_editor::{
     ffmpeg,
@@ -105,4 +106,38 @@ pub async fn load_editor_state(
         .map_err(|e| format!("Failed to parse editor state: {}", e))?;
 
     Ok(Some(state))
+}
+
+/// Export video by copying preview to user-selected location
+#[tauri::command]
+pub async fn export_video(
+    app: AppHandle,
+    preview_path: String,
+) -> Result<String, String> {
+    // Verify preview file exists
+    if !std::path::Path::new(&preview_path).exists() {
+        return Err("Preview video not found. Please generate a preview first.".to_string());
+    }
+
+    // Open save dialog
+    let file_path = app
+        .dialog()
+        .file()
+        .add_filter("MP4 Video", &["mp4"])
+        .add_filter("All Video Files", &["mp4", "mkv", "mov", "avi"])
+        .set_file_name("exported_video.mp4")
+        .blocking_save_file();
+
+    let file_path = match file_path {
+        Some(path) => path,
+        None => return Err("Export cancelled by user".to_string()),
+    };
+
+    let output_path = file_path.to_string();
+
+    // Copy preview video to selected location
+    std::fs::copy(&preview_path, &output_path)
+        .map_err(|e| format!("Failed to export video: {}", e))?;
+
+    Ok(output_path)
 }

@@ -22,7 +22,23 @@ export function useVideoEditor() {
     []
   );
 
+  const exportVideo = useCallback(
+    async (previewPath: string): Promise<string> => {
+      try {
+        const exportPath = await invoke<string>("export_video", {
+          previewPath,
+        });
+        return exportPath;
+      } catch (error) {
+        console.error("Failed to export video:", error);
+        throw error;
+      }
+    },
+    []
+  );
+
   return {
     createPreviewVideo,
+    exportVideo,
   };
 }

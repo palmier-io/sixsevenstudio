@@ -28,11 +28,12 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
     selectClip,
     splitClip
   } = useVideoEditorState(projectName, previewVideoPath);
-  const { createPreviewVideo } = useVideoEditor();
+  const { createPreviewVideo, exportVideo } = useVideoEditor();
 
   const [libraryClips, setLibraryClips] = useState<VideoClip[]>([]);
   const [seekToTime, setSeekToTime] = useState<number | undefined>(undefined);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Load videos from project
   useEffect(() => {
@@ -75,6 +76,28 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
   const handleSplit = (clipId: string, splitTime: number) => {
     splitClip(clipId, splitTime);
     toast.success('Clip split');
+  };
+
+  const handleExport = async () => {
+    if (!previewVideoPath) {
+      toast.error('No preview video to export');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const exportPath = await exportVideo(previewVideoPath);
+      toast.success('Video exported successfully', {
+        description: exportPath,
+      });
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      if (!errMsg.includes('cancelled')) {
+        toast.error('Failed to export video', { description: errMsg });
+      }
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Generate preview video whenever clips change
@@ -152,6 +175,9 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
             onClipSplit={handleSplit}
             currentTime={currentPlaybackTime ?? undefined}
             onTimelineClick={handleTimelineClick}
+            onExport={handleExport}
+            isExporting={isExporting}
+            canExport={!!previewVideoPath && !isGeneratingPreview}
           />
         </div>
       </ResizablePanel>
