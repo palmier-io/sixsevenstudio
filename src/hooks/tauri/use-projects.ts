@@ -16,6 +16,7 @@ export interface VideoMeta {
   created_at: number;
   scene_number?: number;
   scene_title?: string;
+  sample_number?: number;
 }
 
 export interface ProjectMeta {

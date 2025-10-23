@@ -3,6 +3,9 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { VideoGallery } from "@/components/VideoGallery";
 import { VideoDetails } from "@/components/VideoDetails";
 import { useProjects, type VideoMeta, type ProjectMeta } from "@/hooks/tauri/use-projects";
+import { useVideos } from "@/hooks/tauri/use-videos";
+import { useVideoStatusStore } from "@/stores/useVideoStatusStore";
+import { OpenAIVideoJobStatus } from "@/types/openai";
 import { toast } from "sonner";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import {
@@ -10,6 +13,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
+import { STARTING_FRAME_FILENAME } from "@/types/constants";
 
 function VideoPlaceholder(props: { title: string; subtitle: string; pulsing?: boolean }) {
   const { title, subtitle, pulsing } = props;
@@ -42,7 +46,9 @@ interface VideosTabProps {
 }
 
 export function VideosTab({ projectName }: VideosTabProps) {
-  const { getProject, deleteVideoFromProject } = useProjects();
+  const { getProject, deleteVideoFromProject, addVideosToProject, getImage } = useProjects();
+  const { createVideo } = useVideos();
+  const { getStatus } = useVideoStatusStore();
 
   const [projectMeta, setProjectMeta] = useState<ProjectMeta | null>(null);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
@@ -67,7 +73,6 @@ export function VideosTab({ projectName }: VideosTabProps) {
     load();
   }, [projectName, getProject]);
 
-  // Handler for selecting a video
   const handleVideoSelect = useCallback((video: VideoMeta) => {
     setSelectedVideoId(video.id);
   }, []);
@@ -86,6 +91,62 @@ export function VideosTab({ projectName }: VideosTabProps) {
       });
     }
   }, [projectName, deleteVideoFromProject, getProject]);
+
+  const handleVideoRegenerate = useCallback(async (video: VideoMeta) => {
+    if (!projectName || !projectMeta) return;
+    try {
+      toast.loading("Regenerating video...", { id: "regenerate" });
+
+      const currentStatus = getStatus(video.id);
+      const isFailed = currentStatus?.status === OpenAIVideoJobStatus.FAILED;
+
+      const imagePath = projectMeta.image_path
+        ? await getImage(projectName, STARTING_FRAME_FILENAME)
+        : undefined;
+
+      const newVideoId = await createVideo({
+        model: video.model,
+        prompt: video.prompt,
+        size: video.resolution,
+        seconds: String(video.duration),
+        inputReferencePath: imagePath || undefined,
+      });
+
+      const sampleNumber = isFailed
+        ? video.sample_number
+        : (video.sample_number || 1) + 1;
+
+      // Create new video metadata
+      const newVideoMeta: VideoMeta = {
+        id: newVideoId,
+        prompt: video.prompt,
+        model: video.model,
+        resolution: video.resolution,
+        duration: video.duration,
+        created_at: Date.now(),
+        scene_number: video.scene_number,
+        scene_title: video.scene_title,
+        sample_number: sampleNumber,
+      };
+
+      // For failed videos: replace. For successful videos: add new sample
+      if (isFailed) {
+        await deleteVideoFromProject(projectName, video.id);
+      }
+      await addVideosToProject(projectName, [newVideoMeta]);
+
+      // Refresh project data
+      const updatedMeta = await getProject(projectName);
+      setProjectMeta(updatedMeta);
+
+      toast.success("Video regeneration started", { id: "regenerate" });
+    } catch (error) {
+      toast.error("Failed to regenerate video", {
+        id: "regenerate",
+        description: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }, [projectName, projectMeta, createVideo, getStatus, getImage, addVideosToProject, deleteVideoFromProject, getProject]);
 
   const selectedVideo: VideoMeta | undefined = useMemo(() => {
     return projectMeta?.videos.find(v => v.id === selectedVideoId);
@@ -118,7 +179,10 @@ export function VideosTab({ projectName }: VideosTabProps) {
 
           {/* Right Panel: Video Details */}
           <ResizablePanel defaultSize={25} minSize={15}>
-            <VideoDetails video={selectedVideo} />
+            <VideoDetails
+              video={selectedVideo}
+              onRegenerate={selectedVideo ? () => handleVideoRegenerate(selectedVideo) : undefined}
+            />
           </ResizablePanel>
         </ResizablePanelGroup>
       </ResizablePanel>
@@ -134,6 +198,7 @@ export function VideosTab({ projectName }: VideosTabProps) {
               selectedVideoId={selectedVideoId || undefined}
               onVideoSelect={handleVideoSelect}
               onVideoDelete={handleVideoDelete}
+              onVideoRegenerate={handleVideoRegenerate}
               projectPath={projectMeta.path}
             />
           )}

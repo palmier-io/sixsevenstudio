@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Play, Trash2 } from "lucide-react";
+import { Play, Trash2, RotateCw } from "lucide-react";
 import { VideoMeta } from "@/hooks/tauri/use-projects";
 import { OpenAIVideoJobStatus } from "@/types/openai";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ interface VideoGalleryItemProps {
   isSelected?: boolean;
   onClick?: () => void;
   onDelete?: () => void;
+  onRegenerate?: () => void;
 }
 
 export function VideoGalleryItem({
@@ -20,6 +21,7 @@ export function VideoGalleryItem({
   isSelected,
   onClick,
   onDelete,
+  onRegenerate,
 }: VideoGalleryItemProps) {
   const status = useVideoPolling({
     videoId: video.id,
@@ -65,15 +67,29 @@ export function VideoGalleryItem({
         )}
 
         {/* Video metadata overlay */}
-        <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded text-white text-[10px] font-mono max-w-[calc(100%-6rem)] truncate">
-          {video.scene_number && video.scene_title
-            ? `Scene ${video.scene_number}: ${video.scene_title}`
+        <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded text-white text-[10px] max-w-[calc(100%-6rem)] truncate">
+          {video.scene_number
+            ? `${video.sample_number && video.sample_number > 1 ? `(${video.sample_number}) ` : ''}Scene ${video.scene_number}`
             : video.id}
         </div>
 
-        {/* Delete button overlay */}
-        {onDelete && (
-          <div className="absolute top-2 right-2">
+        {/* Action buttons overlay */}
+        <div className="absolute top-2 right-2 flex gap-1">
+          {onRegenerate && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRegenerate();
+              }}
+              className="bg-black/60 hover:bg-blue-600/80 text-white h-8 w-8"
+              title="Regenerate video"
+            >
+              <RotateCw className="size-4" />
+            </Button>
+          )}
+          {onDelete && (
             <Button
               variant="ghost"
               size="icon"
@@ -82,11 +98,12 @@ export function VideoGalleryItem({
                 onDelete();
               }}
               className="bg-black/60 hover:bg-red-600/80 text-white h-8 w-8"
+              title="Delete video"
             >
               <Trash2 className="size-4" />
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </Card>
   );
