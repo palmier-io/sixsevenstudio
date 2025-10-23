@@ -1,6 +1,6 @@
 import { useParams, useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, BookOpen, Scissors } from "lucide-react";
+import { Video, BookOpen, Scissors, Home } from "lucide-react";
 import { VideosTab } from "@/components/tabs/VideosTab";
 import { StoryboardTab } from "@/components/tabs/StoryboardTab";
 import { VideoEditorTab } from "@/components/tabs/VideoEditorTab";
@@ -42,7 +42,10 @@ export function ProjectPage({ selectedProject }: { selectedProject: ProjectSumma
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/">Home</BreadcrumbLink>
+              <BreadcrumbLink href="/" className="flex items-center gap-1.5">
+                <Home className="size-4 text-primary" />
+                <span className="text-primary">Home</span>
+              </BreadcrumbLink>
             </BreadcrumbItem>
             {selectedProject && (
               <>
