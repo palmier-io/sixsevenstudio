@@ -126,8 +126,11 @@ pub async fn add_videos_to_project(
     let project_path = get_project_path(&app, &project_name)?;
     let existing_meta = read_project_meta(&project_path)?;
 
+    let mut all_videos = existing_meta.videos;
+    all_videos.extend(videos_meta);
+
     let meta = ProjectMeta {
-        videos: videos_meta,
+        videos: all_videos,
         path: project_path.to_string_lossy().to_string(),
         created_at: existing_meta.created_at,
         storyboard_response_id: existing_meta.storyboard_response_id,
