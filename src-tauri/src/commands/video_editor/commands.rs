@@ -3,12 +3,12 @@ use tauri_plugin_dialog::DialogExt;
 
 use crate::commands::video_editor::{
     ffmpeg,
-    types::{TimelineClip, ExportProgress, EditorState},
+    types::{EditorState, ExportProgress, TimelineClip},
 };
 
 use crate::commands::projects::{
     filesystem::get_project_path,
-    types::{PROJECT_META_DIR, EDITOR_STATE_FILE},
+    types::{EDITOR_STATE_FILE, PROJECT_META_DIR},
 };
 
 /// Create a stitched preview video from timeline clips
@@ -18,7 +18,6 @@ pub async fn create_preview_video(
     clips: Vec<TimelineClip>,
     project_name: String,
 ) -> Result<String, String> {
-
     // Verify FFmpeg is available
     ffmpeg::get_ffmpeg_path(Some(&app))?;
 
@@ -36,7 +35,8 @@ pub async fn create_preview_video(
     // Generate preview filename
     let preview_filename = "preview.mp4";
     let output_path = temp_dir.join(preview_filename);
-    let output_path_str = output_path.to_str()
+    let output_path_str = output_path
+        .to_str()
         .ok_or("Invalid output path")?
         .to_string();
 
@@ -50,11 +50,19 @@ pub async fn create_preview_video(
         &output_path_str,
         &temp_dir,
         move |progress, message| {
-            let _ = app_clone.emit("video-preview-progress", ExportProgress {
-                progress,
-                message: message.clone(),
-                status: if progress >= 100.0 { "complete" } else { "processing" }.to_string(),
-            });
+            let _ = app_clone.emit(
+                "video-preview-progress",
+                ExportProgress {
+                    progress,
+                    message: message.clone(),
+                    status: if progress >= 100.0 {
+                        "complete"
+                    } else {
+                        "processing"
+                    }
+                    .to_string(),
+                },
+            );
         },
     );
 
@@ -102,18 +110,15 @@ pub async fn load_editor_state(
     let json = std::fs::read_to_string(&editor_state_file)
         .map_err(|e| format!("Failed to read editor state: {}", e))?;
 
-    let state: EditorState = serde_json::from_str(&json)
-        .map_err(|e| format!("Failed to parse editor state: {}", e))?;
+    let state: EditorState =
+        serde_json::from_str(&json).map_err(|e| format!("Failed to parse editor state: {}", e))?;
 
     Ok(Some(state))
 }
 
 /// Export video by copying preview to user-selected location
 #[tauri::command]
-pub async fn export_video(
-    app: AppHandle,
-    preview_path: String,
-) -> Result<String, String> {
+pub async fn export_video(app: AppHandle, preview_path: String) -> Result<String, String> {
     // Verify preview file exists
     if !std::path::Path::new(&preview_path).exists() {
         return Err("Preview video not found. Please generate a preview first.".to_string());

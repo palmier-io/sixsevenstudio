@@ -1,12 +1,15 @@
+use crate::commands::video_editor::types::TimelineClip;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tauri::{AppHandle, Manager};
-use crate::commands::video_editor::types::TimelineClip;
 
 pub fn get_ffmpeg_path(app: Option<&AppHandle>) -> Result<PathBuf, String> {
     // Try Tauri sidecar first (bundled binary)
     if let Some(app_handle) = app {
-        if let Ok(sidecar_path) = app_handle.path().resolve("ffmpeg", tauri::path::BaseDirectory::Resource) {
+        if let Ok(sidecar_path) = app_handle
+            .path()
+            .resolve("ffmpeg", tauri::path::BaseDirectory::Resource)
+        {
             if sidecar_path.exists() {
                 return Ok(sidecar_path);
             }
@@ -14,16 +17,12 @@ pub fn get_ffmpeg_path(app: Option<&AppHandle>) -> Result<PathBuf, String> {
     }
 
     // Fall back to system FFmpeg
-    if Command::new("ffmpeg")
-        .arg("-version")
-        .output()
-        .is_ok() {
+    if Command::new("ffmpeg").arg("-version").output().is_ok() {
         return Ok(PathBuf::from("ffmpeg"));
     }
 
     Err("FFmpeg not found. Please install FFmpeg or ensure it's bundled with the app.".to_string())
 }
-
 
 pub fn trim_video(
     app: Option<&AppHandle>,
@@ -37,18 +36,25 @@ pub fn trim_video(
 
     let output = Command::new(ffmpeg_path)
         .args([
-            "-ss", &start_time.to_string(),
-            "-i", input_path,
-            "-t", &duration.to_string(),
-            "-c", "copy", // Copy codec for fast processing
-            "-y", // Overwrite output file
+            "-ss",
+            &start_time.to_string(),
+            "-i",
+            input_path,
+            "-t",
+            &duration.to_string(),
+            "-c",
+            "copy", // Copy codec for fast processing
+            "-y",   // Overwrite output file
             output_path,
         ])
         .output()
         .map_err(|e| format!("Failed to execute ffmpeg: {}", e))?;
 
     if !output.status.success() {
-        return Err(format!("ffmpeg failed: {}", String::from_utf8_lossy(&output.stderr)));
+        return Err(format!(
+            "ffmpeg failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
     }
 
     Ok(())
@@ -78,11 +84,13 @@ where
 
     for (i, clip) in clips.iter().enumerate() {
         let progress = (i as f64 / clip_count) * 80.0; // First 80% for trimming
-        progress_callback(progress, format!("Processing clip {} of {}...", i + 1, clips.len()));
+        progress_callback(
+            progress,
+            format!("Processing clip {} of {}...", i + 1, clips.len()),
+        );
 
         let temp_file = temp_dir.join(format!("clip_{}.mp4", i));
-        let temp_file_str = temp_file.to_str()
-            .ok_or("Invalid temp file path")?;
+        let temp_file_str = temp_file.to_str().ok_or("Invalid temp file path")?;
 
         // Trim the clip using codec copy (fast)
         trim_video(
@@ -108,10 +116,14 @@ where
     let ffmpeg_path = get_ffmpeg_path(app)?;
     let output = Command::new(ffmpeg_path)
         .args([
-            "-f", "concat",
-            "-safe", "0",
-            "-i", concat_file.to_str().unwrap(),
-            "-c", "copy", // Copy codec - no re-encoding!
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            concat_file.to_str().unwrap(),
+            "-c",
+            "copy", // Copy codec - no re-encoding!
             "-y",
             output_path,
         ])
@@ -125,7 +137,10 @@ where
     let _ = std::fs::remove_file(concat_file);
 
     if !output.status.success() {
-        return Err(format!("ffmpeg failed: {}", String::from_utf8_lossy(&output.stderr)));
+        return Err(format!(
+            "ffmpeg failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
     }
 
     progress_callback(100.0, "Preview ready!".to_string());
