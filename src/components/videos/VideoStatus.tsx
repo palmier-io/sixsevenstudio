@@ -1,7 +1,7 @@
 import { AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { OpenAIVideoJobStatus } from "@/types/openai";
-import { GeneratingStatus } from "./GeneratingStatus";
+import { GeneratingStatus } from "../GeneratingStatus";
 
 interface VideoStatusProps {
   status: OpenAIVideoJobStatus;

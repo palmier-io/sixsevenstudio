@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { VideoPlayer } from "@/components/VideoPlayer";
-import { VideoGallery } from "@/components/VideoGallery";
-import { VideoDetails } from "@/components/VideoDetails";
+import { VideoPlayer } from "@/components/videos/VideoPlayer";
+import { VideoGallery } from "@/components/videos/VideoGallery";
+import { VideoDetails } from "@/components/videos/VideoDetails";
 import { useProjects, type VideoMeta, type ProjectMeta } from "@/hooks/tauri/use-projects";
 import { useVideos } from "@/hooks/tauri/use-videos";
 import { useVideoStatusStore } from "@/stores/useVideoStatusStore";

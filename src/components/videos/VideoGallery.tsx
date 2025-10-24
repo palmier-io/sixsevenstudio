@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { VideoGalleryItem } from "@/components/VideoGalleryItem";
+import { VideoGalleryItem } from "@/components/videos/VideoGalleryItem";
 import { VideoMeta } from "@/hooks/tauri/use-projects";
 import {
   Carousel,

@@ -1,6 +1,6 @@
 import { VideoMeta } from "@/hooks/tauri/use-projects";
 import { Button } from "@/components/ui/button";
-import { RemixPopover } from "@/components/RemixPopover";
+import { RemixPopover } from "@/components/videos/RemixPopover";
 import { RotateCw } from "lucide-react";
 
 interface VideoDetailsProps {

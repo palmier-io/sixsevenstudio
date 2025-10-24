@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useVideoPolling } from "@/hooks/use-video-polling";
 import { OpenAIVideoJobStatus } from "@/types/openai";
-import { VideoStatus } from "@/components/VideoStatus";
+import { VideoStatus } from "@/components/videos/VideoStatus";
 
 interface VideoPlayerProps {
   src: string;

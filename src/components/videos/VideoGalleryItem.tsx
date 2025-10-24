@@ -3,9 +3,9 @@ import { Play, Trash2, RotateCw } from "lucide-react";
 import { VideoMeta } from "@/hooks/tauri/use-projects";
 import { OpenAIVideoJobStatus } from "@/types/openai";
 import { Button } from "@/components/ui/button";
-import { RemixPopover } from "@/components/RemixPopover";
+import { RemixPopover } from "@/components/videos/RemixPopover";
 import { useVideoPolling } from "@/hooks/use-video-polling";
-import { VideoStatus } from "@/components/VideoStatus";
+import { VideoStatus } from "@/components/videos/VideoStatus";
 
 interface VideoGalleryItemProps {
   video: VideoMeta;
