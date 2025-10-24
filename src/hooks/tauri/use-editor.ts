@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useCallback } from "react";
 import type { TimelineClip } from "@/types/video-editor";
 
-export function useVideoEditor() {
+export function useEditor() {
   const createPreviewVideo = useCallback(
     async (
       clips: TimelineClip[],

@@ -3,8 +3,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { VideoPreview } from "@/components/editor/VideoPreview";
 import { ClipLibrary } from "@/components/editor/ClipLibrary";
 import { Timeline } from "@/components/editor/Timeline";
-import { useVideoEditorState } from "@/hooks/use-video-editor-state";
-import { useVideoEditor } from "@/hooks/tauri/use-video-editor";
+import { useEditorState } from "@/hooks/tauri/use-editor-state";
+import { useEditor } from "@/hooks/tauri/use-editor";
 import { useProjects } from "@/hooks/tauri/use-projects";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { toast } from "sonner";
@@ -29,8 +29,8 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
     selectClip,
     splitClip,
     reorderClips
-  } = useVideoEditorState(projectName, previewVideoPath);
-  const { createPreviewVideo, exportVideo } = useVideoEditor();
+  } = useEditorState(projectName, previewVideoPath);
+  const { createPreviewVideo, exportVideo } = useEditor();
 
   const [libraryClips, setLibraryClips] = useState<VideoClip[]>([]);
   const [seekToTime, setSeekToTime] = useState<number | undefined>(undefined);

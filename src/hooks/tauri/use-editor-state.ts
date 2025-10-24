@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { debug, error as logError } from '@tauri-apps/plugin-log';
 import type { TimelineClip, VideoClip, EditorState } from '@/types/video-editor';
 
-export function useVideoEditorState(projectName: string, previewVideoPath: string | null = null) {
+export function useEditorState(projectName: string, previewVideoPath: string | null = null) {
   const [clips, setClips] = useState<TimelineClip[]>([]);
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
   const [currentPlaybackTime, setCurrentPlaybackTime] = useState<number | null>(null);
