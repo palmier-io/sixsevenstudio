@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { useProjects } from '@/hooks/tauri/use-projects';
 import { useStoryboard, type Scene } from '@/hooks/tauri/use-storyboard';
 import { useVideos } from '@/hooks/tauri/use-videos';
 import { type VideoSettings } from '@/components/VideoSettings';
 import { DEFAULT_VIDEO_SETTINGS, STARTING_FRAME_FILENAME } from '@/types/constants';
-import { StartingFramePanel } from '@/components/storyboard/StartingFramePanel';
-import { StoryboardEditor } from '@/components/storyboard/StoryboardEditor';
+import { SceneList, type SelectedView } from '@/components/storyboard/SceneList';
+import { OverviewCard } from '@/components/storyboard/OverviewCard';
+import { SceneDetailCard } from '@/components/storyboard/SceneDetailCard';
 import { ActionBar } from '@/components/storyboard/ActionBar';
 
 const SAVE_AFTER_IDLE_SECONDS = 5000; // 5 seconds
@@ -17,8 +17,7 @@ interface StoryboardTabProps {
 }
 
 export function StoryboardTab({ projectName }: StoryboardTabProps) {
-  const location = useLocation();
-  const { getProject, addVideosToProject, saveImage, getImage, deleteImage } = useProjects();
+  const { getProject, addVideosToProject, getImage } = useProjects();
   const { storyboard, isLoading: isLoadingStoryboard, generateStoryboard, saveStoryboard } = useStoryboard(projectName);
   const { createVideo } = useVideos();
 
@@ -26,7 +25,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
   const [globalContext, setGlobalContext] = useState('');
   const [responseId, setResponseId] = useState<string | null>(null);
   const [videoSettings, setVideoSettings] = useState<VideoSettings>(DEFAULT_VIDEO_SETTINGS);
-  const [isRefining, setIsRefining] = useState(false);
+  const [selectedView, setSelectedView] = useState<SelectedView>('overview');
 
   // Sync storyboard data from query to local state
   useEffect(() => {
@@ -39,7 +38,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
         id: '1',
         title: 'Scene 1',
         description: '',
-        duration: '3s',
+        duration: '4s',
       }]);
       setGlobalContext('');
     }
@@ -100,19 +99,14 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
     ));
   };
 
-  // Calculate total seconds from all scenes
-  const calculateTotalSeconds = () => {
-    return scenes.reduce((total, scene) => {
-      const match = scene.duration.match(/(\d+)s/);
-      const seconds = match ? parseInt(match[1], 10) : 0;
-      return total + seconds;
-    }, 0);
-  };
+  // Find the selected scene
+  const selectedScene = typeof selectedView === 'object' && selectedView.type === 'scene'
+    ? scenes.find(s => s.id === selectedView.sceneId)
+    : null;
 
-  // Show generating state when:
-  // 1. Coming from Home.tsx and generation is in progress (prompt in state but no storyboard)
-  // 2. Actively refining the storyboard
-  const isGenerating = (!!location.state?.prompt && !storyboard) || isRefining;
+  const selectedSceneIndex = selectedScene
+    ? scenes.findIndex(s => s.id === selectedScene.id)
+    : -1;
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
@@ -121,38 +115,39 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
         <ResizablePanel defaultSize={75} minSize={40}>
           <div className="h-full p-6">
             <ResizablePanelGroup direction="horizontal" className="gap-6">
-              <ResizablePanel defaultSize={30} minSize={15}>
-                <StartingFramePanel
-                  projectName={projectName}
-                  onImageUpload={async (base64Data) => {
-                    return await saveImage(projectName, STARTING_FRAME_FILENAME, base64Data);
-                  }}
-                  onImageDelete={async () => {
-                    await deleteImage(projectName, STARTING_FRAME_FILENAME);
-                  }}
-                  onImageLoad={async () => {
-                    try {
-                      return await getImage(projectName, STARTING_FRAME_FILENAME);
-                    } catch (err) {
-                      console.error('Failed to load image:', err);
-                      return null;
-                    }
-                  }}
+              {/* Scene List - Left Sidebar */}
+              <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+                <SceneList
+                  scenes={scenes}
+                  selectedView={selectedView}
+                  onSelectView={setSelectedView}
+                  onAddScene={addScene}
                 />
               </ResizablePanel>
+
               <ResizableHandle />
-              <ResizablePanel defaultSize={70} minSize={50}>
-                <StoryboardEditor
-                  scenes={scenes}
-                  globalContext={globalContext}
-                  totalSeconds={calculateTotalSeconds()}
-                  videoSettings={videoSettings}
-                  onGlobalContextChange={setGlobalContext}
-                  onAddScene={addScene}
-                  onDeleteScene={deleteScene}
-                  onUpdateScene={updateScene}
-                  isGenerating={isGenerating}
-                />
+
+              {/* Detail Card - Right Panel */}
+              <ResizablePanel defaultSize={80} minSize={50}>
+                {selectedView === 'overview' ? (
+                  <OverviewCard
+                    globalContext={globalContext}
+                    scenes={scenes}
+                    videoSettings={videoSettings}
+                    onGlobalContextChange={setGlobalContext}
+                  />
+                ) : selectedScene ? (
+                  <SceneDetailCard
+                    scene={selectedScene}
+                    sceneNumber={selectedSceneIndex + 1}
+                    videoSettings={videoSettings}
+                    onUpdateScene={updateScene}
+                    onDeleteScene={(id) => {
+                      deleteScene(id);
+                      setSelectedView('overview');
+                    }}
+                  />
+                ) : null}
               </ResizablePanel>
             </ResizablePanelGroup>
           </div>
@@ -160,13 +155,13 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
 
         <ResizableHandle />
 
+        {/* Action Bar - Bottom */}
         <ResizablePanel defaultSize={10} minSize={10}>
           <ActionBar
             responseId={responseId}
             scenes={scenes}
             videoSettings={videoSettings}
             onVideoSettingsChange={setVideoSettings}
-            onRefiningChange={setIsRefining}
             onRefineStoryboard={async (feedback: string) => {
               const refinedData = await generateStoryboard({ prompt: feedback });
               setScenes(refinedData.scenes);
