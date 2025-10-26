@@ -4,6 +4,12 @@ import { Video, BookOpen, Scissors, Home } from "lucide-react";
 import { VideosTab } from "@/components/tabs/VideosTab";
 import { StoryboardTab } from "@/components/tabs/StoryboardTab";
 import { VideoEditorTab } from "@/components/tabs/VideoEditorTab";
+import { ChatPanel } from "@/components/chat/ChatPanel";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -76,11 +82,28 @@ export function ProjectPage({ selectedProject }: { selectedProject: ProjectSumma
         </Tabs>
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Content with Chat Panel */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        {activeTab === "videos" && <VideosTab projectName={params.projectName} />}
-        {activeTab === "storyboard" && <StoryboardTab projectName={params.projectName} />}
-        {activeTab === "editor" && <VideoEditorTab projectName={params.projectName} />}
+        <ResizablePanelGroup direction="horizontal">
+          {/* Main Tab Content - Left Side */}
+          <ResizablePanel defaultSize={75} minSize={50}>
+            {activeTab === "videos" && <VideosTab projectName={params.projectName} />}
+            {activeTab === "storyboard" && <StoryboardTab projectName={params.projectName} />}
+            {activeTab === "editor" && <VideoEditorTab projectName={params.projectName} />}
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* AI Chat Panel - Right Side */}
+          <ResizablePanel
+            defaultSize={25}
+            minSize={0}
+            maxSize={40}
+            collapsible
+          >
+            <ChatPanel projectName={params.projectName} />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );
