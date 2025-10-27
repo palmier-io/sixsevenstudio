@@ -1,5 +1,4 @@
 mod commands;
-mod utils;
 
 use commands::*;
 
@@ -10,17 +9,12 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![
-            // openai api key commands
+            // api key commands
             save_api_key,
             get_api_key,
             remove_api_key,
-            // openai video commands
-            create_video,
-            get_video_status,
-            remix_video,
-            download_video,
-            file_exists,
             // workspace & projects commands
             get_workspace_dir,
             ensure_workspace_exists,
@@ -34,12 +28,21 @@ pub fn run() {
             get_storyboard,
             save_storyboard,
             delete_storyboard,
-            generate_storyboard,
-            get_prompt_from_storyboard,
             // image commands
             save_image,
             get_image,
             delete_image,
+            resize_image,
+            // scene-based storyboard commands
+            read_context,
+            write_context,
+            list_scenes,
+            read_scene,
+            write_scene,
+            delete_scene,
+            save_scene_reference_image,
+            get_scene_reference_image,
+            delete_scene_reference_image,
             // video editor commands
             create_preview_video,
             save_editor_state,

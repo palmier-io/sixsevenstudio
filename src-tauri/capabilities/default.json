@@ -13,6 +13,19 @@
     "dialog:default",
     "dialog:allow-open",
     "dialog:allow-confirm",
-    "log:default"
+    "log:default",
+    "fs:default",
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [
+        { "path": "$HOME/sixsevenstudio/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-write-file",
+      "allow": [
+        { "path": "$HOME/sixsevenstudio/**" }
+      ]
+    }
   ]
 }
