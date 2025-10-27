@@ -57,7 +57,7 @@ export function SceneList({ scenes, selectedView, onSelectView, onAddScene }: Sc
                 onClick={() => onSelectView({ type: 'scene', sceneId: scene.id })}
               >
                 <Film className="h-4 w-4" />
-                <span className="text-sm truncate">Scene {index + 1}</span>
+                <span className="text-sm truncate flex-1 text-left">Scene {index + 1}</span>
               </Button>
             );
           })}

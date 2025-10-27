@@ -4,13 +4,30 @@ import { useAiChat } from '@/hooks/use-ai-chat';
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useEffect, useRef } from 'react';
 
 interface ChatPanelProps {
   projectName: string;
+  initialPrompt?: string;
 }
 
-export function ChatPanel({ projectName }: ChatPanelProps) {
-  const { messages, sendMessage, status, isLoadingKey, setMessages } = useAiChat(projectName);
+export function ChatPanel({ projectName, initialPrompt }: ChatPanelProps) {
+  const { messages, sendMessage, status, isLoadingKey, setMessages, hasApiKey } = useAiChat(projectName);
+  const initialPromptSentRef = useRef(false);
+
+  // Auto-send initial prompt
+  useEffect(() => {
+    if (
+      initialPrompt &&
+      !initialPromptSentRef.current &&
+      messages.length === 0 &&
+      hasApiKey &&
+      status === 'ready'
+    ) {
+      initialPromptSentRef.current = true;
+      sendMessage({ text: initialPrompt });
+    }
+  }, [initialPrompt, messages.length, hasApiKey, status, sendMessage]);
 
   const handleSend = (text: string) => {
     sendMessage({ text });

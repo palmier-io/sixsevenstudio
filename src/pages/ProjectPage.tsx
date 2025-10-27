@@ -1,4 +1,4 @@
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useLocation } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Video, BookOpen, Scissors, Home } from "lucide-react";
 import { VideosTab } from "@/components/tabs/VideosTab";
@@ -23,6 +23,10 @@ import type { ProjectSummary } from "@/hooks/tauri/use-projects";
 export function ProjectPage({ selectedProject }: { selectedProject: ProjectSummary | null }) {
   const params = useParams<{ projectName: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
+  const shouldUseAiChat = location.state?.useAiChat === true;
+  const initialPrompt = shouldUseAiChat ? (location.state?.initialPrompt as string | undefined) : undefined;
 
   const activeTab = (searchParams.get("tab") || "videos") as "videos" | "storyboard" | "editor";
 
@@ -101,7 +105,7 @@ export function ProjectPage({ selectedProject }: { selectedProject: ProjectSumma
             maxSize={40}
             collapsible
           >
-            <ChatPanel projectName={params.projectName} />
+            <ChatPanel projectName={params.projectName} initialPrompt={initialPrompt} />
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>

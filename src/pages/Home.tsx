@@ -1,10 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { InputBox } from "@/components/InputBox";
-import { useVideos } from "@/hooks/tauri/use-videos";
+import { useVideos } from "@/hooks/use-videos";
 import { useProjects, VideoMeta } from "@/hooks/tauri/use-projects";
-import { generateStoryboardAPI } from "@/hooks/tauri/use-storyboard";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { info as logInfo , error as logError} from "@tauri-apps/plugin-log";
 import { STARTING_FRAME_FILENAME } from "@/types/constants";
@@ -34,7 +32,6 @@ function createProjectNameFromPrompt(
 
 export function Home() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { createProject, ensureWorkspaceExists, addVideosToProject, projects, saveImage } = useProjects();
   const {
     createVideo,
@@ -80,25 +77,12 @@ export function Home() {
         }
       }
 
-      toast.info("Generating storyboard...");
-      generateStoryboardAPI(project.name, params.prompt)
-        .then(() => {
-          // Invalidate storyboard query to trigger refetch in StoryboardTab
-          queryClient.invalidateQueries({ queryKey: ["storyboard", project.name] });
-          toast.success("Storyboard generated!");
-          logInfo(`Storyboard generated for project ${project.name}`);
-        })
-        .catch((err) => {
-          const errMsg = err instanceof Error ? err.message : String(err);
-          toast.error("Failed to generate storyboard", { description: errMsg });
-          logError(`Failed to generate storyboard: ${errMsg}`);
-        });
-
-      // Navigate immediately (loading state will be handled in StoryboardTab)
+      // Navigate immediately with prompt - AI chat will handle generation
       navigate(`/projects/${project.name}?tab=storyboard`, {
         state: {
-          prompt: params.prompt,
+          initialPrompt: params.prompt,
           settings: params.settings,
+          useAiChat: true,
         },
       });
     } catch (error) {
