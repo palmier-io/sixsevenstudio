@@ -73,10 +73,7 @@ export function ChatPanel({ projectName, initialPrompt }: ChatPanelProps) {
         </div>
       </div>
 
-      {/* Messages */}
       <ChatMessages messages={messages} status={status} />
-
-      {/* Input */}
       <ChatInput onSend={handleSend} status={status} />
       </Card>
     </div>
