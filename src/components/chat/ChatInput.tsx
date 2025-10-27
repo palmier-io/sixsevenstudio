@@ -42,7 +42,7 @@ export function ChatInput({ onSend, disabled = false, status = 'ready' }: ChatIn
   }, [input]);
 
   return (
-    <div className="border-t p-4 bg-background">
+    <div className="flex-shrink-0 border-t p-4 bg-background">
       <div className="flex gap-2">
         <Textarea
           ref={textareaRef}
@@ -63,9 +63,6 @@ export function ChatInput({ onSend, disabled = false, status = 'ready' }: ChatIn
           <Send className="size-4" />
         </Button>
       </div>
-      {isStreaming && (
-        <p className="text-xs text-muted-foreground mt-2">AI is typing...</p>
-      )}
     </div>
   );
 }

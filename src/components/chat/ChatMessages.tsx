@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessage } from './ChatMessage';
 import type { UIMessage } from '@ai-sdk/react';
-import { Loader2 } from 'lucide-react';
+import { AnimatedCat } from '@/components/AnimatedCat';
 
 interface ChatMessagesProps {
   messages: UIMessage[];
@@ -21,7 +21,7 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
   }, [messages.length, isStreaming]);
 
   return (
-    <ScrollArea className="flex-1 px-4">
+    <ScrollArea className="flex-1 min-h-0 px-4">
       <div className="py-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -53,8 +53,8 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
             ))}
             {isStreaming && (
               <div className="flex items-center gap-2 text-muted-foreground text-sm p-3">
-                <Loader2 className="size-4 animate-spin" />
-                <span>AI is thinking...</span>
+                <AnimatedCat className="text-[8px] leading-tight" animate={true} />
+                <span>thinking...</span>
               </div>
             )}
           </>

@@ -1,8 +1,9 @@
 import { ChatMessages } from './ChatMessages';
 import { ChatInput } from './ChatInput';
 import { useAiChat } from '@/hooks/use-ai-chat';
-import { Bot, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 interface ChatPanelProps {
   projectName: string;
@@ -35,17 +36,14 @@ export function ChatPanel({ projectName }: ChatPanelProps) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full p-4">
+      <Card className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-b">
         <div className="flex items-center gap-2">
-          <Bot className="size-5 text-primary" />
           <h2 className="text-sm font-semibold">AI Assistant</h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {messages.length} {messages.length === 1 ? 'message' : 'messages'}
-          </span>
           <Button
             variant="ghost"
             size="icon-sm"
@@ -63,6 +61,7 @@ export function ChatPanel({ projectName }: ChatPanelProps) {
 
       {/* Input */}
       <ChatInput onSend={handleSend} status={status} />
+      </Card>
     </div>
   );
 }

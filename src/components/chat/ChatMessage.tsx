@@ -15,6 +15,22 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
   return (
     <div className="mb-4 space-y-2">
+      {/* Tool Calls */}
+      {toolParts.map((part, index) => {
+        const toolName = part.type.replace('tool-', '');
+        const toolPart = part as any;
+
+        return (
+          <ToolCallDisplay
+            key={`tool-${index}`}
+            toolName={toolName}
+            state={toolPart.state}
+            output={toolPart.output}
+            errorText={toolPart.errorText}
+          />
+        );
+      })}
+
       {/* Text Messages */}
       {textParts.length > 0 && (
         <div
@@ -46,22 +62,6 @@ export function ChatMessage({ message }: ChatMessageProps) {
           )}
         </div>
       )}
-
-      {/* Tool Calls */}
-      {toolParts.map((part, index) => {
-        const toolName = part.type.replace('tool-', '');
-        const toolPart = part as any;
-
-        return (
-          <ToolCallDisplay
-            key={`tool-${index}`}
-            toolName={toolName}
-            state={toolPart.state}
-            output={toolPart.output}
-            errorText={toolPart.errorText}
-          />
-        );
-      })}
     </div>
   );
 }
