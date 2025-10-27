@@ -92,7 +92,7 @@ export function ProjectPage({ selectedProject }: { selectedProject: ProjectSumma
             {activeTab === "editor" && <VideoEditorTab projectName={params.projectName} />}
           </ResizablePanel>
 
-          <ResizableHandle withHandle />
+          <ResizableHandle />
 
           {/* AI Chat Panel - Right Side */}
           <ResizablePanel
