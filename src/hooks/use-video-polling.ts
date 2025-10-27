@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { useVideos } from '@/hooks/tauri/use-videos';
+import { useVideos } from '@/hooks/use-videos';
 import { useVideoStatusStore } from '@/stores/useVideoStatusStore';
 import { OpenAIVideoJobStatus } from '@/types/openai';
 import { convertFileSrc } from '@tauri-apps/api/core';
