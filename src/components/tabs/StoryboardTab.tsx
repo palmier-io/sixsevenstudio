@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { useProjects } from '@/hooks/tauri/use-projects';
 import { useStoryboard, type Scene } from '@/hooks/tauri/use-storyboard';
-import { useVideos } from '@/hooks/tauri/use-videos';
+import { useVideos } from '@/hooks/use-videos';
 import { type VideoSettings } from '@/components/VideoSettings';
 import { DEFAULT_VIDEO_SETTINGS, STARTING_FRAME_FILENAME } from '@/types/constants';
 import { SceneList, type SelectedView } from '@/components/storyboard/SceneList';

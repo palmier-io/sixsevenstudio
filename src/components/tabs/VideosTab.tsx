@@ -3,7 +3,7 @@ import { VideoPlayer } from "@/components/videos/VideoPlayer";
 import { VideoGallery } from "@/components/videos/VideoGallery";
 import { VideoDetails } from "@/components/videos/VideoDetails";
 import { useProjects, type VideoMeta, type ProjectMeta } from "@/hooks/tauri/use-projects";
-import { useVideos } from "@/hooks/tauri/use-videos";
+import { useVideos } from "@/hooks/use-videos";
 import { useVideoStatusStore } from "@/stores/useVideoStatusStore";
 import { OpenAIVideoJobStatus } from "@/types/openai";
 import { toast } from "sonner";
