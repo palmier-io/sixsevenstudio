@@ -8,6 +8,7 @@ interface VideoStatusProps {
   status: OpenAIVideoStatus;
   progress: number;
   size?: "small" | "large";
+  error?: string;
 }
 
 const messages = [
@@ -17,7 +18,7 @@ const messages = [
   "Almost there...",
 ];
 
-export function VideoStatus({ status, progress, size = "small" }: VideoStatusProps) {
+export function VideoStatus({ status, progress, size = "small", error }: VideoStatusProps) {
   const [messageIndex, setMessageIndex] = useState(0);
 
   const isGenerating = status === OpenAIVideoStatus.QUEUED || status === OpenAIVideoStatus.IN_PROGRESS;
@@ -44,13 +45,16 @@ export function VideoStatus({ status, progress, size = "small" }: VideoStatusPro
   // Failed state
   if (hasFailed) {
     return (
-      <div className="absolute inset-0 bg-red-950/80 flex flex-col items-center justify-center gap-2 text-red-200 rounded-lg z-10">
+      <div className="absolute inset-0 bg-red-950/80 flex flex-col items-center justify-center gap-2 text-red-200 rounded-lg z-10 p-2">
         <AlertCircle className={isSmall ? "size-4" : "size-8"} />
-        <span className={isSmall ? "text-[10px]" : "text-sm"}>
+        <span className={isSmall ? "text-[10px]" : "text-sm font-medium"}>
           {isSmall ? "Failed" : "Video Generation Failed"}
         </span>
         {!isSmall && (
-          <span className="text-xs">Please try creating a new video</span>
+          <div className="text-xs text-center px-2 space-y-1">
+            {error && <p className="break-words max-w-full">Error from OpenAI: {error}</p>}
+            <p>Please try creating a new video</p>
+          </div>
         )}
       </div>
     );

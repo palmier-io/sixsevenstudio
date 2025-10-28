@@ -39,6 +39,7 @@ export function VideoPlayer({ src, videoId, projectPath }: VideoPlayerProps) {
                 status={status.status}
                 progress={status.progress}
                 size="large"
+                error={status.error}
               />
             )}
           </div>

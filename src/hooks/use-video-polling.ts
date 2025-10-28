@@ -87,6 +87,7 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
       if (!res?.status || !isMountedRef.current) return;
 
       const progress = res.progress ?? 0;
+      const error = res.error?.message;
 
       // Download if completed
       if (res.status === 'completed') {
@@ -96,6 +97,7 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
         setStatus(videoId, {
           status: res.status as VideoStatus,
           progress,
+          error,
         });
       }
     } catch (error) {

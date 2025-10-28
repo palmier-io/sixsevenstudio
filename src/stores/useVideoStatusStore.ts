@@ -5,6 +5,7 @@ interface VideoStatus {
   status: OpenAIVideoStatus;
   progress: number;
   videoSrc?: string;
+  error?: string;
 }
 
 interface VideoStatusStore {

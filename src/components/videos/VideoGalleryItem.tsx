@@ -59,6 +59,7 @@ export function VideoGalleryItem({
             status={status.status}
             progress={status.progress}
             size="small"
+            error={status.error}
           />
         )}
 
