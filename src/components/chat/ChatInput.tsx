@@ -2,14 +2,18 @@ import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
+import { ModelSelect } from '@/components/ModelSelect';
+import type { LLMModel } from '@/types/constants';
 
 interface ChatInputProps {
   onSend: (text: string) => void;
   disabled?: boolean;
   status?: 'ready' | 'submitted' | 'streaming' | 'error';
+  llmModel: LLMModel;
+  onModelChange: (model: LLMModel) => void;
 }
 
-export function ChatInput({ onSend, disabled = false, status = 'ready' }: ChatInputProps) {
+export function ChatInput({ onSend, disabled = false, status = 'ready', llmModel, onModelChange }: ChatInputProps) {
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -42,8 +46,8 @@ export function ChatInput({ onSend, disabled = false, status = 'ready' }: ChatIn
   }, [input]);
 
   return (
-    <div className="flex-shrink-0 border-t p-4 bg-background">
-      <div className="flex gap-2">
+    <div className="flex-shrink-0 border-t px-4 pt-4 bg-background">
+      <div className="flex gap-2 mb-1.5">
         <Textarea
           ref={textareaRef}
           value={input}
@@ -62,6 +66,9 @@ export function ChatInput({ onSend, disabled = false, status = 'ready' }: ChatIn
         >
           <Send className="size-4" />
         </Button>
+      </div>
+      <div className="flex items-center">
+        <ModelSelect value={llmModel} onValueChange={onModelChange} size="compact" />
       </div>
     </div>
   );

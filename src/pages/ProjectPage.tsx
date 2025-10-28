@@ -19,6 +19,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import type { ProjectSummary } from "@/hooks/tauri/use-projects";
+import type { LLMModel } from "@/types/constants";
 
 export function ProjectPage({ selectedProject }: { selectedProject: ProjectSummary | null }) {
   const params = useParams<{ projectName: string }>();
@@ -27,6 +28,7 @@ export function ProjectPage({ selectedProject }: { selectedProject: ProjectSumma
 
   const shouldUseAiChat = location.state?.useAiChat === true;
   const initialPrompt = shouldUseAiChat ? (location.state?.initialPrompt as string | undefined) : undefined;
+  const initialLLMModel = location.state?.llmModel as LLMModel | undefined;
 
   const activeTab = (searchParams.get("tab") || "videos") as "videos" | "storyboard" | "editor";
 
@@ -105,7 +107,7 @@ export function ProjectPage({ selectedProject }: { selectedProject: ProjectSumma
             maxSize={40}
             collapsible
           >
-            <ChatPanel projectName={params.projectName} initialPrompt={initialPrompt} />
+            <ChatPanel projectName={params.projectName} initialPrompt={initialPrompt} initialLLMModel={initialLLMModel} />
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>

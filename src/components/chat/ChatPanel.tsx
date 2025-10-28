@@ -4,15 +4,18 @@ import { useAiChat } from '@/hooks/use-ai-chat';
 import { PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { DEFAULT_LLM_MODEL, type LLMModel } from '@/types/constants';
 
 interface ChatPanelProps {
   projectName: string;
   initialPrompt?: string;
+  initialLLMModel?: LLMModel;
 }
 
-export function ChatPanel({ projectName, initialPrompt }: ChatPanelProps) {
-  const { messages, sendMessage, status, isLoadingKey, setMessages, hasApiKey } = useAiChat(projectName);
+export function ChatPanel({ projectName, initialPrompt, initialLLMModel }: ChatPanelProps) {
+  const [llmModel, setLLMModel] = useState<LLMModel>(initialLLMModel || DEFAULT_LLM_MODEL);
+  const { messages, sendMessage, status, isLoadingKey, setMessages, hasApiKey } = useAiChat(projectName, llmModel);
   const initialPromptSentRef = useRef(false);
 
   // Auto-send initial prompt
@@ -74,7 +77,7 @@ export function ChatPanel({ projectName, initialPrompt }: ChatPanelProps) {
       </div>
 
       <ChatMessages messages={messages} status={status} />
-      <ChatInput onSend={handleSend} status={status} />
+      <ChatInput onSend={handleSend} status={status} llmModel={llmModel} onModelChange={setLLMModel} />
       </Card>
     </div>
   );

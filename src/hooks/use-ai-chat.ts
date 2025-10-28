@@ -4,10 +4,13 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { useApiKey } from '@/hooks/tauri/use-api-key';
 import { useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { SYSTEM_PROMPT, MODEL, createStoryboardTools } from '@/lib/ai-sdk';
+import { SYSTEM_PROMPT, createStoryboardTools } from '@/lib/ai-sdk';
 import { debug } from '@tauri-apps/plugin-log';
+import type { LLMModel } from '@/types/constants';
 
-export function useAiChat(projectName: string) {
+const MAX_STEPS_EACH_ROUND = 30;
+
+export function useAiChat(projectName: string, model: LLMModel) {
   const { apiKey, isLoading: isLoadingKey } = useApiKey();
   const queryClient = useQueryClient();
 
@@ -30,11 +33,11 @@ export function useAiChat(projectName: string) {
         const body = JSON.parse(init?.body as string);
 
         const result = await streamText({
-          model: openai(MODEL),
+          model: openai(model),
           system: SYSTEM_PROMPT,
           messages: convertToModelMessages(body.messages),
           abortSignal: init?.signal as AbortSignal | undefined,
-          stopWhen: ({ steps }) => steps.length >= 10,
+          stopWhen: ({ steps }) => steps.length >= MAX_STEPS_EACH_ROUND,
           onStepFinish: (step) => {
             debug(`[AI Agent Step]
               Step finish reason: ${step.finishReason}
@@ -62,7 +65,7 @@ export function useAiChat(projectName: string) {
     return new DefaultChatTransport({
       fetch: customFetch,
     });
-  }, [apiKey, projectName, invalidateStoryboard]);
+  }, [apiKey, projectName, invalidateStoryboard, model]);
 
   const chat = useChat({
     id: projectName, // Unique chat per project

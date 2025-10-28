@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { info as logInfo , error as logError} from "@tauri-apps/plugin-log";
 import openai from "openai";
 import { createProjectNameFromPrompt } from "@/lib/utils";
+import { type LLMModel } from "@/types/constants";
 
 
 export function Home() {
@@ -25,6 +26,7 @@ export function Home() {
       duration: number;
       samples: number;
     };
+    llmModel: LLMModel;
   }) => {
     try {
       await ensureWorkspaceExists();
@@ -38,6 +40,7 @@ export function Home() {
         state: {
           initialPrompt: params.prompt,
           settings: params.settings,
+          llmModel: params.llmModel,
           useAiChat: true,
         },
       });

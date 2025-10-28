@@ -33,8 +33,6 @@ You can help users:
 - Be concise but specific
 - Confirm actions with details (e.g., "Scene 2 duration changed from 4s to 8s")`;
 
-export const MODEL = 'gpt-4.1-mini';
-
 // Factory function to create tools with project context
 export function createStoryboardTools(
   projectName: string,

@@ -5,13 +5,14 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Image as ImageIcon, X, Send } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 import { VideoSettingsButton, type VideoSettings } from "./VideoSettings"
-import { RESOLUTIONS_BY_MODEL, DEFAULT_VIDEO_SETTINGS } from "@/types/constants"
+import { RESOLUTIONS_BY_MODEL, DEFAULT_VIDEO_SETTINGS, DEFAULT_LLM_MODEL, type LLMModel } from "@/types/constants"
+import { ModelSelect } from "./ModelSelect"
 
 type InputMode = "storyboard" | "video"
 
 type InputBoxProps = {
   onGenerate?: (params: { prompt: string; settings: VideoSettings }) => void
-  onStoryboard?: (params: { prompt: string; settings: VideoSettings }) => void
+  onStoryboard?: (params: { prompt: string; settings: VideoSettings; llmModel: LLMModel }) => void
   onImageSelect?: (file: File) => void
   onImageClear?: () => void
   onSettingsChange?: (settings: VideoSettings) => void
@@ -25,6 +26,7 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [settings, setSettings] = useState<VideoSettings>(DEFAULT_VIDEO_SETTINGS)
+  const [llmModel, setLLMModel] = useState<LLMModel>(DEFAULT_LLM_MODEL)
 
   useEffect(() => {
     return () => {
@@ -35,6 +37,7 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
   useEffect(() => {
     onSettingsChange?.(settings)
   }, [settings, onSettingsChange])
+
 
   // Ensure resolution remains valid when switching model
   useEffect(() => {
@@ -96,7 +99,7 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
 
   const handleSend = () => {
     if (mode === "storyboard") {
-      onStoryboard?.({ prompt: value, settings })
+      onStoryboard?.({ prompt: value, settings, llmModel })
     } else {
       onGenerate?.({ prompt: value, settings })
     }
@@ -148,6 +151,9 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
                 settings={settings}
                 onSettingsChange={setSettings}
               />
+            )}
+            {mode === "storyboard" && (
+              <ModelSelect value={llmModel} onValueChange={setLLMModel} size="default" />
             )}
             {imagePreviewUrl ? (
               <div className="relative">

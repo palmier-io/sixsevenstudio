@@ -2,6 +2,18 @@ import { VideoSettings } from '@/components/VideoSettings';
 
 export const SORA_MODELS = ["sora-2", "sora-2-pro"] as const
 export type Model = typeof SORA_MODELS[number]
+
+export const LLM_MODELS = ["gpt-4.1-mini", "gpt-5-mini", "gpt-5"] as const
+export type LLMModel = typeof LLM_MODELS[number]
+
+export const DEFAULT_LLM_MODEL: LLMModel = 'gpt-4.1-mini';
+
+export const LLM_MODEL_LABELS: Record<LLMModel, { label: string; icon: string; }> = {
+  "gpt-4.1-mini": { label: "Fast", icon: "Zap" },
+  "gpt-5-mini": { label: "Auto", icon: "Sparkles" },
+  "gpt-5": { label: "Thinking", icon: "Brain" },
+}
+
 export const RESOLUTIONS_BY_MODEL: Record<
   Model,
   ReadonlyArray<{ value: string; isLandscape: boolean }>
