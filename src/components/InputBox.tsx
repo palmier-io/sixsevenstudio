@@ -94,7 +94,7 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
   }
 
   const placeholderText = mode === "storyboard"
-    ? "Describe the story, characters, settings"
+    ? "Describe the story, characters, settings..."
     : "Describe your video scene..."
 
   const handleSend = () => {

@@ -19,6 +19,7 @@ export interface VideoMeta {
   sample_number?: number;
   remixed_from_video_id?: string;
   remix_prompt?: string;
+  input_reference_image?: string;
 }
 
 export interface ProjectMeta {

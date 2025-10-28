@@ -26,6 +26,12 @@
       "allow": [
         { "path": "$HOME/sixsevenstudio/**" }
       ]
+    },
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [
+        { "path": "$HOME/sixsevenstudio/**" }
+      ]
     }
   ]
 }

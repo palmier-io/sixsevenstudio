@@ -12,6 +12,7 @@ const catFrames = [
  > ^ < `,
 ];
 
+const INTERVAL = 2000; // 2 seconds
 interface AnimatedCatProps {
   className?: string;
   animate?: boolean;
@@ -24,7 +25,7 @@ export function AnimatedCat({ className = "text-sm", animate = true }: AnimatedC
     if (!animate) return;
     const interval = setInterval(() => {
       setCatFrame((prev) => (prev + 1) % catFrames.length);
-    }, 500);
+    }, INTERVAL);
     return () => clearInterval(interval);
   }, [animate]);
 

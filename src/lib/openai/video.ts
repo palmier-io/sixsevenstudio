@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { writeFile, exists } from '@tauri-apps/plugin-fs';
+import { writeFile, exists, readFile } from '@tauri-apps/plugin-fs';
 import { invoke } from '@tauri-apps/api/core';
 import openai from 'openai';
 import { debug } from '@tauri-apps/plugin-log';
@@ -52,12 +52,19 @@ export async function createVideo(
       const targetHeight = parseInt(heightStr, 10);
 
       if (targetWidth && targetHeight) {
+        const imagePath = params.input_reference as any as string;
+
         await invoke('resize_image', {
-          imagePath: params.input_reference,
+          imagePath,
           targetWidth,
           targetHeight,
         });
-        requestParams.input_reference = params.input_reference;
+
+        const imageBytes = await readFile(imagePath);
+        const imageBlob = new Blob([imageBytes], { type: 'image/png' });
+        const imageFile = new File([imageBlob], 'reference.png', { type: 'image/png' });
+
+        requestParams.input_reference = imageFile;
       }
     }
 

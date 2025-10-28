@@ -8,15 +8,25 @@ import { info as logInfo , error as logError} from "@tauri-apps/plugin-log";
 import openai from "openai";
 import { createProjectNameFromPrompt } from "@/lib/utils";
 import { type LLMModel } from "@/types/constants";
+import { generateId } from "@/lib/utils";
 
 
 export function Home() {
   const navigate = useNavigate();
-  const { createProject, ensureWorkspaceExists, addVideosToProject, projects } = useProjects();
+  const { createProject, ensureWorkspaceExists, addVideosToProject, projects, saveImage } = useProjects();
   const {
     createVideo,
   } = useVideos();
   const [isGenerating, setIsGenrating] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+
+  const handleImageSelect = (file: File) => {
+    setSelectedImage(file);
+  };
+
+  const handleImageClear = () => {
+    setSelectedImage(null);
+  };
 
   const handleStoryboard = async (params: {
     prompt: string;
@@ -70,6 +80,24 @@ export function Home() {
       const projectName = createProjectNameFromPrompt(params.prompt, "video", existingProjectNames);
       const project = await createProject(projectName);
 
+      let inputReferencePath: string | undefined;
+      if (selectedImage) {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => {
+            const base64 = (reader.result as string).split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = reject;
+        });
+        reader.readAsDataURL(selectedImage);
+
+        const base64Data = await base64Promise;
+        const imageName = `${generateId("input")}.png`;
+        inputReferencePath = await saveImage(project.name, imageName, base64Data);
+        logInfo(`Saved input reference image: ${inputReferencePath}`);
+      }
+
       // Start video generation for n samples
       const videoMetadata: VideoMeta[] = [];
       for (let i = 0; i < params.settings.samples; i++) {
@@ -78,6 +106,7 @@ export function Home() {
           prompt: params.prompt,
           size: params.settings.resolution as openai.Videos.VideoSize,
           seconds: params.settings.duration.toString() as openai.Videos.VideoSeconds,
+          input_reference: inputReferencePath as any,
         });
 
         videoMetadata.push({
@@ -87,10 +116,12 @@ export function Home() {
           resolution: params.settings.resolution,
           duration: params.settings.duration,
           created_at: Date.now(),
+          input_reference_image: inputReferencePath,
         } as VideoMeta);
       }
 
       await addVideosToProject(project.name, videoMetadata);
+      setSelectedImage(null);
 
       
       toast.success("Project created and video generation started!", {
@@ -129,7 +160,8 @@ export function Home() {
         <InputBox
           onGenerate={handleGenerate}
           onStoryboard={handleStoryboard}
-          // TODO: What do we do with the image?
+          onImageSelect={handleImageSelect}
+          onImageClear={handleImageClear}
           disabled={isGenerating}
         />
 

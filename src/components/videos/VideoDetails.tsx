@@ -1,6 +1,7 @@
 import { VideoMeta } from "@/hooks/tauri/use-projects";
 import { Button } from "@/components/ui/button";
 import { RemixPopover } from "@/components/videos/RemixPopover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { RotateCw } from "lucide-react";
 
 interface VideoDetailsProps {
@@ -12,18 +13,20 @@ interface VideoDetailsProps {
 export function VideoDetails({ video, onRegenerate, onRemix }: VideoDetailsProps) {
   if (!video) {
     return (
-      <div className="h-full overflow-auto p-6">
-        <div>
-          <h2 className="text-lg font-semibold mb-2">Original Prompt</h2>
-          <p className="text-sm text-muted-foreground">No prompt available</p>
+      <ScrollArea className="h-full">
+        <div className="p-6">
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Original Prompt</h2>
+            <p className="text-sm text-muted-foreground">No prompt available</p>
+          </div>
         </div>
-      </div>
+      </ScrollArea>
     );
   }
 
   return (
-    <div className="h-full overflow-auto p-6">
-      <div className="space-y-6">
+    <ScrollArea className="h-full">
+      <div className="p-6 space-y-6">
         {/* Action Buttons */}
         <div className="flex gap-2">
           {onRegenerate && (
@@ -93,6 +96,6 @@ export function VideoDetails({ video, onRegenerate, onRemix }: VideoDetailsProps
           </div>
         )}
       </div>
-    </div>
+    </ScrollArea>
   );
 }
