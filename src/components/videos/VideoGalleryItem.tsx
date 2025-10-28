@@ -78,7 +78,7 @@ export function VideoGalleryItem({
         </div>
 
         {/* Action buttons overlay - vertical stack */}
-        <div className="absolute top-2 right-2 flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
+        <div className="absolute top-2 right-2 flex flex-col gap-1 z-20" onClick={(e) => e.stopPropagation()}>
           {onRemix && (
             <RemixPopover
               onRemix={onRemix}
