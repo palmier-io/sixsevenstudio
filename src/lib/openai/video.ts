@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { writeFile } from '@tauri-apps/plugin-fs';
+import { writeFile, exists } from '@tauri-apps/plugin-fs';
 import { invoke } from '@tauri-apps/api/core';
 import openai from 'openai';
 
@@ -51,21 +51,15 @@ export async function createVideo(
       const targetHeight = parseInt(heightStr, 10);
 
       if (targetWidth && targetHeight) {
-        // Use Rust to resize the image in-place for optimal quality
-        // This modifies the file on disk to match video dimensions
         await invoke('resize_image', {
           imagePath: params.input_reference,
           targetWidth,
           targetHeight,
         });
-
-        // Now the file is resized, pass the path to OpenAI SDK
-        // The SDK will read and upload it
         requestParams.input_reference = params.input_reference;
       }
     }
 
-    console.log('requestParams', requestParams);
     const response = await client.videos.create(requestParams);
 
     return response.id;
@@ -95,6 +89,12 @@ export async function downloadVideo(
   savePath: string,
 ): Promise<void> {
   try {
+    const fileExists = await exists(savePath);
+    if (fileExists) {
+      console.log(`Video already exists at ${savePath}, skipping download`);
+      return;
+    }
+
     // First check if video is completed
     const status = await getVideoStatus(apiKey, videoId);
 

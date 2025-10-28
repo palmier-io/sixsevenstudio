@@ -5,6 +5,10 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
 import { VideoStatus } from '@/lib/openai/video';
 
+export function getVideoPath(projectPath: string, videoId: string) {
+  return `${projectPath}/videos/${videoId}.mp4`;
+}
+
 interface UseVideoPollingOptions {
   videoId: string;
   projectPath: string;
@@ -19,7 +23,7 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
 
   // Shared download handler
   const handleDownload = useCallback(async (status: VideoStatus, progress: number) => {
-    const savePath = `${projectPath}/videos/${videoId}.mp4`;
+    const savePath = getVideoPath(projectPath, videoId);
 
     // Only download once, but always update status
     if (!hasDownloadedRef.current) {
@@ -51,7 +55,7 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
     hasCheckedLocalRef.current = true;
 
     const checkLocalVideo = async () => {
-      const savePath = `${projectPath}/videos/${videoId}.mp4`;
+      const savePath = getVideoPath(projectPath, videoId);
       const exists = await fileExists(savePath);
 
       if (exists && isMountedRef.current) {

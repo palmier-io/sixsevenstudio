@@ -5,7 +5,6 @@ import { VideoDetails } from "@/components/videos/VideoDetails";
 import { useProjects, type VideoMeta, type ProjectMeta } from "@/hooks/tauri/use-projects";
 import { useVideos } from "@/hooks/use-videos";
 import { useVideoStatusStore } from "@/stores/useVideoStatusStore";
-import { OpenAIVideoJobStatus } from "@/types/openai";
 import { toast } from "sonner";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import {
@@ -13,7 +12,9 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import { STARTING_FRAME_FILENAME } from "@/types/constants";
+import openai from 'openai';
+import { VideoStatus } from "@/lib/openai/video";
+import { getVideoPath } from "@/hooks/use-video-polling";
 
 function VideoPlaceholder(props: { title: string; subtitle: string; pulsing?: boolean }) {
   const { title, subtitle, pulsing } = props;
@@ -98,18 +99,13 @@ export function VideosTab({ projectName }: VideosTabProps) {
       toast.loading("Regenerating video...", { id: "regenerate" });
 
       const currentStatus = getStatus(video.id);
-      const isFailed = currentStatus?.status === OpenAIVideoJobStatus.FAILED;
-
-      const imagePath = projectMeta.image_path
-        ? await getImage(projectName, STARTING_FRAME_FILENAME)
-        : undefined;
+      const isFailed = currentStatus?.status === VideoStatus.FAILED;
 
       const newVideoId = await createVideo({
-        model: video.model,
+        model: video.model as openai.Videos.VideoModel,
         prompt: video.prompt,
-        size: video.resolution,
-        seconds: String(video.duration),
-        inputReferencePath: imagePath || undefined,
+        size: video.resolution as openai.Videos.VideoSize,
+        seconds: video.duration.toString() as openai.Videos.VideoSeconds,
       });
 
       const sampleNumber = isFailed
@@ -199,7 +195,7 @@ export function VideosTab({ projectName }: VideosTabProps) {
             <div className="h-full overflow-auto p-6 flex items-center justify-center">
               {selectedVideoId && projectMeta ? (
                 <VideoPlayer
-                  src={convertFileSrc(`${projectMeta.path}/${selectedVideoId}.mp4`)}
+                  src={convertFileSrc(getVideoPath(projectMeta.path, selectedVideoId))}
                   videoId={selectedVideoId}
                   projectPath={projectMeta.path}
                 />

@@ -37,7 +37,6 @@ export function Home() {
     createVideo,
   } = useVideos();
   const [isGenerating, setIsGenrating] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const handleStoryboard = async (params: {
     prompt: string;
@@ -54,28 +53,6 @@ export function Home() {
       const existingProjectNames = projects.map(p => p.name);
       const projectName = createProjectNameFromPrompt(params.prompt, "storyboard", existingProjectNames);
       const project = await createProject(projectName);
-
-      if (selectedImage) {
-        try {
-          const reader = new FileReader();
-          const imageDataPromise = new Promise<string>((resolve, reject) => {
-            reader.onloadend = () => {
-              const base64String = reader.result as string;
-              const base64Data = base64String.split(',')[1]; // Remove data:image/...;base64, prefix
-              resolve(base64Data);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(selectedImage);
-          });
-          const imageData = await imageDataPromise;
-          await saveImage(project.name, 'starting_frame.png', imageData);
-          logInfo(`Reference image saved for project ${project.name}`);
-        } catch (err) {
-          const errMsg = err instanceof Error ? err.message : String(err);
-          logError(`Failed to save reference image: ${errMsg}`);
-          // Continue with storyboard generation even if image save fails
-        }
-      }
 
       // Navigate immediately with prompt - AI chat will handle generation
       navigate(`/projects/${project.name}?tab=storyboard`, {
@@ -170,8 +147,7 @@ export function Home() {
         <InputBox
           onGenerate={handleGenerate}
           onStoryboard={handleStoryboard}
-          onImageSelect={(file) => setSelectedImage(file)}
-          onImageClear={() => setSelectedImage(null)}
+          // TODO: What do we do with the image?
           disabled={isGenerating}
         />
 
