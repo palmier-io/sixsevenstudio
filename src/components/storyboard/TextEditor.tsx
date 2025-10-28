@@ -1,7 +1,6 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useEffect } from 'react';
-import { debug } from '@tauri-apps/plugin-log';
 
 interface TextEditorProps {
   content: string;
@@ -14,26 +13,20 @@ export function TextEditor({ content, onChange, placeholder, className }: TextEd
   const editor = useEditor({
     extensions: [StarterKit],
     content,
-    editorProps: {
-      attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[150px] outline-none text-left',
-      },
-    },
     parseOptions: {
-      preserveWhitespace: 'full',
+      preserveWhitespace: true,
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.getText());
-      debug(`TextEditor content changed:\n${editor.getText()}`);
+      onChange(editor.getText({ blockSeparator: '\n\n'}));
     },
   });
 
   // Update editor content when prop changes externally
   useEffect(() => {
-    if (editor && content !== editor.getText()) {
+    if (editor && content !== editor.getText({ blockSeparator: '\n\n' })) {
       editor.commands.setContent(content, {
         parseOptions: {
-          preserveWhitespace: 'full',
+          preserveWhitespace: true,
         }
       });
     }

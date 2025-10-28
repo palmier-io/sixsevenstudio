@@ -114,10 +114,12 @@ export function SceneDetailCard({
     try {
       const globalContext = await invoke<string>('read_context', { projectName });
 
-      const imagePrompt = `Create a reference image for the scene based on the following context:
+      const imagePrompt = `Create a starting frame for the scene based on the following context:
       Context: ${globalContext}
       Scene Title: ${scene.title}
       Scene Description: ${scene.description}
+
+      No human faces allowed.
       `;
 
       const path = await generateAndSaveImage(apiKey, projectName, sceneImageName(scene.id), {
