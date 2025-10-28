@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { exists } from "@tauri-apps/plugin-fs";
-import { OpenAIVideoRequestParams, OpenAIVideoJobResponse } from "@/types/openai";
 import * as VideoClient from "@/lib/openai/video";
+import openai from "openai";
 
 export function useVideos() {
   const getApiKey = useCallback(async (): Promise<string> => {
@@ -14,7 +14,7 @@ export function useVideos() {
   }, []);
 
   const createVideo = useCallback(
-    async (params: OpenAIVideoRequestParams): Promise<string> => {
+    async (params: openai.Videos.VideoCreateParams): Promise<string> => {
       const apiKey = await getApiKey();
       return await VideoClient.createVideo(apiKey, params);
     },
@@ -32,7 +32,7 @@ export function useVideos() {
     [getApiKey]
   );
 
-  const getVideoStatus = useCallback(async (videoId: string): Promise<OpenAIVideoJobResponse> => {
+  const getVideoStatus = useCallback(async (videoId: string): Promise<openai.Videos.Video> => {
     const apiKey = await getApiKey();
     return await VideoClient.getVideoStatus(apiKey, videoId);
   }, [getApiKey]);

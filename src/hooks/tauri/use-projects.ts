@@ -26,7 +26,6 @@ export interface ProjectMeta {
   videos: VideoMeta[];
   created_at: number;
   storyboard_response_id?: string;
-  image_path?: string;
 }
 
 

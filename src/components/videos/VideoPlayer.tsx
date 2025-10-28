@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useVideoPolling } from "@/hooks/use-video-polling";
-import { OpenAIVideoJobStatus } from "@/types/openai";
+import { VideoStatus as OpenAIVideoStatus } from "@/lib/openai/video";
 import { VideoStatus } from "@/components/videos/VideoStatus";
 
 interface VideoPlayerProps {
@@ -16,7 +16,7 @@ export function VideoPlayer({ src, videoId, projectPath }: VideoPlayerProps) {
     projectPath,
   });
 
-  const isVideoReady = status?.status === OpenAIVideoJobStatus.COMPLETED && status?.videoSrc;
+  const isVideoReady = status?.status === OpenAIVideoStatus.COMPLETED && status?.videoSrc;
 
   return (
     <Card className="w-full max-w-4xl overflow-hidden">

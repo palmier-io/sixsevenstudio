@@ -16,7 +16,7 @@ interface SceneDetailCardProps {
   sceneNumber: number;
   videoSettings: VideoSettings;
   projectName: string;
-  onUpdateScene: (id: string, field: keyof Scene, value: string) => void;
+  onUpdateScene: (id: string, field: keyof Scene, value: Scene[keyof Scene]) => void;
   onDeleteScene: (id: string) => void;
   onGenerateVideo?: (scene: Scene) => Promise<void>;
   onVideoSettingsChange?: (settings: VideoSettings) => void;
@@ -58,6 +58,7 @@ export function SceneDetailCard({
         const base64 = (reader.result as string).split(',')[1];
         const path = await saveSceneReferenceImage(scene.id, base64);
         setReferenceImagePath(path);
+        onUpdateScene(scene.id, 'hasReferenceImage', true);
       };
       reader.readAsDataURL(file);
     } catch (error) {
@@ -71,6 +72,7 @@ export function SceneDetailCard({
     try {
       await deleteSceneReferenceImage(scene.id);
       setReferenceImagePath(null);
+      onUpdateScene(scene.id, 'hasReferenceImage', false);
     } catch (error) {
       console.error('Failed to remove image:', error);
     }

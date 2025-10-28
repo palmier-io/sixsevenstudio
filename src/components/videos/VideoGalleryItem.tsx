@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Play, Trash2, RotateCw } from "lucide-react";
 import { VideoMeta } from "@/hooks/tauri/use-projects";
-import { OpenAIVideoJobStatus } from "@/types/openai";
+import { VideoStatus as OpenAIVideoStatus } from "@/lib/openai/video";
 import { Button } from "@/components/ui/button";
 import { RemixPopover } from "@/components/videos/RemixPopover";
 import { useVideoPolling } from "@/hooks/use-video-polling";
@@ -31,8 +31,8 @@ export function VideoGalleryItem({
     projectPath,
   });
 
-  const isGenerating = status?.status === OpenAIVideoJobStatus.QUEUED || status?.status === OpenAIVideoJobStatus.IN_PROGRESS;
-  const hasFailed = status?.status === OpenAIVideoJobStatus.FAILED;
+  const isGenerating = status?.status === OpenAIVideoStatus.QUEUED || status?.status === OpenAIVideoStatus.IN_PROGRESS;
+  const hasFailed = status?.status === OpenAIVideoStatus.FAILED;
   const videoSrc = status?.videoSrc;
 
   return (

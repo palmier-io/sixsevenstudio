@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { OpenAIVideoJobStatus } from "@/types/openai";
+import { VideoStatus as OpenAIVideoStatus } from "@/lib/openai/video";
 import { AnimatedCat } from "@/components/AnimatedCat";
 import { AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface VideoStatusProps {
-  status: OpenAIVideoJobStatus;
+  status: OpenAIVideoStatus;
   progress: number;
   size?: "small" | "large";
 }
@@ -20,10 +20,10 @@ const messages = [
 export function VideoStatus({ status, progress, size = "small" }: VideoStatusProps) {
   const [messageIndex, setMessageIndex] = useState(0);
 
-  const isGenerating = status === OpenAIVideoJobStatus.QUEUED || status === OpenAIVideoJobStatus.IN_PROGRESS;
-  const hasFailed = status === OpenAIVideoJobStatus.FAILED;
-  const isQueued = status === OpenAIVideoJobStatus.QUEUED;
-  const showProgress = status === OpenAIVideoJobStatus.IN_PROGRESS;
+  const isGenerating = status === OpenAIVideoStatus.QUEUED || status === OpenAIVideoStatus.IN_PROGRESS;
+  const hasFailed = status === OpenAIVideoStatus.FAILED;
+  const isQueued = status === OpenAIVideoStatus.QUEUED;
+  const showProgress = status === OpenAIVideoStatus.IN_PROGRESS;
 
   // Rotate messages
   useEffect(() => {

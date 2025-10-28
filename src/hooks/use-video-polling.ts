@@ -1,9 +1,9 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useVideos } from '@/hooks/use-videos';
 import { useVideoStatusStore } from '@/stores/useVideoStatusStore';
-import { OpenAIVideoJobStatus } from '@/types/openai';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
+import { VideoStatus } from '@/lib/openai/video';
 
 interface UseVideoPollingOptions {
   videoId: string;
@@ -18,8 +18,8 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
   const hasCheckedLocalRef = useRef(false);
 
   // Shared download handler
-  const handleDownload = useCallback(async (status: OpenAIVideoJobStatus, progress: number) => {
-    const savePath = `${projectPath}/${videoId}.mp4`;
+  const handleDownload = useCallback(async (status: VideoStatus, progress: number) => {
+    const savePath = `${projectPath}/videos/${videoId}.mp4`;
 
     // Only download once, but always update status
     if (!hasDownloadedRef.current) {
@@ -38,7 +38,7 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
     // Always update status (this triggers polling to stop)
     if (isMountedRef.current) {
       setStatus(videoId, {
-        status,
+        status: status,
         progress,
         videoSrc: convertFileSrc(savePath),
       });
@@ -51,13 +51,13 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
     hasCheckedLocalRef.current = true;
 
     const checkLocalVideo = async () => {
-      const savePath = `${projectPath}/${videoId}.mp4`;
+      const savePath = `${projectPath}/videos/${videoId}.mp4`;
       const exists = await fileExists(savePath);
 
       if (exists && isMountedRef.current) {
         // Video already exists locally, set status to completed and skip polling
         setStatus(videoId, {
-          status: OpenAIVideoJobStatus.COMPLETED,
+          status: VideoStatus.COMPLETED,
           progress: 100,
           videoSrc: convertFileSrc(savePath),
         });
@@ -72,7 +72,7 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
   const currentStatus = getStatus(videoId);
   useEffect(() => {
     if (!currentStatus) return;
-    if (currentStatus.status !== OpenAIVideoJobStatus.COMPLETED) return;
+    if (currentStatus.status !== VideoStatus.COMPLETED) return;
 
     handleDownload(currentStatus.status, currentStatus.progress);
   }, [currentStatus?.status, handleDownload]);
@@ -85,12 +85,12 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
       const progress = res.progress ?? 0;
 
       // Download if completed
-      if (res.status === OpenAIVideoJobStatus.COMPLETED) {
-        await handleDownload(res.status, progress);
+      if (res.status === 'completed') {
+        await handleDownload(res.status as VideoStatus, progress);
       } else {
         // For non-completed statuses, just update status and progress
         setStatus(videoId, {
-          status: res.status,
+          status: res.status as VideoStatus,
           progress,
         });
       }
@@ -104,7 +104,7 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
 
     // Only start polling if the video doesn't already exist locally (completed)
     const status = getStatus(videoId);
-    if (!status || status.status !== OpenAIVideoJobStatus.COMPLETED) {
+    if (!status || status.status !== VideoStatus.COMPLETED) {
       startPolling(videoId, poll);
     }
 

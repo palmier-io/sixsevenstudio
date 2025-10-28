@@ -1,7 +1,14 @@
 import OpenAI from 'openai';
 import { writeFile } from '@tauri-apps/plugin-fs';
 import { invoke } from '@tauri-apps/api/core';
-import type { OpenAIVideoJobResponse } from '@/types/openai';
+import openai from 'openai';
+
+export enum VideoStatus {
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  QUEUED = 'queued',
+  IN_PROGRESS = 'in_progress',
+}
 
 let openaiClient: OpenAI | null = null;
 
@@ -19,13 +26,7 @@ function getClient(apiKey: string): OpenAI {
 
 export async function createVideo(
   apiKey: string,
-  params: {
-    model: string;
-    prompt: string;
-    size?: string;
-    seconds?: string;
-    inputReferencePath?: string;
-  }
+  params: openai.Videos.VideoCreateParams
 ): Promise<string> {
   const client = getClient(apiKey);
 
@@ -43,7 +44,7 @@ export async function createVideo(
       requestParams.seconds = params.seconds;
     }
 
-    if (params.inputReferencePath && params.size) {
+    if (params.input_reference && params.size) {
       // Parse target dimensions from size (e.g., "1280x720")
       const [widthStr, heightStr] = params.size.split('x');
       const targetWidth = parseInt(widthStr, 10);
@@ -52,18 +53,19 @@ export async function createVideo(
       if (targetWidth && targetHeight) {
         // Use Rust to resize the image in-place for optimal quality
         // This modifies the file on disk to match video dimensions
-        await invoke('resize_image_for_video', {
-          imagePath: params.inputReferencePath,
+        await invoke('resize_image', {
+          imagePath: params.input_reference,
           targetWidth,
           targetHeight,
         });
 
         // Now the file is resized, pass the path to OpenAI SDK
         // The SDK will read and upload it
-        requestParams.input_reference = params.inputReferencePath;
+        requestParams.input_reference = params.input_reference;
       }
     }
 
+    console.log('requestParams', requestParams);
     const response = await client.videos.create(requestParams);
 
     return response.id;
@@ -76,26 +78,11 @@ export async function createVideo(
 export async function getVideoStatus(
   apiKey: string,
   videoId: string
-): Promise<OpenAIVideoJobResponse> {
+): Promise<openai.Videos.Video> {
   const client = getClient(apiKey);
 
   try {
-    const response = await client.videos.retrieve(videoId);
-
-    return {
-      id: response.id,
-      completed_at: response.completed_at ?? undefined,
-      created_at: response.created_at ?? undefined,
-      error: response.error ?? undefined,
-      expires_at: response.expires_at ?? undefined,
-      model: response.model ?? undefined,
-      object: response.object ?? undefined,
-      progress: response.progress ?? undefined,
-      remixed_from_video_id: response.remixed_from_video_id ?? undefined,
-      seconds: response.seconds ?? undefined,
-      size: response.size ?? undefined,
-      status: response.status as any ?? undefined,
-    };
+    return await client.videos.retrieve(videoId);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to get video status: ${errorMessage}`);
@@ -105,7 +92,7 @@ export async function getVideoStatus(
 export async function downloadVideo(
   apiKey: string,
   videoId: string,
-  savePath: string
+  savePath: string,
 ): Promise<void> {
   try {
     // First check if video is completed
@@ -125,6 +112,9 @@ export async function downloadVideo(
 
     const arrayBuffer = await response.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
+
+    const savePathDir = savePath.split('/').slice(0, -1).join('/');
+    await invoke('ensure_dir_exists', { path: savePathDir });
 
     await writeFile(savePath, uint8Array);
   } catch (error) {
