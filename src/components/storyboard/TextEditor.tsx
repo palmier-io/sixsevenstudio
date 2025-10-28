@@ -1,7 +1,7 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import TextAlign from '@tiptap/extension-text-align';
 import { useEffect } from 'react';
+import { debug } from '@tauri-apps/plugin-log';
 
 interface TextEditorProps {
   content: string;
@@ -12,33 +12,30 @@ interface TextEditorProps {
 
 export function TextEditor({ content, onChange, placeholder, className }: TextEditorProps) {
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3],
-        },
-      }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-        alignments: ['left', 'center', 'right'],
-        defaultAlignment: 'left',
-      }),
-    ],
+    extensions: [StarterKit],
     content,
     editorProps: {
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none min-h-[150px] outline-none text-left',
       },
     },
+    parseOptions: {
+      preserveWhitespace: 'full',
+    },
     onUpdate: ({ editor }) => {
-      onChange(editor.getText().trim());
+      onChange(editor.getText());
+      debug(`TextEditor content changed:\n${editor.getText()}`);
     },
   });
 
   // Update editor content when prop changes externally
   useEffect(() => {
-    if (editor && content !== editor.getText().trim()) {
-      editor.commands.setContent(content);
+    if (editor && content !== editor.getText()) {
+      editor.commands.setContent(content, {
+        parseOptions: {
+          preserveWhitespace: 'full',
+        }
+      });
     }
   }, [content, editor]);
 
