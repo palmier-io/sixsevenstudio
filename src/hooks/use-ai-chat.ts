@@ -24,6 +24,7 @@ export function useAiChat(projectName: string, model: LLMModel) {
     if (!apiKey) return null;
 
     const openai = createOpenAI({ apiKey });
+    const lastGeneratedImageRef = { current: null as string | null };
 
     const customFetch = async (
       _input: RequestInfo | URL,
@@ -39,6 +40,17 @@ export function useAiChat(projectName: string, model: LLMModel) {
           abortSignal: init?.signal as AbortSignal | undefined,
           stopWhen: ({ steps }) => steps.length >= MAX_STEPS_EACH_ROUND,
           onStepFinish: (step) => {
+            // Cache image generation results
+            step.toolResults?.forEach(toolResult => {
+              if (toolResult.toolName === 'image_generation') {
+                const output = toolResult.output as { result: string } | undefined;
+                if (output?.result) {
+                  lastGeneratedImageRef.current = output.result;
+                  debug(`Image generated and cached (${output.result.length} chars)`);
+                }
+              }
+            });
+
             debug(`[AI Agent Step]
               Step finish reason: ${step.finishReason}
               Tool calls: ${step.toolCalls?.map(call => call.toolName + ' ' + JSON.stringify(call.input)).join(', ') || 'none'}
@@ -47,7 +59,12 @@ export function useAiChat(projectName: string, model: LLMModel) {
               Text generated: ${step.text ? `${step.text.substring(0, 50)}...` : '(no text)'}
             `);
           },
-          tools: createStoryboardTools(projectName, invalidateStoryboard, apiKey),
+          tools: createStoryboardTools(
+            projectName,
+            invalidateStoryboard,
+            apiKey,
+            () => lastGeneratedImageRef.current
+          ),
         });
 
         return result.toUIMessageStreamResponse();

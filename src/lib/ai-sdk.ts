@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { invoke } from '@tauri-apps/api/core';
 import type { SceneSummary, SceneDetails } from '@/hooks/tauri/use-storyboard';
-import { generateAndSaveImage, GPT_IMAGE_SIZE_OPTIONS, sceneImageName } from '@/lib/openai/image';
+import { sceneImageName } from '@/lib/openai/image';
+import { createOpenAI } from '@ai-sdk/openai';
 
 export const SYSTEM_PROMPT = `You are an AI assistant for video storyboarding and editing.
 
@@ -39,8 +40,11 @@ You can help users:
 export function createStoryboardTools(
   projectName: string,
   invalidateStoryboard: () => void,
-  apiKey: string
+  apiKey: string,
+  getLastGeneratedImage: () => string | null
 ) {
+  const openai = createOpenAI({ apiKey });
+
   return {
     read_global_context: {
       description: 'Read the global context for the storyboard (style, tone, characters, setting)',
@@ -174,38 +178,32 @@ export function createStoryboardTools(
         return `Scene ${scene_id} deleted successfully.`;
       },
     },
-    image_generation: {
-      description:
-        'Generate an AI image based on a text prompt and save it to the project. Use this to create reference images for scenes.',
+    image_generation: openai.tools.imageGeneration({
+      outputFormat: 'webp',
+    }),
+    save_image: {
+      description: 'Save the last generated image to a scene. Must be called after generating an image with image_generation.',
       inputSchema: z.object({
-        prompt: z.string().describe('The text prompt describing the image to generate'),
-        scene_id: z
-          .string()
-          .describe('The scene ID this image is for (used for naming the saved image)'),
-        size: z
-          .enum(GPT_IMAGE_SIZE_OPTIONS)
-          .optional()
-          .describe('Image size/aspect ratio (default: 1024x1024)'),
+        scene_id: z.string().describe('The scene ID to save the image to'),
       }),
-      execute: async ({
-        prompt,
-        scene_id,
-        size,
-      }: {
-        prompt: string;
-        scene_id: string;
-        size?: (typeof GPT_IMAGE_SIZE_OPTIONS)[number];
-      }) => {
+      execute: async ({ scene_id }: { scene_id: string }) => {
+        const base64Image = getLastGeneratedImage();
+        if (!base64Image) {
+          return 'Error: No image has been generated yet. Generate an image first using image_generation.';
+        }
+
         try {
-          const imagePath = await generateAndSaveImage(apiKey, projectName, sceneImageName(scene_id), {
-            prompt,
-            size,
+          const imagePath = await invoke<string>('save_image', {
+            projectName,
+            imageName: sceneImageName(scene_id),
+            imageData: base64Image,
           });
+
           invalidateStoryboard();
-          return `Image generated and saved successfully at: ${imagePath}\nYou can now reference this image for scene ${scene_id}.`;
+          return `Image saved successfully to scene ${scene_id} at: ${imagePath}`;
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
-          return `Failed to generate image: ${errorMessage}`;
+          return `Failed to save image: ${errorMessage}`;
         }
       },
     },

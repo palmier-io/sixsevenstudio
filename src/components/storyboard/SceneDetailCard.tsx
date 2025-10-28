@@ -42,12 +42,14 @@ export function SceneDetailCard({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [referenceImageUpdatedAt, setReferenceImageUpdatedAt] = useState<number | null>(null);
 
   // Load reference image on mount
   useEffect(() => {
     const loadImage = async () => {
       const path = await getSceneReferenceImage(scene.id);
       setReferenceImagePath(path);
+      setReferenceImageUpdatedAt(path ? Date.now() : null);
     };
     loadImage();
   }, [scene.id, getSceneReferenceImage]);
@@ -60,6 +62,7 @@ export function SceneDetailCard({
         const base64 = (reader.result as string).split(',')[1];
         const path = await saveSceneReferenceImage(scene.id, base64);
         setReferenceImagePath(path);
+        setReferenceImageUpdatedAt(Date.now());
         onUpdateScene(scene.id, 'hasReferenceImage', true);
       };
       reader.readAsDataURL(file);
@@ -80,6 +83,7 @@ export function SceneDetailCard({
     try {
       await deleteSceneReferenceImage(scene.id);
       setReferenceImagePath(null);
+      setReferenceImageUpdatedAt(null);
       onUpdateScene(scene.id, 'hasReferenceImage', false);
     } catch (error) {
       console.error('Failed to remove image:', error);
@@ -122,6 +126,7 @@ export function SceneDetailCard({
       });
 
       setReferenceImagePath(path);
+      setReferenceImageUpdatedAt(Date.now());
       onUpdateScene(scene.id, 'hasReferenceImage', true);
       toast.success('Image generated successfully!');
     } catch (error) {
@@ -152,6 +157,16 @@ export function SceneDetailCard({
     ...videoSettings,
     duration: sceneDuration,
   });
+
+  // Add cache busting to the reference image src, so we invalidate the cache when a new image is generated with the same file name
+  const referenceImageSrc = referenceImagePath
+    ? (() => {
+        const baseSrc = convertFileSrc(referenceImagePath);
+        const separator = baseSrc.includes('?') ? '&' : '?';
+        const cacheBuster = referenceImageUpdatedAt ?? 0;
+        return `${baseSrc}${separator}v=${cacheBuster}`;
+      })()
+    : '';
 
   return (
     <Card className="flex flex-col h-full p-6 overflow-hidden">
@@ -251,7 +266,7 @@ export function SceneDetailCard({
             {referenceImagePath ? (
               <div className="relative group">
                 <img
-                  src={convertFileSrc(referenceImagePath)}
+                  src={referenceImageSrc}
                   alt={`Reference for ${scene.title}`}
                   className="w-full h-auto object-contain rounded-md border"
                 />
