@@ -95,7 +95,6 @@ export async function downloadVideo(
       return;
     }
 
-    // First check if video is completed
     const status = await getVideoStatus(apiKey, videoId);
 
     if (status.status !== 'completed') {

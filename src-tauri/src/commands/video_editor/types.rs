@@ -20,7 +20,6 @@ pub struct TimelineClip {
 pub struct EditorState {
     pub clips: Vec<TimelineClip>,
     pub selected_clip_id: Option<String>,
-    pub current_playback_time: Option<f64>,
     pub preview_video_path: Option<String>,
 }
 
