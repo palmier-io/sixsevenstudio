@@ -6,10 +6,7 @@ use crate::commands::video_editor::{
     types::{EditorState, ExportProgress, TimelineClip},
 };
 
-use crate::commands::projects::{
-    filesystem::get_project_path,
-    types::{EDITOR_STATE_FILE, PROJECT_META_DIR},
-};
+use crate::commands::projects::paths::ProjectPaths;
 
 /// Create a stitched preview video from timeline clips
 #[tauri::command]
@@ -25,10 +22,10 @@ pub async fn create_preview_video(
         return Err("No clips to preview".to_string());
     }
 
-    let project_path = get_project_path(&app, &project_name)?;
+    let paths = ProjectPaths::from_name(&app, &project_name)?;
 
     // Create temp directory for intermediate files
-    let temp_dir = project_path.join("temp");
+    let temp_dir = paths.root().join("temp");
     std::fs::create_dir_all(&temp_dir)
         .map_err(|e| format!("Failed to create temp directory: {}", e))?;
 
@@ -82,8 +79,8 @@ pub async fn save_editor_state(
     project_name: String,
     state: EditorState,
 ) -> Result<(), String> {
-    let project_path = get_project_path(&app, &project_name)?;
-    let editor_state_file = project_path.join(PROJECT_META_DIR).join(EDITOR_STATE_FILE);
+    let paths = ProjectPaths::from_name(&app, &project_name)?;
+    let editor_state_file = paths.editor_state_file();
 
     let json = serde_json::to_string_pretty(&state)
         .map_err(|e| format!("Failed to serialize editor state: {}", e))?;
@@ -100,8 +97,8 @@ pub async fn load_editor_state(
     app: AppHandle,
     project_name: String,
 ) -> Result<Option<EditorState>, String> {
-    let project_path = get_project_path(&app, &project_name)?;
-    let editor_state_file = project_path.join(PROJECT_META_DIR).join(EDITOR_STATE_FILE);
+    let paths = ProjectPaths::from_name(&app, &project_name)?;
+    let editor_state_file = paths.editor_state_file();
 
     if !editor_state_file.exists() {
         return Ok(None);

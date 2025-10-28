@@ -1,12 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-pub const WORKSPACE_FOLDER: &str = "sixsevenstudio";
-pub const PROJECT_META_DIR: &str = ".sixseven";
-pub const PROJECT_META_FILE: &str = "metadata.json";
-pub const STORYBOARD_FILE: &str = "storyboard.json";
-pub const EDITOR_STATE_FILE: &str = "editor_state.json";
-pub const IMAGES_FOLDER: &str = "images";
-
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ProjectSummary {
     pub name: String,
@@ -21,8 +14,6 @@ pub struct ProjectMeta {
     pub created_at: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub storyboard_response_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub image_path: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -46,15 +37,22 @@ pub struct VideoMeta {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct Scene {
+#[serde(rename_all = "camelCase")]
+pub struct SceneSummary {
     pub id: String,
     pub title: String,
-    pub description: String,
     pub duration: String,
+    pub has_reference_image: bool,
+    pub order: i32,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct StoryboardData {
-    pub scenes: Vec<Scene>,
-    pub global_context: String,
+#[serde(rename_all = "camelCase")]
+pub struct SceneDetails {
+    pub id: String,
+    pub title: String,
+    pub duration: String,
+    pub description: String,
+    pub has_reference_image: bool,
+    pub order: i32,
 }
