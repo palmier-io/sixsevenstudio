@@ -94,7 +94,7 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
   }
 
   const placeholderText = mode === "storyboard"
-    ? "Describe the idea you have in mind for your storyboard..."
+    ? "Describe the story, characters, settings"
     : "Describe your video scene..."
 
   const handleSend = () => {
@@ -136,24 +136,26 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
         </div>
         <div className="flex items-center justify-between gap-2 border-t px-4 py-3">
           <div className="flex items-center gap-1.5">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon-sm" aria-label="Upload image" onClick={handlePickImage}>
-                    <ImageIcon className="size-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Add image</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
             {mode === "video" && (
-              <VideoSettingsButton
-                settings={settings}
-                onSettingsChange={setSettings}
-              />
+              <>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="icon-sm" aria-label="Upload image" onClick={handlePickImage}>
+                        <ImageIcon className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Add image</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <VideoSettingsButton
+                  settings={settings}
+                  onSettingsChange={setSettings}
+                />
+              </>
             )}
             {mode === "storyboard" && (
-              <ModelSelect value={llmModel} onValueChange={setLLMModel} size="default" />
+              <ModelSelect value={llmModel} onValueChange={setLLMModel} size="default" className="w-[120px]" />
             )}
             {imagePreviewUrl ? (
               <div className="relative">

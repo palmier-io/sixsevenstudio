@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { writeFile, exists } from '@tauri-apps/plugin-fs';
 import { invoke } from '@tauri-apps/api/core';
 import openai from 'openai';
+import { debug } from '@tauri-apps/plugin-log';
 
 export enum VideoStatus {
   COMPLETED = 'completed',
@@ -62,6 +63,7 @@ export async function createVideo(
 
     const response = await client.videos.create(requestParams);
 
+    debug(`Video created: ${response.id}`);
     return response.id;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -76,7 +78,9 @@ export async function getVideoStatus(
   const client = getClient(apiKey);
 
   try {
-    return await client.videos.retrieve(videoId);
+    const response = await client.videos.retrieve(videoId);
+    debug(`Video status: ${response.status}, progress: ${response.progress} error: ${response.error?.message}`);
+    return response;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to get video status: ${errorMessage}`);
@@ -91,7 +95,7 @@ export async function downloadVideo(
   try {
     const fileExists = await exists(savePath);
     if (fileExists) {
-      console.log(`Video already exists at ${savePath}, skipping download`);
+      debug(`Video already exists at ${savePath}, skipping download`);
       return;
     }
 

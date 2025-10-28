@@ -11,10 +11,10 @@ interface VideoStatusProps {
 }
 
 const messages = [
-  "cooking...",
-  "meowing...",
-  "six seven...",
-  "almost there...",
+  "Hang tight... we're cooking up a video for you!",
+  "Video will be downloaded once ready",
+  "OpenAI only retains videos for 1 hour, so please don't close the app yet!",
+  "Almost there...",
 ];
 
 export function VideoStatus({ status, progress, size = "small" }: VideoStatusProps) {

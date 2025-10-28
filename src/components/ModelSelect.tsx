@@ -18,7 +18,7 @@ interface ModelSelectProps {
 export function ModelSelect({ value, onValueChange, size = 'default', className }: ModelSelectProps) {
   const sizeClasses = {
     default: {
-      trigger: 'h-8 min-h-8 max-h-8 w-[90px] text-xs px-2 py-0',
+      trigger: 'h-8 min-h-8 max-h-8 w-[90px] text-[12px] px-2 py-0',
       icon: 'size-3',
       gap: 'gap-1',
     },
