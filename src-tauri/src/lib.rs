@@ -24,25 +24,20 @@ pub fn run() {
             get_project,
             add_videos_to_project,
             delete_video_from_project,
-            // storyboard commands
-            get_storyboard,
-            save_storyboard,
-            delete_storyboard,
             // image commands
             save_image,
             get_image,
             delete_image,
             resize_image,
-            // scene-based storyboard commands
+            // storyboard commands
             read_context,
             write_context,
             list_scenes,
             read_scene,
             write_scene,
             delete_scene,
-            save_scene_reference_image,
-            get_scene_reference_image,
-            delete_scene_reference_image,
+            reorder_scenes,
+            ensure_project_videos_dir,
             // video editor commands
             create_preview_video,
             save_editor_state,
