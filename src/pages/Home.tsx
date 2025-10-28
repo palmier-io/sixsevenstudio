@@ -6,33 +6,12 @@ import { useProjects, VideoMeta } from "@/hooks/tauri/use-projects";
 import { toast } from "sonner";
 import { info as logInfo , error as logError} from "@tauri-apps/plugin-log";
 import openai from "openai";
+import { createProjectNameFromPrompt } from "@/lib/utils";
 
-function createProjectNameFromPrompt(
-  prompt: string,
-  fallbackPrefix: string,
-  existingProjects: string[]
-): string {
-  const baseName = prompt
-    .slice(0, 50)
-    .trim()
-    .replace(/[^a-zA-Z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .toLowerCase() || `${fallbackPrefix}-${Date.now()}`;
-
-  // Check for collisions and append suffix if needed
-  let finalName = baseName;
-  let suffix = 2;
-  while (existingProjects.includes(finalName)) {
-    finalName = `${baseName}-${suffix}`;
-    suffix++;
-  }
-
-  return finalName;
-}
 
 export function Home() {
   const navigate = useNavigate();
-  const { createProject, ensureWorkspaceExists, addVideosToProject, projects, saveImage } = useProjects();
+  const { createProject, ensureWorkspaceExists, addVideosToProject, projects } = useProjects();
   const {
     createVideo,
   } = useVideos();

@@ -6,7 +6,6 @@ import { Timeline } from "@/components/editor/Timeline";
 import { useEditorState } from "@/hooks/tauri/use-editor-state";
 import { useEditor } from "@/hooks/tauri/use-editor";
 import { useProjects } from "@/hooks/tauri/use-projects";
-import { convertFileSrc } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import type { VideoClip } from "@/types/video-editor";
 import { getVideoPath } from "@/hooks/use-video-polling";
@@ -49,7 +48,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
             name: video.scene_number && video.scene_title
               ? `Scene ${video.scene_number}: ${video.scene_title}`
               : `Video ${video.id.slice(0, 8)}`,
-            videoPath: convertFileSrc(getVideoPath(project.path, video.id)),
+            videoPath: getVideoPath(project.path, video.id),
             originalDuration: video.duration,
             createdAt: video.created_at,
             sceneNumber: video.scene_number,

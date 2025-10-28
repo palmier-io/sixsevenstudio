@@ -9,18 +9,9 @@ import { SceneList, type SelectedView } from '@/components/storyboard/SceneList'
 import { OverviewCard } from '@/components/storyboard/OverviewCard';
 import { SceneDetailCard } from '@/components/storyboard/SceneDetailCard';
 import openai from 'openai';
+import { generateId } from '@/lib/utils';
 
 const SAVE_AFTER_IDLE_SECONDS = 5000; // 5 seconds
-
-const generateSceneId = () => {
-  const cryptoRef = typeof globalThis !== 'undefined' && 'crypto' in globalThis
-    ? (globalThis.crypto as Crypto)
-    : undefined;
-  if (cryptoRef && typeof cryptoRef.randomUUID === 'function') {
-    return cryptoRef.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-};
 
 interface StoryboardTabProps {
   projectName: string;
@@ -51,7 +42,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
       setGlobalContext(storyboard.globalContext);
     } else if (!isLoadingStoryboard) {
       // Initialize with default first scene if no data exists
-      const fallbackId = generateSceneId();
+      const fallbackId = generateId('scene');
       setScenes([{
         id: fallbackId,
         title: 'Scene 1',
@@ -93,7 +84,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
   const addScene = () => {
     const nextOrder = scenes.length;
     const newScene: Scene = {
-      id: generateSceneId(),
+      id: generateId('scene'),
       title: `Scene ${nextOrder + 1}`,
       description: '',
       duration: '4s',

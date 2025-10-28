@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { debug, error as logError } from '@tauri-apps/plugin-log';
 import type { TimelineClip, VideoClip, EditorState } from '@/types/video-editor';
+import { generateId } from '@/lib/utils';
 
 export function useEditorState(projectName: string, previewVideoPath: string | null = null) {
   const [clips, setClips] = useState<TimelineClip[]>([]);
@@ -20,7 +21,9 @@ export function useEditorState(projectName: string, previewVideoPath: string | n
         if (savedState) {
           setClips(savedState.clips);
           setSelectedClipId(savedState.selectedClipId);
-          setCurrentPlaybackTime(savedState.currentPlaybackTime);
+          setCurrentPlaybackTime(savedState.clips.length > 0 ? 0 : null);
+        } else {
+          setCurrentPlaybackTime(null);
         }
         setIsLoaded(true);
       })
@@ -38,11 +41,9 @@ export function useEditorState(projectName: string, previewVideoPath: string | n
     const state: EditorState = {
       clips,
       selectedClipId,
-      currentPlaybackTime,
       previewVideoPath,
     };
-
-
+  
     invoke('save_editor_state', { projectName, state })
       .then(() => {
         debug(`[EditorState] Successfully saved state for project: ${projectName}`);
@@ -51,7 +52,7 @@ export function useEditorState(projectName: string, previewVideoPath: string | n
         logError(`[EditorState] Failed to save state: ${err}`);
         console.error(err);
       });
-  }, [clips, selectedClipId, currentPlaybackTime, previewVideoPath, projectName, isLoaded]);
+  }, [clips, selectedClipId, previewVideoPath, projectName, isLoaded]);
 
   // Calculate total duration
   const totalDuration = clips.length > 0
@@ -62,6 +63,7 @@ export function useEditorState(projectName: string, previewVideoPath: string | n
   const addClip = useCallback((clip: VideoClip, position: number) => {
     const timelineClip: TimelineClip = {
       ...clip,
+      id: generateId('clip'),
       position,
       trimStart: 0,
       trimEnd: clip.originalDuration,
@@ -103,7 +105,7 @@ export function useEditorState(projectName: string, previewVideoPath: string | n
       // Create first clip (before split)
       const firstClip: TimelineClip = {
         ...clip,
-        id: `${clip.id}-1`,
+        id: generateId('clip'),
         duration: splitPointInClip,
         trimEnd: clip.trimStart + splitPointInClip,
       };
@@ -111,7 +113,7 @@ export function useEditorState(projectName: string, previewVideoPath: string | n
       // Create second clip (after split)
       const secondClip: TimelineClip = {
         ...clip,
-        id: `${clip.id}-2`,
+        id: generateId('clip'),
         position: clip.position + splitPointInClip,
         duration: clip.duration - splitPointInClip,
         trimStart: clip.trimStart + splitPointInClip,

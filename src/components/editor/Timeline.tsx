@@ -12,6 +12,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -47,6 +48,10 @@ export const Timeline = memo(function Timeline({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    onClipSelect(event.active.id as string);
+  }, [onClipSelect]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -220,6 +225,7 @@ export const Timeline = memo(function Timeline({
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
+            onDragStart={handleDragStart}
           >
             <div className="space-y-4" ref={timelineRef}>
               <div className="relative h-6 border-b border-border cursor-pointer" onClick={handleTimelineClick}>

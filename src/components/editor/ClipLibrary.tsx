@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import type { VideoClip } from "@/types/video-editor";
 
 interface ClipLibraryProps {
@@ -24,6 +25,8 @@ function ClipItem({ clip, onAdd }: ClipItemProps) {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const videoSrc = clip.videoPath ? `${convertFileSrc(clip.videoPath)}#t=0.1` : null;
+
   return (
     <div className="relative group max-w-xs">
       <div
@@ -32,35 +35,35 @@ function ClipItem({ clip, onAdd }: ClipItemProps) {
           "hover:border-primary/50 hover:shadow transition-all"
         )}
       >
-      <AspectRatio ratio={16 / 9} className="bg-muted">
-        {clip.videoPath ? (
-          <video
-            src={`${clip.videoPath}#t=0.1`}
-            className="w-full h-full object-cover"
-            preload="metadata"
-            muted
-          />
-        ) : clip.thumbnail ? (
-          <img src={clip.thumbnail} alt={clip.name} className="object-cover w-full h-full" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="size-6 text-muted-foreground"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"
-              />
-            </svg>
-          </div>
-        )}
-      </AspectRatio>
+        <AspectRatio ratio={16 / 9} className="bg-muted">
+          {videoSrc ? (
+            <video
+              src={videoSrc}
+              className="w-full h-full object-cover"
+              preload="metadata"
+              muted
+            />
+          ) : clip.thumbnail ? (
+            <img src={clip.thumbnail} alt={clip.name} className="object-cover w-full h-full" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="size-6 text-muted-foreground"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"
+                />
+              </svg>
+            </div>
+          )}
+        </AspectRatio>
 
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1.5">
           <div className="flex items-center justify-between gap-1.5">
