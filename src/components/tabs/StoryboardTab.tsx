@@ -26,6 +26,7 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
     writeContext,
     deleteScene: deleteSceneAPI,
     reorderScenes,
+    getSceneReferenceImage,
   } = useStoryboard(projectName);
   const { createVideo } = useVideos();
 
@@ -160,12 +161,16 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
                 onGenerateVideo={async (scene: Scene) => {
                   const scenePrompt = `${globalContext}\n\n${scene.description}`;
                   const sceneDuration = parseInt(scene.duration.replace('s', ''), 10);
+                  const referenceImagePath = scene.hasReferenceImage
+                    ? await getSceneReferenceImage(scene.id)
+                    : null;
 
                   const videoId = await createVideo({
                     model: videoSettings.model,
                     prompt: scenePrompt,
                     size: videoSettings.resolution as openai.Videos.VideoSize,
                     seconds: sceneDuration.toString() as openai.Videos.VideoSeconds,
+                    ...(referenceImagePath && { input_reference: referenceImagePath as any }),
                   });
 
                   await addVideosToProject(projectName, [{

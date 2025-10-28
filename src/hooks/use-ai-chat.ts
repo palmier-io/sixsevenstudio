@@ -41,13 +41,13 @@ export function useAiChat(projectName: string, model: LLMModel) {
           onStepFinish: (step) => {
             debug(`[AI Agent Step]
               Step finish reason: ${step.finishReason}
-              Tool call count: ${step.toolCalls?.length || 0}
+              Tool calls: ${step.toolCalls?.map(call => call.toolName + ' ' + JSON.stringify(call.input)).join(', ') || 'none'}
               Tool result count: ${step.toolResults?.length || 0}
               Tokens used: ${step.usage?.totalTokens || 0}
               Text generated: ${step.text ? `${step.text.substring(0, 50)}...` : '(no text)'}
             `);
           },
-          tools: createStoryboardTools(projectName, invalidateStoryboard),
+          tools: createStoryboardTools(projectName, invalidateStoryboard, apiKey),
         });
 
         return result.toUIMessageStreamResponse();

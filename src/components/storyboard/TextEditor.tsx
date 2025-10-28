@@ -31,13 +31,13 @@ export function TextEditor({ content, onChange, placeholder, className }: TextEd
       },
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      onChange(editor.getText().trim());
     },
   });
 
   // Update editor content when prop changes externally
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
+    if (editor && content !== editor.getText().trim()) {
       editor.commands.setContent(content);
     }
   }, [content, editor]);

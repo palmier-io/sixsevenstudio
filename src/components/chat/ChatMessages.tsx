@@ -77,6 +77,7 @@ interface ChatMessagesProps {
 export function ChatMessages({ messages, status }: ChatMessagesProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isStreaming = status === 'streaming';
+  const isSubmitted = status === 'submitted';
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -116,7 +117,7 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
             {messages.map((message) => (
               <ChatMessage key={message.id} message={message} />
             ))}
-            {isStreaming && (
+            {isSubmitted && (
               <div className="flex items-center gap-2 text-muted-foreground text-sm p-3">
                 <AnimatedCat className="text-[8px] leading-tight" animate={true} />
                 <span>thinking...</span>
