@@ -25,5 +25,3 @@ export const DEFAULT_VIDEO_SETTINGS: VideoSettings = {
   duration: 12,
   samples: 1,
 };
-
-export const STARTING_FRAME_FILENAME = 'starting_frame.png';

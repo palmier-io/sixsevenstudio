@@ -18,6 +18,7 @@ pub fn run() {
             // workspace & projects commands
             get_workspace_dir,
             ensure_workspace_exists,
+            ensure_dir_exists,
             list_projects,
             create_project,
             delete_project,
@@ -37,7 +38,6 @@ pub fn run() {
             write_scene,
             delete_scene,
             reorder_scenes,
-            ensure_project_videos_dir,
             // video editor commands
             create_preview_video,
             save_editor_state,

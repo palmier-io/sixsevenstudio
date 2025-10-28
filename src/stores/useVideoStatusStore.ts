@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { OpenAIVideoJobStatus } from '@/types/openai';
+import { VideoStatus as OpenAIVideoStatus } from '@/lib/openai/video';
 
 interface VideoStatus {
-  status: OpenAIVideoJobStatus;
+  status: OpenAIVideoStatus;
   progress: number;
   videoSrc?: string;
 }
@@ -19,8 +19,8 @@ interface VideoStatusStore {
 const pollingIntervals = new Map<string, number>();
 const POLL_INTERVAL = 5000; // 5 seconds between poll cycles
 
-function isTerminalState(status: OpenAIVideoJobStatus) {
-  return status === OpenAIVideoJobStatus.COMPLETED || status === OpenAIVideoJobStatus.FAILED;
+function isTerminalState(status: OpenAIVideoStatus) {
+  return status === OpenAIVideoStatus.COMPLETED || status === OpenAIVideoStatus.FAILED;
 }
 
 export const useVideoStatusStore = create<VideoStatusStore>((set, get) => ({

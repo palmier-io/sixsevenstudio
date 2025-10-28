@@ -5,7 +5,7 @@ import { useVideos } from "@/hooks/use-videos";
 import { useProjects, VideoMeta } from "@/hooks/tauri/use-projects";
 import { toast } from "sonner";
 import { info as logInfo , error as logError} from "@tauri-apps/plugin-log";
-import { STARTING_FRAME_FILENAME } from "@/types/constants";
+import openai from "openai";
 
 function createProjectNameFromPrompt(
   prompt: string,
@@ -68,7 +68,7 @@ export function Home() {
             reader.readAsDataURL(selectedImage);
           });
           const imageData = await imageDataPromise;
-          await saveImage(project.name, STARTING_FRAME_FILENAME, imageData);
+          await saveImage(project.name, 'starting_frame.png', imageData);
           logInfo(`Reference image saved for project ${project.name}`);
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : String(err);
@@ -115,10 +115,10 @@ export function Home() {
       const videoMetadata: VideoMeta[] = [];
       for (let i = 0; i < params.settings.samples; i++) {
         const videoId = await createVideo({
-          model: params.settings.model,
+          model: params.settings.model as openai.Videos.VideoModel,
           prompt: params.prompt,
-          size: params.settings.resolution,
-          seconds: params.settings.duration.toString(),
+          size: params.settings.resolution as openai.Videos.VideoSize,
+          seconds: params.settings.duration.toString() as openai.Videos.VideoSeconds,
         });
 
         videoMetadata.push({

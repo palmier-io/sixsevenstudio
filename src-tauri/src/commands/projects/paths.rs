@@ -98,13 +98,17 @@ impl ProjectPaths {
         &self.root
     }
 
+    pub fn metadata_dir(&self) -> PathBuf {
+        self.root.join(PROJECT_META_DIR)
+    }
+
     /// ~/sixsevenstudio/projects/<project_name>/.sixseven/metadata.json
     pub fn metadata_file(&self) -> PathBuf {
-        self.root.join(PROJECT_META_DIR).join(PROJECT_META_FILE)
+        self.metadata_dir().join(PROJECT_META_FILE)
     }
 
     pub fn editor_state_file(&self) -> PathBuf {
-        self.root.join(PROJECT_META_DIR).join(EDITOR_STATE_FILE)
+        self.metadata_dir().join(EDITOR_STATE_FILE)
     }
 
     /// ~/sixsevenstudio/projects/<project_name>/images/

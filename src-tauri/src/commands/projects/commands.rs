@@ -1,4 +1,5 @@
 use std::fs;
+use std::path::Path;
 use tauri::AppHandle;
 
 use super::filesystem::{
@@ -55,8 +56,8 @@ pub async fn create_project(app: AppHandle, name: String) -> Result<ProjectSumma
     let created_at = current_timestamp();
 
     // init metadata
+    ensure_dir(&paths.metadata_dir())?;
     let meta_path = paths.metadata_file();
-    ensure_dir(&meta_path)?;
     if !meta_path.exists() {
         let json = serde_json::to_string_pretty(&ProjectMeta {
             videos: Vec::new(),
@@ -231,7 +232,6 @@ pub async fn reorder_scenes(
 }
 
 #[tauri::command]
-pub async fn ensure_project_videos_dir(app: AppHandle, project_name: String) -> Result<(), String> {
-    let paths = ProjectPaths::from_name(&app, &project_name)?;
-    ensure_dir(&paths.videos_dir())
+pub async fn ensure_dir_exists(app: AppHandle, path: String) -> Result<(), String> {
+    ensure_dir(&Path::new(&path))
 }
