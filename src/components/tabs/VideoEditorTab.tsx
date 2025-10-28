@@ -9,6 +9,8 @@ import { useProjects } from "@/hooks/tauri/use-projects";
 import { toast } from "sonner";
 import type { VideoClip } from "@/types/video-editor";
 import { getVideoPath } from "@/hooks/use-video-polling";
+import { useVideoStatusStore } from "@/stores/useVideoStatusStore";
+import { VideoStatus } from "@/lib/openai/video";
 
 interface VideoEditorTabProps {
   projectName: string;
@@ -16,6 +18,7 @@ interface VideoEditorTabProps {
 
 export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
   const { getProject } = useProjects();
+  const { getStatus } = useVideoStatusStore();
   const [previewVideoPath, setPreviewVideoPath] = useState<string | null>(null);
 
   const {
@@ -42,19 +45,24 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
     const loadVideos = async () => {
       try {
         const project = await getProject(projectName);
-        const videoClips: VideoClip[] = project.videos.map((video) => {
-          return {
-            id: video.id,
-            name: video.scene_number && video.scene_title
-              ? `Scene ${video.scene_number}: ${video.scene_title}`
-              : `Video ${video.id.slice(0, 8)}`,
-            videoPath: getVideoPath(project.path, video.id),
-            originalDuration: video.duration,
-            createdAt: video.created_at,
-            sceneNumber: video.scene_number,
-            sceneTitle: video.scene_title,
-          };
-        });
+        const videoClips: VideoClip[] = project.videos
+          .filter((video) => {
+            const status = getStatus(video.id);
+            return status?.status === VideoStatus.COMPLETED && status?.videoSrc;
+          })
+          .map((video) => {
+            return {
+              id: video.id,
+              name: video.scene_number && video.scene_title
+                ? `Scene ${video.scene_number}: ${video.scene_title}`
+                : `Video ${video.id.slice(0, 8)}`,
+              videoPath: getVideoPath(project.path, video.id),
+              originalDuration: video.duration,
+              createdAt: video.created_at,
+              sceneNumber: video.scene_number,
+              sceneTitle: video.scene_title,
+            };
+          });
         setLibraryClips(videoClips);
       } catch (error) {
         console.error('Failed to load videos:', error);
@@ -63,7 +71,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
     };
 
     loadVideos();
-  }, [projectName, getProject]);
+  }, [projectName, getProject, getStatus]);
 
   const handleClipAdd = (clip: VideoClip) => {
     addClip(clip, totalDuration);
