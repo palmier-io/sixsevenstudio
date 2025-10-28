@@ -1,5 +1,6 @@
 mod commands;
 pub mod filesystem;
-mod storyboard;
+pub mod paths;
+pub mod scenes;
 pub mod types;
 pub use commands::*;
