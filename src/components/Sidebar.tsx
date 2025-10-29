@@ -18,6 +18,8 @@ import { useProjects, ProjectSummary } from "@/hooks/tauri/use-projects"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ApiKey } from "@/components/ApiKey"
+import { toast } from "sonner"
+import { error as logError } from "@tauri-apps/plugin-log"
 
 export function Sidebar({
   onSelectProject,
@@ -38,8 +40,11 @@ export function Sidebar({
     try {
       await deleteProject(name, "trash")
     } catch (error) {
-      console.error("Failed to delete project:", error)
-      alert(`Failed to delete project: ${error}`)
+      const errMsg = error instanceof Error ? error.message : String(error)
+      logError(`Failed to delete project: ${errMsg}`)
+      toast.error("Failed to delete project", {
+        description: errMsg,
+      })
     }
   }
 

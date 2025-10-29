@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 import { writeFile, exists, readFile } from '@tauri-apps/plugin-fs';
 import { invoke } from '@tauri-apps/api/core';
-import openai from 'openai';
 import { debug } from '@tauri-apps/plugin-log';
+import type openai from 'openai';
 
 export enum VideoStatus {
   COMPLETED = 'completed',

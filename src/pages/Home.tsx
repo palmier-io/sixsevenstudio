@@ -17,7 +17,7 @@ export function Home() {
   const {
     createVideo,
   } = useVideos();
-  const [isGenerating, setIsGenrating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const handleImageSelect = (file: File) => {
@@ -73,7 +73,7 @@ export function Home() {
     };
   }) => {
     try {
-      setIsGenrating(true);
+      setIsGenerating(true);
       await ensureWorkspaceExists();
 
       const existingProjectNames = projects.map(p => p.name);
@@ -145,7 +145,7 @@ export function Home() {
       });
       logError(`Failed to start video generation ${errMsg}`);
     } finally {
-      setIsGenrating(false);
+      setIsGenerating(false);
     }
   };
 

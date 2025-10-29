@@ -47,7 +47,7 @@ interface VideosTabProps {
 }
 
 export function VideosTab({ projectName }: VideosTabProps) {
-  const { getProject, deleteVideoFromProject, addVideosToProject, getImage } = useProjects();
+  const { getProject, deleteVideoFromProject, addVideosToProject } = useProjects();
   const { createVideo, remixVideo } = useVideos();
   const { getStatus } = useVideoStatusStore();
 
@@ -142,7 +142,7 @@ export function VideosTab({ projectName }: VideosTabProps) {
         description: error instanceof Error ? error.message : String(error),
       });
     }
-  }, [projectName, projectMeta, createVideo, getStatus, getImage, addVideosToProject, deleteVideoFromProject, getProject]);
+  }, [projectName, projectMeta, createVideo, getStatus, addVideosToProject, deleteVideoFromProject, getProject]);
 
   const handleVideoRemix = useCallback(async (video: VideoMeta, remixPrompt: string) => {
     if (!projectName || !projectMeta) return;
