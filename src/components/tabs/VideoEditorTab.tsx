@@ -161,7 +161,17 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
       {/* Top Section */}
       <ResizablePanel defaultSize={75} minSize={40}>
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Left Panel: Video Preview */}
+          {/* Left Panel: Clip Library */}
+          <ResizablePanel defaultSize={15} minSize={10}>
+            <ClipLibrary
+              clips={libraryClips}
+              onClipAdd={handleClipAdd}
+            />
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Right Panel: Video Preview */}
           <ResizablePanel defaultSize={80} minSize={40}>
             <div className="h-full overflow-auto p-6 flex items-center justify-center">
               <VideoPreview
@@ -171,16 +181,6 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
                 isGenerating={isGeneratingPreview}
               />
             </div>
-          </ResizablePanel>
-
-          <ResizableHandle withHandle />
-
-          {/* Right Panel: Clip Library */}
-          <ResizablePanel defaultSize={20} minSize={15}>
-            <ClipLibrary
-              clips={libraryClips}
-              onClipAdd={handleClipAdd}
-            />
           </ResizablePanel>
         </ResizablePanelGroup>
       </ResizablePanel>

@@ -190,7 +190,18 @@ export function VideosTab({ projectName }: VideosTabProps) {
       {/* Top Section */}
       <ResizablePanel defaultSize={75} minSize={40}>
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Left Panel: Video Player */}
+          {/* Left Panel: Video Details */}
+          <ResizablePanel defaultSize={25} minSize={15}>
+            <VideoDetails
+              video={selectedVideo}
+              onRegenerate={selectedVideo ? () => handleVideoRegenerate(selectedVideo) : undefined}
+              onRemix={selectedVideo ? (remixPrompt: string) => handleVideoRemix(selectedVideo, remixPrompt) : undefined}
+            />
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Right Panel: Video Player */}
           <ResizablePanel defaultSize={75} minSize={40}>
             <div className="h-full overflow-auto p-6 flex items-center justify-center">
               {selectedVideoId && projectMeta ? (
@@ -206,17 +217,6 @@ export function VideosTab({ projectName }: VideosTabProps) {
                 />
               )}
             </div>
-          </ResizablePanel>
-
-          <ResizableHandle withHandle />
-
-          {/* Right Panel: Video Details */}
-          <ResizablePanel defaultSize={25} minSize={15}>
-            <VideoDetails
-              video={selectedVideo}
-              onRegenerate={selectedVideo ? () => handleVideoRegenerate(selectedVideo) : undefined}
-              onRemix={selectedVideo ? (remixPrompt: string) => handleVideoRemix(selectedVideo, remixPrompt) : undefined}
-            />
           </ResizablePanel>
         </ResizablePanelGroup>
       </ResizablePanel>
