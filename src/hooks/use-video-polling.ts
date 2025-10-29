@@ -17,9 +17,14 @@ interface UseVideoPollingOptions {
 export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions) => {
   const { getVideoStatus, downloadVideo, fileExists } = useVideos();
   const { setStatus, getStatus, startPolling } = useVideoStatusStore();
-  const isMountedRef = useRef(true);
   const hasDownloadedRef = useRef(false);
   const hasCheckedLocalRef = useRef(false);
+
+  // Reset per-video refs when identifiers change
+  useEffect(() => {
+    hasDownloadedRef.current = false;
+    hasCheckedLocalRef.current = false;
+  }, [videoId, projectPath]);
 
   // Shared download handler
   const handleDownload = useCallback(async (status: VideoStatus, progress: number) => {
@@ -27,26 +32,23 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
 
     // Only download once, but always update status
     if (!hasDownloadedRef.current) {
-      hasDownloadedRef.current = true;
-
       try {
         await downloadVideo(videoId, savePath); // Idempotent
+        hasDownloadedRef.current = true;
       } catch (error) {
         console.error('Failed to download video:', error);
         toast.error('Failed to download video', {
           description: error instanceof Error ? error.message : String(error),
         });
+        return;
       }
     }
 
-    // Always update status (this triggers polling to stop)
-    if (isMountedRef.current) {
-      setStatus(videoId, {
-        status: status,
-        progress,
-        videoSrc: convertFileSrc(savePath),
-      });
-    }
+    setStatus(videoId, {
+      status: status,
+      progress,
+      videoSrc: convertFileSrc(savePath),
+    });
   }, [videoId, projectPath, downloadVideo, setStatus]);
 
   // Check if video exists locally before polling
@@ -58,7 +60,7 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
       const savePath = getVideoPath(projectPath, videoId);
       const exists = await fileExists(savePath);
 
-      if (exists && isMountedRef.current) {
+      if (exists) {
         // Video already exists locally, set status to completed and skip polling
         setStatus(videoId, {
           status: VideoStatus.COMPLETED,
@@ -77,14 +79,18 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
   useEffect(() => {
     if (!currentStatus) return;
     if (currentStatus.status !== VideoStatus.COMPLETED) return;
+    if (currentStatus.videoSrc) {
+      hasDownloadedRef.current = true;
+      return;
+    }
 
     handleDownload(currentStatus.status, currentStatus.progress);
-  }, [currentStatus?.status, handleDownload]);
+  }, [currentStatus?.status, currentStatus?.videoSrc, handleDownload]);
 
   const poll = useCallback(async () => {
     try {
       const res = await getVideoStatus(videoId);
-      if (!res?.status || !isMountedRef.current) return;
+      if (!res?.status) return;
 
       const progress = res.progress ?? 0;
       const error = res.error?.message;
@@ -103,21 +109,14 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
     } catch (error) {
       console.error('Failed to poll status for video:', error);
     }
-  }, [videoId, getVideoStatus, handleDownload, getStatus, setStatus]);
+  }, [videoId, getVideoStatus, handleDownload, setStatus]);
 
   useEffect(() => {
-    isMountedRef.current = true;
-
     // Only start polling if the video doesn't already exist locally (completed)
     const status = getStatus(videoId);
     if (!status || status.status !== VideoStatus.COMPLETED) {
       startPolling(videoId, poll);
     }
-
-    return () => {
-      isMountedRef.current = false;
-      // Don't stop polling on unmount - let other components continue using it
-    };
   }, [videoId, poll, startPolling, getStatus]);
 
   return getStatus(videoId);

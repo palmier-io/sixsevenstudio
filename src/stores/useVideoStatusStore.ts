@@ -18,7 +18,7 @@ interface VideoStatusStore {
 
 // Store polling intervals outside of Zustand state
 const pollingIntervals = new Map<string, number>();
-const POLL_INTERVAL = 5000; // 5 seconds between poll cycles
+const POLL_INTERVAL = 15000; // 15 seconds between poll cycles
 
 function isTerminalState(status: OpenAIVideoStatus) {
   return status === OpenAIVideoStatus.COMPLETED || status === OpenAIVideoStatus.FAILED;
