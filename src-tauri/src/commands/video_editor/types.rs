@@ -13,6 +13,8 @@ pub struct TimelineClip {
     pub trim_start: f64,
     pub trim_end: f64,
     pub duration: f64,
+    pub transition_type: Option<String>,
+    pub transition_duration: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

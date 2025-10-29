@@ -1,9 +1,9 @@
-use tauri::{AppHandle, Emitter};
+use tauri::AppHandle;
 use tauri_plugin_dialog::DialogExt;
 
 use crate::commands::video_editor::{
     ffmpeg,
-    types::{EditorState, ExportProgress, TimelineClip},
+    types::{EditorState, TimelineClip},
 };
 
 use crate::commands::projects::paths::ProjectPaths;
@@ -37,31 +37,29 @@ pub async fn create_preview_video(
         .ok_or("Invalid output path")?
         .to_string();
 
-    // Clone app handle for progress tracking
-    let app_clone = app.clone();
+    // Check if any clips have transitions configured
+    let has_transitions = clips
+        .iter()
+        .any(|clip| clip.transition_type.is_some());
 
-    // Create preview using fast codec copy (no re-encoding)
-    let result = ffmpeg::concatenate_videos_fast(
-        Some(&app),
-        &clips,
-        &output_path_str,
-        &temp_dir,
-        move |progress, message| {
-            let _ = app_clone.emit(
-                "video-preview-progress",
-                ExportProgress {
-                    progress,
-                    message: message.clone(),
-                    status: if progress >= 100.0 {
-                        "complete"
-                    } else {
-                        "processing"
-                    }
-                    .to_string(),
-                },
-            );
-        },
-    );
+    // Choose the appropriate concatenation method
+    let result = if has_transitions {
+        // Use transition-aware concatenation (requires re-encoding)
+        ffmpeg::concatenate_videos_with_transitions(
+            Some(&app),
+            &clips,
+            &output_path_str,
+            &temp_dir,
+        )
+    } else {
+        // Use fast codec copy (no re-encoding)
+        ffmpeg::concatenate_videos_fast(
+            Some(&app),
+            &clips,
+            &output_path_str,
+            &temp_dir,
+        )
+    };
 
     match result {
         Ok(_) => Ok(output_path_str),
