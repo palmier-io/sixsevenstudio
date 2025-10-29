@@ -203,6 +203,7 @@ pub fn concatenate_videos_with_transitions(
     // Build the filter_complex for xfade transitions
     let mut filter_complex = String::new();
     let mut current_label = String::from("0:v");
+    let mut cumulative_offset = 0.0;
 
     for (i, clip) in clips.iter().enumerate() {
         if i == clips.len() - 1 {
@@ -219,8 +220,18 @@ pub fn concatenate_videos_with_transitions(
         let transition_duration = clip.transition_duration.unwrap_or(1.0);
 
         // Calculate offset: when to start the transition
-        // Offset is relative to the start of the first input in the xfade pair
-        let offset = clip.duration - transition_duration;
+        // For chained xfades, offset must be cumulative from the original timeline
+        // offset = sum of all previous (clip_duration - transition_duration)
+        let offset = if i == 0 {
+            // First transition: simple offset within first clip
+            clip.duration - transition_duration
+        } else {
+            // Subsequent transitions: cumulative offset from the start
+            cumulative_offset + clip.duration - transition_duration
+        };
+
+        // Update cumulative offset for next iteration
+        cumulative_offset += clip.duration - transition_duration;
 
         let next_input = format!("{}:v", i + 1);
         let output_label = if i == clips.len() - 2 {
