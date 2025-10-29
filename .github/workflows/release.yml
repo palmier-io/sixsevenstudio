@@ -10,29 +10,42 @@ jobs:
   build-tauri:
     permissions:
       contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-            target: 'aarch64-apple-darwin'
-          - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
-            target: 'x86_64-apple-darwin'
-
-    runs-on: ${{ matrix.platform }}
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: aarch64-apple-darwin
 
       - name: Install dependencies (macOS)
         run: |
           brew install pkg-config create-dmg
+
+      - name: Import signing certificate
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          
+          # Import certificate
+          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          
+          # Verify signing identity is available
+          echo "Available signing identities:"
+          security find-identity -v -p codesigning build.keychain
+          
+          # Clean up
+          rm certificate.p12
 
       - name: Download FFmpeg binaries
         run: |
@@ -41,18 +54,18 @@ jobs:
           # Download FFmpeg
           curl -L "https://evermeet.cx/ffmpeg/ffmpeg-6.1.zip" -o /tmp/ffmpeg.zip
           unzip -o /tmp/ffmpeg.zip -d /tmp
-          mv /tmp/ffmpeg "src-tauri/binaries/ffmpeg-${{ matrix.target }}"
-          chmod +x "src-tauri/binaries/ffmpeg-${{ matrix.target }}"
+          mv /tmp/ffmpeg "src-tauri/binaries/ffmpeg-aarch64-apple-darwin"
+          chmod +x "src-tauri/binaries/ffmpeg-aarch64-apple-darwin"
           rm /tmp/ffmpeg.zip
           
           # Download FFprobe
           curl -L "https://evermeet.cx/ffmpeg/ffprobe-6.1.zip" -o /tmp/ffprobe.zip
           unzip -o /tmp/ffprobe.zip -d /tmp
-          mv /tmp/ffprobe "src-tauri/binaries/ffprobe-${{ matrix.target }}"
-          chmod +x "src-tauri/binaries/ffprobe-${{ matrix.target }}"
+          mv /tmp/ffprobe "src-tauri/binaries/ffprobe-aarch64-apple-darwin"
+          chmod +x "src-tauri/binaries/ffprobe-aarch64-apple-darwin"
           rm /tmp/ffprobe.zip
           
-          echo "✅ FFmpeg binaries downloaded for ${{ matrix.target }}"
+          echo "✅ FFmpeg binaries downloaded for aarch64-apple-darwin"
           ls -lh src-tauri/binaries/
 
       - uses: actions/setup-node@v4
@@ -70,19 +83,62 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           projectPath: ./src-tauri
-          args: ${{ matrix.args }}
+          args: --target aarch64-apple-darwin
           tagName: ${{ github.ref }}
           releaseName: Release ${{ github.ref_name }}
           releaseBody: |
             ## Installation Instructions
             
-            ### macOS
-            - Download the `.dmg` file for your architecture (Apple Silicon or Intel)
+            ### macOS (Apple Silicon)
+            - Download the `aarch64_darwin.dmg` file
             - Open the downloaded DMG
             - Drag the app to your Applications folder
-            - If you get a security warning: Right-click the app → "Open" → Click "Open" in the dialog
+            - Open the app - no security warnings needed!
             
-            **Note:** These builds are unsigned. macOS may show security warnings. This is normal for unsigned apps.
-          releaseDraft: false
+            **Note**: This build is for Apple Silicon Macs (M1/M2/M3) only.
+          releaseDraft: true
+
+      - name: Notarize app
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Unlock keychain for notarization
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          
+          # Find the DMG file
+          DMG_FILE=$(find src-tauri/target/*/release/bundle/dmg -name "*.dmg" | head -n 1)
+          
+          if [ -z "$DMG_FILE" ]; then
+            echo "DMG file not found"
+            exit 1
+          fi
+          
+          echo "Notarizing $DMG_FILE"
+          
+          # Submit for notarization
+          xcrun notarytool submit "$DMG_FILE" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --wait
+          
+          # Staple the notarization ticket
+          xcrun stapler staple "$DMG_FILE"
+          
+          echo "Notarization complete"
+          
+          # Upload notarized DMG to replace the one in the draft release
+          echo "Uploading notarized DMG to release..."
+          # Extract tag name from ref (e.g., refs/tags/v0.1.0 -> v0.1.0)
+          TAG_NAME=$(echo "${{ github.ref }}" | sed 's|refs/tags/||')
+          gh release upload "$TAG_NAME" "$DMG_FILE" --clobber
