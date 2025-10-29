@@ -1,8 +1,9 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { debug, error as logError } from '@tauri-apps/plugin-log';
 import type { TimelineClip, VideoClip, EditorState } from '@/types/video-editor';
 import { generateId } from '@/lib/utils';
+import { calculateTotalDuration } from '@/lib/utils';
 
 export function useEditorState(projectName: string, previewVideoPath: string | null = null) {
   const [clips, setClips] = useState<TimelineClip[]>([]);
@@ -54,10 +55,8 @@ export function useEditorState(projectName: string, previewVideoPath: string | n
       });
   }, [clips, selectedClipId, previewVideoPath, projectName, isLoaded]);
 
-  // Calculate total duration
-  const totalDuration = clips.length > 0
-    ? Math.max(...clips.map(c => c.position + c.duration))
-    : 0;
+  // Calculate total duration accounting for transitions (transitions cause overlap)
+  const totalDuration = useMemo(() => calculateTotalDuration(clips), [clips]);
 
   // Add clip to end of timeline
   const addClip = useCallback((clip: VideoClip, position: number) => {
@@ -135,6 +134,15 @@ export function useEditorState(projectName: string, previewVideoPath: string | n
     setClips(newClips);
   }, []);
 
+  // Update clip transition
+  const updateClipTransition = useCallback((clipId: string, transitionType: string | null, transitionDuration: number | null) => {
+    setClips(prev => prev.map(clip =>
+      clip.id === clipId
+        ? { ...clip, transitionType: transitionType || undefined, transitionDuration: transitionDuration || undefined }
+        : clip
+    ));
+  }, []);
+
   return {
     clips,
     selectedClipId,
@@ -146,5 +154,6 @@ export function useEditorState(projectName: string, previewVideoPath: string | n
     selectClip,
     splitClip,
     reorderClips,
+    updateClipTransition,
   };
 }

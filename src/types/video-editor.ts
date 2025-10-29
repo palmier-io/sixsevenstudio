@@ -14,6 +14,8 @@ export interface TimelineClip extends VideoClip {
   trimStart: number;
   trimEnd: number;
   duration: number;
+  transitionType?: string;
+  transitionDuration?: number;
 }
 
 export interface EditorState {

@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Trash2, Scissors, Download, Loader2 } from "lucide-react";
 import { TimelineClip } from "./TimelineClip";
+import { TransitionSelector, type TransitionConfig } from "./TransitionSelector";
 import type { TimelineClip as TimelineClipType } from "@/types/video-editor";
+import { calculateTotalDuration } from "@/lib/utils";
 import {
   DndContext,
   closestCenter,
@@ -28,6 +31,7 @@ interface TimelineProps {
   onClipDelete: () => void;
   onClipSplit?: (clipId: string, splitTime: number) => void;
   onClipReorder: (clips: TimelineClipType[]) => void;
+  onClipTransitionChange?: (clipId: string, transition: TransitionConfig | null) => void;
   currentTime?: number; // Current playback position in timeline seconds
   onTimelineClick?: (time: number) => void;
   onExport?: () => void;
@@ -36,7 +40,7 @@ interface TimelineProps {
 }
 
 export const Timeline = memo(function Timeline({
-  clips, selectedClipId, onClipSelect, onClipDelete, onClipSplit, onClipReorder, currentTime, onTimelineClick, onExport, isExporting, canExport,
+  clips, selectedClipId, onClipSelect, onClipDelete, onClipSplit, onClipReorder, onClipTransitionChange, currentTime, onTimelineClick, onExport, isExporting, canExport,
 }: TimelineProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -65,8 +69,8 @@ export const Timeline = memo(function Timeline({
     }
   }, [clips, onClipReorder]);
 
-  const totalDuration = useMemo(() =>
-    clips.reduce((sum, clip) => sum + clip.duration, 0), [clips]);
+  // Calculate total duration accounting for transitions (transitions cause overlap)
+  const totalDuration = useMemo(() => calculateTotalDuration(clips), [clips]);
 
   const pixelsPerSecond = useMemo(() => {
     if (!totalDuration || !containerWidth) return 100;
@@ -212,52 +216,86 @@ export const Timeline = memo(function Timeline({
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-auto p-4">
-        {clips.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-center">
-            <div>
-              <p className="text-sm text-muted-foreground">No clips on timeline</p>
-              <p className="text-xs text-muted-foreground mt-1">Add clips from the library</p>
-            </div>
-          </div>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-            onDragStart={handleDragStart}
-          >
-            <div className="space-y-4" ref={timelineRef}>
-              <div className="relative h-6 border-b border-border cursor-pointer" onClick={handleTimelineClick}>
-                {timeMarkers.map((time) => (
-                  <div key={time} className="absolute top-0 flex flex-col items-center" style={{ left: `${time * pixelsPerSecond}px` }}>
-                    <div className="w-px h-3 bg-border" />
-                    <span className="text-xs text-muted-foreground mt-1">{formatTime(time)}</span>
-                  </div>
-                ))}
-                <Playhead showHandle />
-              </div>
-              <SortableContext
-                items={clips.map((clip) => clip.id)}
-                strategy={horizontalListSortingStrategy}
-              >
-                <div className="relative h-16">
-                  {clips.map((clip, index) => (
-                    <TimelineClip
-                      key={clip.id}
-                      clip={clip}
-                      isSelected={selectedClipId === clip.id}
-                      onClick={() => onClipSelect(clip.id)}
-                      position={clips.slice(0, index).reduce((sum, c) => sum + c.duration, 0)}
-                      pixelsPerSecond={pixelsPerSecond}
-                    />
-                  ))}
-                  <Playhead />
+      <CardContent className="flex-1 p-0 overflow-hidden">
+        <ScrollArea className="h-full w-full">
+          <div className="p-4">
+            {clips.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-center">
+                <div>
+                  <p className="text-sm text-muted-foreground">No clips on timeline</p>
+                  <p className="text-xs text-muted-foreground mt-1">Add clips from the library</p>
                 </div>
-              </SortableContext>
-            </div>
-          </DndContext>
-        )}
+              </div>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+                onDragStart={handleDragStart}
+              >
+                <div className="space-y-4" ref={timelineRef}>
+                  <div className="relative h-6 border-b border-border cursor-pointer" onClick={handleTimelineClick}>
+                    {timeMarkers.map((time) => (
+                      <div key={time} className="absolute top-0 flex flex-col items-center" style={{ left: `${time * pixelsPerSecond}px` }}>
+                        <div className="w-px h-3 bg-border" />
+                        <span className="text-xs text-muted-foreground mt-1">{formatTime(time)}</span>
+                      </div>
+                    ))}
+                    <Playhead showHandle />
+                  </div>
+                  <SortableContext
+                    items={clips.map((clip) => clip.id)}
+                    strategy={horizontalListSortingStrategy}
+                  >
+                    <div className="relative h-16">
+                      {clips.map((clip, index) => {
+                        // Calculate visual position (clips laid out end-to-end, transitions are just effects)
+                        const position = clips.slice(0, index).reduce((sum, c) => sum + c.duration, 0);
+                        const isLastClip = index === clips.length - 1;
+
+                        return (
+                          <div key={clip.id} className="contents">
+                            <TimelineClip
+                              clip={clip}
+                              isSelected={selectedClipId === clip.id}
+                              onClick={() => onClipSelect(clip.id)}
+                              position={position}
+                              pixelsPerSecond={pixelsPerSecond}
+                            />
+                            {!isLastClip && onClipTransitionChange && (
+                              <div
+                                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20"
+                                style={{
+                                  left: `${(position + clip.duration) * pixelsPerSecond}px`,
+                                }}
+                              >
+                                <TransitionSelector
+                                  currentTransition={
+                                    clip.transitionType
+                                      ? {
+                                          type: clip.transitionType,
+                                          duration: clip.transitionDuration || 1.0,
+                                        }
+                                      : undefined
+                                  }
+                                  onTransitionChange={(transition) =>
+                                    onClipTransitionChange(clip.id, transition)
+                                  }
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      <Playhead />
+                    </div>
+                  </SortableContext>
+                </div>
+              </DndContext>
+            )}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </CardContent>
     </Card>
   );

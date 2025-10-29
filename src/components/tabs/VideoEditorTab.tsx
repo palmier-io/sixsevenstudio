@@ -31,7 +31,8 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
     removeClip,
     selectClip,
     splitClip,
-    reorderClips
+    reorderClips,
+    updateClipTransition
   } = useEditorState(projectName, previewVideoPath);
   const { createPreviewVideo, exportVideo } = useEditor();
 
@@ -88,6 +89,16 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
   const handleSplit = (clipId: string, splitTime: number) => {
     splitClip(clipId, splitTime);
     toast.success('Clip split');
+  };
+
+  const handleTransitionChange = (clipId: string, transition: { type: string; duration: number } | null) => {
+    if (transition) {
+      updateClipTransition(clipId, transition.type, transition.duration);
+      toast.success(`Transition applied: ${transition.type}`);
+    } else {
+      updateClipTransition(clipId, null, null);
+      toast.success('Transition removed');
+    }
   };
 
   const handleExport = async () => {
@@ -151,7 +162,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
       <ResizablePanel defaultSize={75} minSize={40}>
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Left Panel: Video Preview */}
-          <ResizablePanel defaultSize={75} minSize={40}>
+          <ResizablePanel defaultSize={80} minSize={40}>
             <div className="h-full overflow-auto p-6 flex items-center justify-center">
               <VideoPreview
                 videoPath={previewVideoPath}
@@ -165,7 +176,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
           <ResizableHandle withHandle />
 
           {/* Right Panel: Clip Library */}
-          <ResizablePanel defaultSize={25} minSize={15}>
+          <ResizablePanel defaultSize={20} minSize={15}>
             <ClipLibrary
               clips={libraryClips}
               onClipAdd={handleClipAdd}
@@ -186,6 +197,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
             onClipDelete={handleDelete}
             onClipSplit={handleSplit}
             onClipReorder={reorderClips}
+            onClipTransitionChange={handleTransitionChange}
             currentTime={currentPlaybackTime ?? undefined}
             onTimelineClick={handleTimelineClick}
             onExport={handleExport}
