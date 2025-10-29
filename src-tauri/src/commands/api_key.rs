@@ -1,32 +1,36 @@
-use tauri_plugin_store::StoreExt;
+use keyring::Entry;
 
-const STORE_NAME: &str = "store.json";
+const SERVICE_NAME: &str = "sixsevenstudio";
 const KEY_NAME: &str = "openai_api_key";
 
 #[tauri::command]
-pub async fn save_api_key(app: tauri::AppHandle, api_key: String) -> Result<(), String> {
-    let store = app.store(STORE_NAME).map_err(|e| e.to_string())?;
-    store.set(KEY_NAME, api_key);
-    store.save().map_err(|e| e.to_string())?;
+pub async fn save_api_key(_app: tauri::AppHandle, api_key: String) -> Result<(), String> {
+    let entry = Entry::new(SERVICE_NAME, KEY_NAME)
+        .map_err(|e| format!("Failed to create keyring entry: {}", e))?;
+    entry
+        .set_password(&api_key)
+        .map_err(|e| format!("Failed to save API key: {}", e))?;
     Ok(())
 }
 
 #[tauri::command]
-pub async fn get_api_key(app: tauri::AppHandle) -> Result<Option<String>, String> {
-    let store = app.store(STORE_NAME).map_err(|e| e.to_string())?;
-    let value_opt = store.get(KEY_NAME);
-    let result = if let Some(value) = value_opt {
-        value.as_str().map(|s| s.to_string())
-    } else {
-        None
-    };
-    Ok(result)
+pub async fn get_api_key(_app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let entry = Entry::new(SERVICE_NAME, KEY_NAME)
+        .map_err(|e| format!("Failed to create keyring entry: {}", e))?;
+    match entry.get_password() {
+        Ok(password) => Ok(Some(password)),
+        Err(keyring::Error::NoEntry) => Ok(None),
+        Err(e) => Err(format!("Failed to get API key: {}", e)),
+    }
 }
 
 #[tauri::command]
-pub async fn remove_api_key(app: tauri::AppHandle) -> Result<(), String> {
-    let store = app.store(STORE_NAME).map_err(|e| e.to_string())?;
-    store.delete(KEY_NAME);
-    store.save().map_err(|e| e.to_string())?;
-    Ok(())
+pub async fn remove_api_key(_app: tauri::AppHandle) -> Result<(), String> {
+    let entry = Entry::new(SERVICE_NAME, KEY_NAME)
+        .map_err(|e| format!("Failed to create keyring entry: {}", e))?;
+    match entry.delete_credential() {
+        Ok(()) => Ok(()),
+        Err(keyring::Error::NoEntry) => Ok(()), // Already deleted, treat as success
+        Err(e) => Err(format!("Failed to remove API key: {}", e)),
+    }
 }
