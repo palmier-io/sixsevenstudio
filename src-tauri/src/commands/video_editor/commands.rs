@@ -38,27 +38,15 @@ pub async fn create_preview_video(
         .to_string();
 
     // Check if any clips have transitions configured
-    let has_transitions = clips
-        .iter()
-        .any(|clip| clip.transition_type.is_some());
+    let has_transitions = clips.iter().any(|clip| clip.transition_type.is_some());
 
     // Choose the appropriate concatenation method
     let result = if has_transitions {
         // Use transition-aware concatenation (requires re-encoding)
-        ffmpeg::concatenate_videos_with_transitions(
-            Some(&app),
-            &clips,
-            &output_path_str,
-            &temp_dir,
-        )
+        ffmpeg::concatenate_videos_with_transitions(Some(&app), &clips, &output_path_str, &temp_dir)
     } else {
         // Use fast codec copy (no re-encoding)
-        ffmpeg::concatenate_videos_fast(
-            Some(&app),
-            &clips,
-            &output_path_str,
-            &temp_dir,
-        )
+        ffmpeg::concatenate_videos_fast(Some(&app), &clips, &output_path_str, &temp_dir)
     };
 
     match result {

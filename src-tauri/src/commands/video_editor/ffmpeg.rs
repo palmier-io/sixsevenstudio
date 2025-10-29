@@ -66,8 +66,7 @@ pub fn concatenate_videos_fast(
     clips: &[TimelineClip],
     output_path: &str,
     temp_dir: &Path,
-) -> Result<(), String>
-{
+) -> Result<(), String> {
     if clips.is_empty() {
         return Err("No clips to concatenate".to_string());
     }
@@ -138,8 +137,7 @@ pub fn concatenate_videos_with_transitions(
     clips: &[TimelineClip],
     output_path: &str,
     temp_dir: &Path,
-) -> Result<(), String>
-{
+) -> Result<(), String> {
     if clips.is_empty() {
         return Err("No clips to concatenate".to_string());
     }
