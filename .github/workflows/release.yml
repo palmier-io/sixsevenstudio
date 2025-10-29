@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags like v0.1.0
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  build-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+            target: 'aarch64-apple-darwin'
+          - platform: 'macos-latest'
+            args: '--target x86_64-apple-darwin'
+            target: 'x86_64-apple-darwin'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install dependencies (macOS)
+        run: |
+          brew install pkg-config create-dmg
+
+      - name: Download FFmpeg binaries
+        run: |
+          mkdir -p src-tauri/binaries
+          
+          # Download FFmpeg
+          curl -L "https://evermeet.cx/ffmpeg/ffmpeg-6.1.zip" -o /tmp/ffmpeg.zip
+          unzip -o /tmp/ffmpeg.zip -d /tmp
+          mv /tmp/ffmpeg "src-tauri/binaries/ffmpeg-${{ matrix.target }}"
+          chmod +x "src-tauri/binaries/ffmpeg-${{ matrix.target }}"
+          rm /tmp/ffmpeg.zip
+          
+          # Download FFprobe
+          curl -L "https://evermeet.cx/ffmpeg/ffprobe-6.1.zip" -o /tmp/ffprobe.zip
+          unzip -o /tmp/ffprobe.zip -d /tmp
+          mv /tmp/ffprobe "src-tauri/binaries/ffprobe-${{ matrix.target }}"
+          chmod +x "src-tauri/binaries/ffprobe-${{ matrix.target }}"
+          rm /tmp/ffprobe.zip
+          
+          echo "✅ FFmpeg binaries downloaded for ${{ matrix.target }}"
+          ls -lh src-tauri/binaries/
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: ./src-tauri
+          args: ${{ matrix.args }}
+          tagName: ${{ github.ref }}
+          releaseName: Release ${{ github.ref_name }}
+          releaseBody: |
+            ## Installation Instructions
+            
+            ### macOS
+            - Download the `.dmg` file for your architecture (Apple Silicon or Intel)
+            - Open the downloaded DMG
+            - Drag the app to your Applications folder
+            - If you get a security warning: Right-click the app → "Open" → Click "Open" in the dialog
+            
+            **Note:** These builds are unsigned. macOS may show security warnings. This is normal for unsigned apps.
+          releaseDraft: false
