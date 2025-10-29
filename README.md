@@ -12,15 +12,14 @@ It's built with Tauri, React, Vite and TypeScript.
 - Local storage
 - Basic video editing (trimming, stitching, transitions)
 
-
-## Development Guide
-### Prerequisites
+### Development Guide
+#### Prerequisites
 
 1. Install [Node.js](https://nodejs.org/) (v18+)
 2. Install [Rust](https://www.rust-lang.org/tools/install)
 3. Install `ffmpeg` (see below)
 
-### Setup
+#### Setup
 
 ```bash
 # Install ffmpeg binaries
@@ -34,8 +33,11 @@ npm install
 npm run tauri dev
 ```
 
-### Build
+#### Build
 
 ```bash
 npm run tauri build
 ```
+
+### OS
+Currently support Apple Silicon.
