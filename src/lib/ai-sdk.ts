@@ -229,6 +229,7 @@ export function createStoryboardTools(
     },
     image_generation: openai.tools.imageGeneration({
       outputFormat: 'webp',
+      model: 'gpt-image-1-mini',
     }),
     save_image: {
       description: 'Save the last generated image to a scene. Must be called after generating an image with image_generation.',

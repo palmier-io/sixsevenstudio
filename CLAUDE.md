@@ -26,6 +26,8 @@ npx tsc --noEmit
 cargo fmt
 ```
 
+You should not run `npm run tauri dev`, you should assume users already are running it in the background with hot-reload.
+
 ## Architecture Overview
 
 ### High-Level Structure
