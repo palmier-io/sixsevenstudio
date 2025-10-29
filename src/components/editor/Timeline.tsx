@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
 import { Trash2, Scissors, Download, Loader2 } from "lucide-react";
 import { TimelineClip } from "./TimelineClip";
 import { TransitionSelector, type TransitionConfig } from "./TransitionSelector";
@@ -24,6 +25,11 @@ import {
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
+// Zoom levels in pixels per second
+const MIN_ZOOM = 10;
+const MAX_ZOOM = 150;
+const DEFAULT_ZOOM = 50;
+
 interface TimelineProps {
   clips: TimelineClipType[];
   selectedClipId: string | null;
@@ -43,7 +49,7 @@ export const Timeline = memo(function Timeline({
   clips, selectedClipId, onClipSelect, onClipDelete, onClipSplit, onClipReorder, onClipTransitionChange, currentTime, onTimelineClick, onExport, isExporting, canExport,
 }: TimelineProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [containerWidth, setContainerWidth] = useState(0);
+  const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
   const timelineRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
@@ -72,20 +78,7 @@ export const Timeline = memo(function Timeline({
   // Calculate total duration accounting for transitions (transitions cause overlap)
   const totalDuration = useMemo(() => calculateTotalDuration(clips), [clips]);
 
-  const pixelsPerSecond = useMemo(() => {
-    if (!totalDuration || !containerWidth) return 100;
-    const scale = (containerWidth * 0.9) / totalDuration;
-    return Math.max(50, Math.min(200, scale)); // Min 50px/s, Max 200px/s
-  }, [totalDuration, containerWidth]);
-
-  useEffect(() => {
-    if (!timelineRef.current) return;
-    const updateWidth = () => timelineRef.current && setContainerWidth(timelineRef.current.clientWidth);
-    updateWidth();
-    const observer = new ResizeObserver(updateWidth);
-    observer.observe(timelineRef.current);
-    return () => observer.disconnect();
-  }, [clips.length]);
+  const pixelsPerSecond = zoomLevel;
 
   const timeMarkers = useMemo(() => {
     if (!totalDuration) return [];
@@ -170,9 +163,23 @@ export const Timeline = memo(function Timeline({
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="border-b px-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <CardTitle>Timeline</CardTitle>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 max-w-xs">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Zoom:</span>
+              <Slider
+                value={[zoomLevel]}
+                onValueChange={(values) => setZoomLevel(values[0])}
+                min={MIN_ZOOM}
+                max={MAX_ZOOM}
+                step={5}
+                className="w-32"
+              />
+              <span className="text-xs text-muted-foreground min-w-[45px]">
+                {zoomLevel}%
+              </span>
+            </div>
             <Button
               size="sm"
               variant="outline"
