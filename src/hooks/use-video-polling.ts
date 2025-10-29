@@ -26,7 +26,6 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
     hasCheckedLocalRef.current = false;
   }, [videoId, projectPath]);
 
-  // Shared download handler
   const handleDownload = useCallback(async (status: VideoStatus, progress: number) => {
     const savePath = getVideoPath(projectPath, videoId);
 
@@ -95,11 +94,9 @@ export const useVideoPolling = ({ videoId, projectPath }: UseVideoPollingOptions
       const progress = res.progress ?? 0;
       const error = res.error?.message;
 
-      // Download if completed
       if (res.status === 'completed') {
         await handleDownload(res.status as VideoStatus, progress);
       } else {
-        // For non-completed statuses, just update status and progress
         setStatus(videoId, {
           status: res.status as VideoStatus,
           progress,
