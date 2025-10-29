@@ -24,10 +24,3 @@ pub struct EditorState {
     pub selected_clip_id: Option<String>,
     pub preview_video_path: Option<String>,
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ExportProgress {
-    pub progress: f64,
-    pub message: String,
-    pub status: String,
-}

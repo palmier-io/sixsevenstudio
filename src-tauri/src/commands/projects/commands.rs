@@ -232,6 +232,6 @@ pub async fn reorder_scenes(
 }
 
 #[tauri::command]
-pub async fn ensure_dir_exists(app: AppHandle, path: String) -> Result<(), String> {
+pub async fn ensure_dir_exists(_app: AppHandle, path: String) -> Result<(), String> {
     ensure_dir(&Path::new(&path))
 }

@@ -4,6 +4,7 @@ src-tauri/gen/
 
 # External binaries (will be bundled during build)
 src-tauri/binaries/
+target/
 
 # Frontend build artifacts (adjust based on your frontend framework)
 dist/
