@@ -93,15 +93,7 @@ jobs:
           tagName: ${{ github.ref }}
           releaseName: Release ${{ github.ref_name }}
           releaseBody: |
-            ## Installation Instructions
-            
-            ### macOS (Apple Silicon)
-            - Download the `aarch64_darwin.dmg` file
-            - Open the downloaded DMG
-            - Drag the app to your Applications folder
-            - Open the app - no security warnings needed!
-            
-            **Note**: This build is for Apple Silicon Macs (M1/M2/M3) only.
+            Release ${{ github.ref_name }}
           releaseDraft: true
 
       - name: Notarize app
