@@ -32,6 +32,15 @@
       "allow": [
         { "path": "$HOME/sixsevenstudio/**" }
       ]
+    },
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "binaries/ffmpeg",
+          "sidecar": true
+        }
+      ]
     }
   ]
 }

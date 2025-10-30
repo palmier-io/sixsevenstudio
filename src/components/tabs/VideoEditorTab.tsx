@@ -137,7 +137,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
         setPreviewVideoPath(path);
       } catch (error) {
         console.error('Failed to generate preview:', error);
-        toast.error('Failed to generate preview video');
+        toast.error('Failed to generate preview video', { description: error instanceof Error ? error.message : String(error) });
       } finally {
         setIsGeneratingPreview(false);
       }

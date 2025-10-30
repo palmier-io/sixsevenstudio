@@ -2,6 +2,7 @@ use crate::commands::video_editor::types::TimelineClip;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tauri::{AppHandle, Manager};
+use tauri_plugin_shell::ShellExt;
 
 // Encoding constants
 const VIDEO_CODEC: &str = "libx264";
@@ -11,24 +12,48 @@ const AUDIO_CODEC: &str = "aac";
 const AUDIO_BITRATE: &str = "128k";
 
 pub fn get_ffmpeg_path(app: Option<&AppHandle>) -> Result<PathBuf, String> {
-    // Try Tauri sidecar first (bundled binary)
-    if let Some(app_handle) = app {
-        if let Ok(sidecar_path) = app_handle
-            .path()
-            .resolve("ffmpeg", tauri::path::BaseDirectory::Resource)
-        {
-            if sidecar_path.exists() {
-                return Ok(sidecar_path);
+    // https://v2.tauri.app/develop/sidecar/
+    if let Some(app_handle) = app {        
+        if app_handle.shell().sidecar("ffmpeg").is_ok() {
+            if let Ok(resource_dir) = app_handle.path().resource_dir() {
+                let target_triple = get_target_triple();
+
+                #[cfg(target_os = "windows")]
+                let sidecar_path = resource_dir.join(format!("binaries/ffmpeg-{}.exe", target_triple));
+                
+                #[cfg(not(target_os = "windows"))]
+                let sidecar_path = resource_dir.join(format!("binaries/ffmpeg-{}", target_triple));
+
+                if sidecar_path.exists() {
+                    return Ok(sidecar_path);
+                }
             }
         }
     }
-
-    // Fall back to system FFmpeg
-    if Command::new("ffmpeg").arg("-version").output().is_ok() {
-        return Ok(PathBuf::from("ffmpeg"));
-    }
-
     Err("FFmpeg not found. Please install FFmpeg or ensure it's bundled with the app.".to_string())
+}
+
+fn get_target_triple() -> &'static str {
+    #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+    return "x86_64-apple-darwin";
+    
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    return "aarch64-apple-darwin";
+
+    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+    return "x86_64-unknown-linux-gnu";
+    
+    #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+    return "aarch64-unknown-linux-gnu";
+    
+    #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
+    return "x86_64-pc-windows-msvc";
+    
+    #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
+    return "aarch64-pc-windows-msvc";
+    
+    #[allow(unreachable_code)]
+    "unknown"
 }
 
 fn run_ffmpeg_command(cmd: &mut Command, operation: &str) -> Result<(), String> {
