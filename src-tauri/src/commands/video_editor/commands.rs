@@ -15,8 +15,7 @@ pub async fn create_preview_video(
     clips: Vec<TimelineClip>,
     project_name: String,
 ) -> Result<String, String> {
-    // Verify FFmpeg is available
-    ffmpeg::get_ffmpeg_path(Some(&app))?;
+    ffmpeg::verify_ffmpeg_available(Some(&app))?;
 
     if clips.is_empty() {
         return Err("No clips to preview".to_string());
@@ -44,9 +43,10 @@ pub async fn create_preview_video(
     let result = if has_transitions {
         // Use transition-aware concatenation (requires re-encoding)
         ffmpeg::concatenate_videos_with_transitions(Some(&app), &clips, &output_path_str, &temp_dir)
+            .await
     } else {
         // Use fast codec copy (no re-encoding)
-        ffmpeg::concatenate_videos_fast(Some(&app), &clips, &output_path_str, &temp_dir)
+        ffmpeg::concatenate_videos_fast(Some(&app), &clips, &output_path_str, &temp_dir).await
     };
 
     match result {

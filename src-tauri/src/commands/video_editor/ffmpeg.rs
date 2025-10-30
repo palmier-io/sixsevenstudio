@@ -1,7 +1,6 @@
 use crate::commands::video_editor::types::TimelineClip;
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use tauri::{AppHandle, Manager};
+use std::path::Path;
+use tauri::AppHandle;
 use tauri_plugin_shell::ShellExt;
 
 // Encoding constants
@@ -11,54 +10,26 @@ const VIDEO_CRF: &str = "23";
 const AUDIO_CODEC: &str = "aac";
 const AUDIO_BITRATE: &str = "128k";
 
-pub fn get_ffmpeg_path(app: Option<&AppHandle>) -> Result<PathBuf, String> {
-    // https://v2.tauri.app/develop/sidecar/
-    if let Some(app_handle) = app {        
-        if app_handle.shell().sidecar("ffmpeg").is_ok() {
-            if let Ok(resource_dir) = app_handle.path().resource_dir() {
-                let target_triple = get_target_triple();
-
-                #[cfg(target_os = "windows")]
-                let sidecar_path = resource_dir.join(format!("binaries/ffmpeg-{}.exe", target_triple));
-                
-                #[cfg(not(target_os = "windows"))]
-                let sidecar_path = resource_dir.join(format!("binaries/ffmpeg-{}", target_triple));
-
-                if sidecar_path.exists() {
-                    return Ok(sidecar_path);
-                }
-            }
-        }
+pub fn verify_ffmpeg_available(app: Option<&AppHandle>) -> Result<(), String> {
+    if let Some(app_handle) = app {
+        app_handle.shell().sidecar("ffmpeg").map_err(|_| {
+            "FFmpeg sidecar not found. Please ensure it's bundled with the app.".to_string()
+        })?;
+        Ok(())
+    } else {
+        Err("AppHandle not available".to_string())
     }
-    Err("FFmpeg not found. Please install FFmpeg or ensure it's bundled with the app.".to_string())
 }
 
-fn get_target_triple() -> &'static str {
-    #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
-    return "x86_64-apple-darwin";
-    
-    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-    return "aarch64-apple-darwin";
-
-    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-    return "x86_64-unknown-linux-gnu";
-    
-    #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
-    return "aarch64-unknown-linux-gnu";
-    
-    #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
-    return "x86_64-pc-windows-msvc";
-    
-    #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
-    return "aarch64-pc-windows-msvc";
-    
-    #[allow(unreachable_code)]
-    "unknown"
-}
-
-fn run_ffmpeg_command(cmd: &mut Command, operation: &str) -> Result<(), String> {
-    let output = cmd
+/// Execute an FFmpeg command via sidecar
+async fn run_ffmpeg_command(app: &AppHandle, args: &[&str], operation: &str) -> Result<(), String> {
+    let output = app
+        .shell()
+        .sidecar("ffmpeg")
+        .map_err(|e| format!("Failed to get ffmpeg sidecar: {}", e))?
+        .args(args)
         .output()
+        .await
         .map_err(|e| format!("Failed to execute ffmpeg for {}: {}", operation, e))?;
 
     if !output.status.success() {
@@ -69,18 +40,17 @@ fn run_ffmpeg_command(cmd: &mut Command, operation: &str) -> Result<(), String> 
     Ok(())
 }
 
-pub fn trim_video(
+pub async fn trim_video(
     app: Option<&AppHandle>,
     input_path: &str,
     start_time: f64,
     end_time: f64,
     output_path: &str,
 ) -> Result<(), String> {
+    let app_handle = app.ok_or("AppHandle not available")?;
     let duration = end_time - start_time;
-    let ffmpeg_path = get_ffmpeg_path(app)?;
 
-    let mut cmd = Command::new(ffmpeg_path);
-    cmd.args([
+    let args = [
         "-ss",
         &start_time.to_string(),
         "-i",
@@ -91,47 +61,13 @@ pub fn trim_video(
         "copy", // Copy codec for fast processing
         "-y",   // Overwrite output file
         output_path,
-    ]);
+    ];
 
-    run_ffmpeg_command(&mut cmd, "trim video")
-}
-
-/// Trim and re-encode a video clip (needed for filter compatibility)
-fn trim_and_reencode_clip(
-    app: Option<&AppHandle>,
-    clip: &TimelineClip,
-    output_path: &str,
-) -> Result<(), String> {
-    let duration = clip.trim_end - clip.trim_start;
-    let ffmpeg_path = get_ffmpeg_path(app)?;
-
-    let mut cmd = Command::new(ffmpeg_path);
-    cmd.args([
-        "-ss",
-        &clip.trim_start.to_string(),
-        "-i",
-        &clip.video_path,
-        "-t",
-        &duration.to_string(),
-        "-c:v",
-        VIDEO_CODEC,
-        "-preset",
-        VIDEO_PRESET,
-        "-crf",
-        VIDEO_CRF,
-        "-c:a",
-        AUDIO_CODEC,
-        "-b:a",
-        AUDIO_BITRATE,
-        "-y",
-        output_path,
-    ]);
-
-    run_ffmpeg_command(&mut cmd, &format!("trim and encode clip {}", clip.id))
+    run_ffmpeg_command(app_handle, &args, "trim video").await
 }
 
 /// Concatenate videos using codec copy (no re-encoding)
-pub fn concatenate_videos_fast(
+pub async fn concatenate_videos_fast(
     app: Option<&AppHandle>,
     clips: &[TimelineClip],
     output_path: &str,
@@ -140,6 +76,8 @@ pub fn concatenate_videos_fast(
     if clips.is_empty() {
         return Err("No clips to concatenate".to_string());
     }
+
+    let app_handle: &AppHandle = app.ok_or("AppHandle not available")?;
 
     // Create temporary trimmed clips
     let mut temp_files = Vec::new();
@@ -150,13 +88,20 @@ pub fn concatenate_videos_fast(
         let temp_file_str = temp_file.to_str().ok_or("Invalid temp file path")?;
 
         // Trim the clip using codec copy (fast)
-        trim_video(
-            app,
+        let duration = clip.trim_end - clip.trim_start;
+        let args = [
+            "-ss",
+            &clip.trim_start.to_string(),
+            "-i",
             &clip.video_path,
-            clip.trim_start,
-            clip.trim_end,
+            "-t",
+            &duration.to_string(),
+            "-c",
+            "copy",
+            "-y",
             temp_file_str,
-        )?;
+        ];
+        run_ffmpeg_command(app_handle, &args, "trim video").await?;
 
         temp_files.push(temp_file.clone());
         concat_list.push_str(&format!("file '{}'\n", temp_file_str));
@@ -168,22 +113,22 @@ pub fn concatenate_videos_fast(
         .map_err(|e| format!("Failed to write concat list: {}", e))?;
 
     // Concatenate using concat demuxer with codec copy (no re-encoding)
-    let ffmpeg_path = get_ffmpeg_path(app)?;
-    let mut cmd = Command::new(ffmpeg_path);
-    cmd.args([
+    let concat_file_str = concat_file.to_str().ok_or("Invalid concat file path")?;
+
+    let args = [
         "-f",
         "concat",
         "-safe",
         "0",
         "-i",
-        concat_file.to_str().unwrap(),
+        concat_file_str,
         "-c",
-        "copy", // Copy codec - no re-encoding!
+        "copy", // Copy codec - no re-encoding
         "-y",
         output_path,
-    ]);
+    ];
 
-    run_ffmpeg_command(&mut cmd, "concatenate videos")?;
+    run_ffmpeg_command(app_handle, &args, "concatenate videos").await?;
 
     // Clean up temp files (best effort)
     for temp_file in temp_files {
@@ -199,7 +144,7 @@ pub fn concatenate_videos_fast(
 }
 
 /// Concatenate videos with transitions using xfade filter (requires re-encoding)
-pub fn concatenate_videos_with_transitions(
+pub async fn concatenate_videos_with_transitions(
     app: Option<&AppHandle>,
     clips: &[TimelineClip],
     output_path: &str,
@@ -217,10 +162,11 @@ pub fn concatenate_videos_with_transitions(
             clips[0].trim_start,
             clips[0].trim_end,
             output_path,
-        );
+        )
+        .await;
     }
 
-    let ffmpeg_path = get_ffmpeg_path(app)?;
+    let app_handle = app.ok_or("AppHandle not available")?;
 
     // Create temporary trimmed and re-encoded clips
     let mut temp_files = Vec::new();
@@ -228,44 +174,76 @@ pub fn concatenate_videos_with_transitions(
         let temp_file = temp_dir.join(format!("clip_{}.mp4", i));
         let temp_file_str = temp_file.to_str().ok_or("Invalid temp file path")?;
 
-        trim_and_reencode_clip(app, clip, temp_file_str)?;
+        // Inline the re-encoding to avoid function call overhead
+        let duration = clip.trim_end - clip.trim_start;
+        let args = [
+            "-ss",
+            &clip.trim_start.to_string(),
+            "-i",
+            &clip.video_path,
+            "-t",
+            &duration.to_string(),
+            "-c:v",
+            VIDEO_CODEC,
+            "-preset",
+            VIDEO_PRESET,
+            "-crf",
+            VIDEO_CRF,
+            "-c:a",
+            AUDIO_CODEC,
+            "-b:a",
+            AUDIO_BITRATE,
+            "-y",
+            temp_file_str,
+        ];
+        run_ffmpeg_command(
+            app_handle,
+            &args,
+            &format!("trim and encode clip {}", clip.id),
+        )
+        .await?;
         temp_files.push(temp_file);
     }
 
     // Build filter_complex for video transitions and audio concatenation
     let filter_complex = build_transition_filter_complex(clips);
 
-    // Build and run FFmpeg command
-    let mut cmd = Command::new(&ffmpeg_path);
+    let mut args: Vec<String> = Vec::new();
 
     // Add all input files
     for temp_file in &temp_files {
-        cmd.arg("-i").arg(temp_file);
+        args.push("-i".to_string());
+        args.push(temp_file.to_str().unwrap().to_string());
     }
 
-    // Add filter_complex and output settings
-    cmd.args([
-        "-filter_complex",
-        &filter_complex,
-        "-map",
-        "[out]", // Video output
-        "-map",
-        "[outa]", // Audio output
-        "-c:v",
-        VIDEO_CODEC,
-        "-preset",
-        VIDEO_PRESET,
-        "-crf",
-        VIDEO_CRF,
-        "-c:a",
-        AUDIO_CODEC,
-        "-b:a",
-        AUDIO_BITRATE,
-        "-y",
-        output_path,
+    args.extend_from_slice(&[
+        "-filter_complex".to_string(),
+        filter_complex,
+        "-map".to_string(),
+        "[out]".to_string(), // Video output
+        "-map".to_string(),
+        "[outa]".to_string(), // Audio output
+        "-c:v".to_string(),
+        VIDEO_CODEC.to_string(),
+        "-preset".to_string(),
+        VIDEO_PRESET.to_string(),
+        "-crf".to_string(),
+        VIDEO_CRF.to_string(),
+        "-c:a".to_string(),
+        AUDIO_CODEC.to_string(),
+        "-b:a".to_string(),
+        AUDIO_BITRATE.to_string(),
+        "-y".to_string(),
+        output_path.to_string(),
     ]);
 
-    run_ffmpeg_command(&mut cmd, "concatenate videos with transitions")?;
+    let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+    run_ffmpeg_command(
+        app_handle,
+        &args_refs,
+        "concatenate videos with transitions",
+    )
+    .await?;
 
     // Clean up temp files (best effort)
     for temp_file in temp_files {
