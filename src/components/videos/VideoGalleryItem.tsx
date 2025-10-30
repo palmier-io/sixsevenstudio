@@ -83,7 +83,7 @@ export function VideoGalleryItem({
             <RemixPopover
               onRemix={onRemix}
               buttonSize="icon"
-              buttonClassName="bg-black/60 hover:bg-purple-600/80 text-white h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8"
+              buttonClassName="bg-black/60 hover:bg-purple-600/80 text-white h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7"
               compact
             />
           )}
@@ -95,10 +95,10 @@ export function VideoGalleryItem({
                 e.stopPropagation();
                 onRegenerate();
               }}
-              className="bg-black/60 hover:bg-blue-600/80 text-white h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8"
+              className="bg-black/60 hover:bg-blue-600/80 text-white h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7"
               title="Regenerate video"
             >
-              <RotateCw className="size-3 sm:size-3.5 md:size-4" />
+              <RotateCw className="size-2.5 sm:size-3 md:size-3.5" />
             </Button>
           )}
           {onDelete && (
@@ -109,10 +109,10 @@ export function VideoGalleryItem({
                 e.stopPropagation();
                 onDelete();
               }}
-              className="bg-black/60 hover:bg-red-600/80 text-white h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8"
+              className="bg-black/60 hover:bg-red-600/80 text-white h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7"
               title="Delete video"
             >
-              <Trash2 className="size-3 sm:size-3.5 md:size-4" />
+              <Trash2 className="size-2.5 sm:size-3 md:size-3.5" />
             </Button>
           )}
         </div>
