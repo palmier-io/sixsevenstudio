@@ -4,6 +4,7 @@ import type { UIMessage } from '@ai-sdk/react';
 import { AnimatedCat } from '@/components/AnimatedCat';
 import { cn } from '@/lib/utils';
 import { ToolCallDisplay } from './ToolCallDisplay';
+import { MemoizedMarkdown } from './MemoizedMarkdown';
 
 interface ChatMessageProps {
   message: UIMessage;
@@ -55,12 +56,18 @@ function ChatMessage({ message }: ChatMessageProps) {
             </div>
           ) : (
             // AI message
-            <div className="text-sm text-foreground">
-              {textParts.map((part, index) => (
-                <p key={index} className="whitespace-pre-wrap break-words leading-relaxed">
-                  {(part as any).text}
-                </p>
-              ))}
+            <div className="text-sm text-foreground markdown-content">
+              {textParts.map((part, index) => {
+                const textContent = (part as any).text;
+                return (
+                  <div key={index} className="space-y-2">
+                    <MemoizedMarkdown
+                      content={textContent}
+                      id={`${message.id}-text-${index}`}
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
