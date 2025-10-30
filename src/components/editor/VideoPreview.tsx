@@ -11,7 +11,6 @@ interface VideoPreviewProps {
 
 export function VideoPreview({ videoPath, onTimeUpdate, seekToTime, isGenerating = false }: VideoPreviewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const animationFrameRef = useRef<number | null>(null);
 
   // Handle external seek commands (from timeline clicks/drags)
   useEffect(() => {
@@ -20,46 +19,30 @@ export function VideoPreview({ videoPath, onTimeUpdate, seekToTime, isGenerating
     }
   }, [seekToTime, videoPath]);
 
-  // Continuous requestAnimationFrame loop for smooth playhead updates
+  // Use native video timeupdate event - fires automatically when video plays
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !videoPath || !onTimeUpdate) {
       return;
     }
 
-    const updateTime = () => {
-      const video = videoRef.current;
-      if (!video) return;
-
-      onTimeUpdate(video.currentTime);
-      
-      if (!video.paused && !video.ended) {
-        animationFrameRef.current = requestAnimationFrame(updateTime);
-      } else {
-        animationFrameRef.current = null;
-      }
-    };
-
-    const handleSeeked = () => {
+    const handleTimeUpdate = () => {
       if (videoRef.current) {
         onTimeUpdate(videoRef.current.currentTime);
       }
     };
 
-    video.addEventListener('seeked', handleSeeked);
-    video.addEventListener('play', updateTime);
-    video.addEventListener('playing', updateTime);
-
-    // Start the loop
-    updateTime();
+    // Use native timeupdate event (fires ~4 times per second when playing)
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    // Also update on seek for immediate feedback
+    video.addEventListener('seeked', handleTimeUpdate);
+    // Update when video loads metadata
+    video.addEventListener('loadedmetadata', handleTimeUpdate);
 
     return () => {
-      if (animationFrameRef.current !== null) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      video.removeEventListener('seeked', handleSeeked);
-      video.removeEventListener('play', updateTime);
-      video.removeEventListener('playing', updateTime);
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('seeked', handleTimeUpdate);
+      video.removeEventListener('loadedmetadata', handleTimeUpdate);
     };
   }, [videoPath, onTimeUpdate]);
 
