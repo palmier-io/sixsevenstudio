@@ -2,7 +2,7 @@ use tauri::AppHandle;
 use tauri_plugin_dialog::DialogExt;
 
 use crate::commands::video_editor::{
-    ffmpeg,
+    ffmpeg::{concatenate_fast, concatenate_with_transitions, verify_ffmpeg_available},
     types::{EditorState, TimelineClip},
 };
 
@@ -15,7 +15,7 @@ pub async fn create_preview_video(
     clips: Vec<TimelineClip>,
     project_name: String,
 ) -> Result<String, String> {
-    ffmpeg::verify_ffmpeg_available(Some(&app))?;
+    verify_ffmpeg_available(Some(&app))?;
 
     if clips.is_empty() {
         return Err("No clips to preview".to_string());
@@ -42,11 +42,10 @@ pub async fn create_preview_video(
     // Choose the appropriate concatenation method
     let result = if has_transitions {
         // Use transition-aware concatenation (requires re-encoding)
-        ffmpeg::concatenate_videos_with_transitions(Some(&app), &clips, &output_path_str, &temp_dir)
-            .await
+        concatenate_with_transitions(&app, &clips, &output_path, &temp_dir).await
     } else {
         // Use fast codec copy (no re-encoding)
-        ffmpeg::concatenate_videos_fast(Some(&app), &clips, &output_path_str, &temp_dir).await
+        concatenate_fast(&app, &clips, &output_path, &temp_dir).await
     };
 
     match result {
