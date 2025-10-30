@@ -66,24 +66,24 @@ export function VideoGalleryItem({
         {/* Play button overlay */}
         {!isGenerating && !hasFailed && (
           <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center group">
-            <Play className="size-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+            <Play className="size-4 sm:size-5 md:size-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
           </div>
         )}
 
         {/* Video metadata overlay */}
-        <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded text-white text-[10px] max-w-[calc(100%-6rem)] truncate">
+        <div className="absolute top-1 left-1 sm:top-1.5 sm:left-1.5 md:top-2 md:left-2 bg-black/60 px-1 py-0.5 sm:px-1.5 sm:py-1 md:px-2 md:py-1 rounded text-white text-[8px] sm:text-[9px] md:text-[10px] max-w-[calc(100%-3rem)] sm:max-w-[calc(100%-4rem)] md:max-w-[calc(100%-5rem)] truncate">
           {video.scene_number
             ? `${video.sample_number && video.sample_number > 1 ? `(${video.sample_number}) ` : ''}Scene ${video.scene_number}`
             : video.id}
         </div>
 
         {/* Action buttons overlay - vertical stack */}
-        <div className="absolute top-2 right-2 flex flex-col gap-1 z-20" onClick={(e) => e.stopPropagation()}>
+        <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-2 md:right-2 flex flex-col gap-0.5 sm:gap-1 z-20" onClick={(e) => e.stopPropagation()}>
           {onRemix && (
             <RemixPopover
               onRemix={onRemix}
               buttonSize="icon"
-              buttonClassName="bg-black/60 hover:bg-purple-600/80 text-white h-8 w-8"
+              buttonClassName="bg-black/60 hover:bg-purple-600/80 text-white h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8"
               compact
             />
           )}
@@ -95,10 +95,10 @@ export function VideoGalleryItem({
                 e.stopPropagation();
                 onRegenerate();
               }}
-              className="bg-black/60 hover:bg-blue-600/80 text-white h-8 w-8"
+              className="bg-black/60 hover:bg-blue-600/80 text-white h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8"
               title="Regenerate video"
             >
-              <RotateCw className="size-4" />
+              <RotateCw className="size-3 sm:size-3.5 md:size-4" />
             </Button>
           )}
           {onDelete && (
@@ -109,10 +109,10 @@ export function VideoGalleryItem({
                 e.stopPropagation();
                 onDelete();
               }}
-              className="bg-black/60 hover:bg-red-600/80 text-white h-8 w-8"
+              className="bg-black/60 hover:bg-red-600/80 text-white h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8"
               title="Delete video"
             >
-              <Trash2 className="size-4" />
+              <Trash2 className="size-3 sm:size-3.5 md:size-4" />
             </Button>
           )}
         </div>

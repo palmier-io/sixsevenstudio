@@ -35,9 +35,9 @@ export function VideoGallery({
           </div>
         ) : (
           <ScrollArea className="h-full w-full" type="auto">
-            <div className="flex gap-4 pb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-4">
               {videos.map((video) => (
-                <div key={video.id} className="flex-shrink-0 w-48 md:w-56 lg:w-64">
+                <div key={video.id} className="w-full">
                   <VideoGalleryItem
                     video={video}
                     projectPath={projectPath}
@@ -50,7 +50,7 @@ export function VideoGallery({
                 </div>
               ))}
             </div>
-            <ScrollBar orientation="horizontal" />
+            <ScrollBar orientation="vertical" />
           </ScrollArea>
         )}
       </div>

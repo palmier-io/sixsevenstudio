@@ -42,7 +42,7 @@ export function RemixPopover({
           className={buttonClassName}
           title="Remix video"
         >
-          <Sparkles className={buttonSize === "icon" ? "size-4" : "size-3 mr-1.5"} />
+          <Sparkles className={buttonSize === "icon" ? "size-3 sm:size-3.5 md:size-4" : "size-3 mr-1.5"} />
           {buttonSize !== "icon" && "Remix"}
         </Button>
       </PopoverTrigger>
