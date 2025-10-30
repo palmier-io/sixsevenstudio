@@ -49,11 +49,20 @@ export function useVideos() {
     [getApiKey]
   );
 
+  const deleteVideo = useCallback(
+    async (videoId: string): Promise<void> => {
+      const apiKey = await getApiKey();
+      await VideoClient.deleteVideo(apiKey, videoId);
+    },
+    [getApiKey]
+  );
+
   return {
     createVideo,
     downloadVideo,
     getVideoStatus,
     fileExists,
     remixVideo,
+    deleteVideo,
   };
 }

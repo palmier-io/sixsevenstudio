@@ -151,3 +151,18 @@ export async function remixVideo(
     throw new Error(`Failed to remix video: ${errorMessage}`);
   }
 }
+
+export async function deleteVideo(
+  apiKey: string,
+  videoId: string
+): Promise<void> {
+  const client = getClient(apiKey);
+
+  try {
+    await client.videos.delete(videoId);
+    debug(`Video deleted from OpenAI: ${videoId}`);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to delete video from OpenAI: ${errorMessage}`);
+  }
+}

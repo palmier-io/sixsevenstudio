@@ -48,7 +48,7 @@ interface VideosTabProps {
 
 export function VideosTab({ projectName }: VideosTabProps) {
   const { getProject, deleteVideoFromProject, addVideosToProject } = useProjects();
-  const { createVideo, remixVideo } = useVideos();
+  const { createVideo, remixVideo, deleteVideo } = useVideos();
   const { getStatus } = useVideoStatusStore();
 
   const [projectMeta, setProjectMeta] = useState<ProjectMeta | null>(null);
@@ -86,12 +86,17 @@ export function VideosTab({ projectName }: VideosTabProps) {
       setProjectMeta(updatedMeta);
       setSelectedVideoId(null);
       toast.success("Video deleted successfully");
+      
+      // fire and forget
+      deleteVideo(videoId).catch((error) => {
+        console.error("Failed to delete video from OpenAI:", error);
+      });
     } catch (error) {
       toast.error("Failed to delete video", {
         description: error instanceof Error ? error.message : String(error),
       });
     }
-  }, [projectName, deleteVideoFromProject, getProject]);
+  }, [projectName, deleteVideo, deleteVideoFromProject, getProject]);
 
   const handleVideoRegenerate = useCallback(async (video: VideoMeta) => {
     if (!projectName || !projectMeta) return;
@@ -128,6 +133,11 @@ export function VideosTab({ projectName }: VideosTabProps) {
       // For failed videos: replace. For successful videos: add new sample
       if (isFailed) {
         await deleteVideoFromProject(projectName, video.id);
+
+        // fire and forget
+        deleteVideo(video.id).catch((error) => {
+          console.error("Failed to delete video from OpenAI:", error);
+        });
       }
       await addVideosToProject(projectName, [newVideoMeta]);
 
@@ -142,7 +152,7 @@ export function VideosTab({ projectName }: VideosTabProps) {
         description: error instanceof Error ? error.message : String(error),
       });
     }
-  }, [projectName, projectMeta, createVideo, getStatus, addVideosToProject, deleteVideoFromProject, getProject]);
+  }, [projectName, projectMeta, createVideo, getStatus, addVideosToProject, deleteVideo, deleteVideoFromProject, getProject]);
 
   const handleVideoRemix = useCallback(async (video: VideoMeta, remixPrompt: string) => {
     if (!projectName || !projectMeta) return;
