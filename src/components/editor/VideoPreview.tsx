@@ -11,6 +11,7 @@ interface VideoPreviewProps {
 
 export function VideoPreview({ videoPath, onTimeUpdate, seekToTime, isGenerating = false }: VideoPreviewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   // Handle external seek commands (from timeline clicks/drags)
   useEffect(() => {
@@ -19,14 +20,48 @@ export function VideoPreview({ videoPath, onTimeUpdate, seekToTime, isGenerating
     }
   }, [seekToTime, videoPath]);
 
-  // Handle time updates
-  const handleTimeUpdate = () => {
+  // Continuous requestAnimationFrame loop for smooth playhead updates
+  useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !videoPath || !onTimeUpdate) {
+      return;
+    }
 
-    // Emit current time (timeline time in seconds)
-    onTimeUpdate?.(video.currentTime);
-  };
+    const updateTime = () => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      onTimeUpdate(video.currentTime);
+      
+      if (!video.paused && !video.ended) {
+        animationFrameRef.current = requestAnimationFrame(updateTime);
+      } else {
+        animationFrameRef.current = null;
+      }
+    };
+
+    const handleSeeked = () => {
+      if (videoRef.current) {
+        onTimeUpdate(videoRef.current.currentTime);
+      }
+    };
+
+    video.addEventListener('seeked', handleSeeked);
+    video.addEventListener('play', updateTime);
+    video.addEventListener('playing', updateTime);
+
+    // Start the loop
+    updateTime();
+
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      video.removeEventListener('seeked', handleSeeked);
+      video.removeEventListener('play', updateTime);
+      video.removeEventListener('playing', updateTime);
+    };
+  }, [videoPath, onTimeUpdate]);
 
   return (
     <Card className="w-full h-full flex flex-col overflow-hidden">
@@ -41,7 +76,6 @@ export function VideoPreview({ videoPath, onTimeUpdate, seekToTime, isGenerating
             src={convertFileSrc(videoPath)}
             className="max-w-full max-h-full object-contain"
             controls
-            onTimeUpdate={handleTimeUpdate}
             key={videoPath} // Force re-render when video changes
           />
         ) : (
