@@ -128,6 +128,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
     const generatePreview = async () => {
       if (clips.length === 0) {
         setPreviewVideoPath(null);
+        setCurrentPlaybackTime(null);
         return;
       }
 
@@ -135,6 +136,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
       try {
         const path = await createPreviewVideo(clips, projectName);
         setPreviewVideoPath(path);
+        setCurrentPlaybackTime(0);
       } catch (error) {
         console.error('Failed to generate preview:', error);
         toast.error('Failed to generate preview video', { description: error instanceof Error ? error.message : String(error) });
@@ -144,7 +146,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
     };
 
     generatePreview();
-  }, [clips, projectName, createPreviewVideo]);
+  }, [clips, projectName, createPreviewVideo, setCurrentPlaybackTime]);
 
   // Handle video time update - timeline time directly from stitched video
   const handleVideoTimeUpdate = useCallback((videoTime: number) => {
