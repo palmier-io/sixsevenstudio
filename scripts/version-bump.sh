@@ -74,15 +74,15 @@ echo "✓ Tagged as v$NEW_VERSION"
 
 if [[ "$SHOULD_PUSH" == "true" ]]; then
   echo ""
-  echo "Pushing changes and tags..."
+  echo "Pushing changes and tag..."
   git push
-  git push --tags
+  git push origin "v$NEW_VERSION"
   echo ""
   echo "✓ Pushed to remote"
 else
   echo ""
-  echo "To push changes and tags, run:"
-  echo "  git push && git push --tags"
+  echo "To push changes and tag, run:"
+  echo "  git push && git push origin v$NEW_VERSION"
   echo ""
   echo "Or use --push flag to push automatically:"
   echo "  ./scripts/version-bump.sh $VERSION_TYPE --push"
