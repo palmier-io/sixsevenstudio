@@ -98,5 +98,6 @@ export function useAiChat(projectName: string, model: LLMModel) {
     ...chat,
     hasApiKey: !!apiKey && !isLoadingKey,
     isLoadingKey,
+    stop: chat.stop,
   };
 }

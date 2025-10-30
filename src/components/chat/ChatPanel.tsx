@@ -15,7 +15,7 @@ interface ChatPanelProps {
 
 export function ChatPanel({ projectName, initialPrompt, initialLLMModel }: ChatPanelProps) {
   const [llmModel, setLLMModel] = useState<LLMModel>(initialLLMModel || DEFAULT_LLM_MODEL);
-  const { messages, sendMessage, status, isLoadingKey, setMessages, hasApiKey } = useAiChat(projectName, llmModel);
+  const { messages, sendMessage, status, isLoadingKey, setMessages, hasApiKey, stop } = useAiChat(projectName, llmModel);
   const initialPromptSentRef = useRef(false);
 
   // Auto-send initial prompt
@@ -37,11 +37,10 @@ export function ChatPanel({ projectName, initialPrompt, initialLLMModel }: ChatP
   };
 
   const handleNewChat = () => {
-    if (messages.length > 0) {
-      if (confirm('Start a new chat? This will clear the current conversation.')) {
-        setMessages([]);
-      }
+    if (status !== 'ready' && stop) {
+      stop();
     }
+    setMessages([]);
   };
 
   if (isLoadingKey) {
@@ -68,7 +67,7 @@ export function ChatPanel({ projectName, initialPrompt, initialLLMModel }: ChatP
             variant="ghost"
             size="icon-sm"
             onClick={handleNewChat}
-            disabled={messages.length === 0}
+            disabled={messages.length === 0 && status === 'ready'}
             title="New Chat"
           >
             <PlusCircle className="size-4" />
@@ -77,7 +76,7 @@ export function ChatPanel({ projectName, initialPrompt, initialLLMModel }: ChatP
       </div>
 
       <ChatMessages messages={messages} status={status} />
-      <ChatInput onSend={handleSend} status={status} llmModel={llmModel} onModelChange={setLLMModel} />
+      <ChatInput onSend={handleSend} onStop={stop} status={status} llmModel={llmModel} onModelChange={setLLMModel} />
       </Card>
     </div>
   );
