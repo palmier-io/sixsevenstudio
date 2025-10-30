@@ -3,6 +3,13 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use tauri::{AppHandle, Manager};
 
+// Encoding constants
+const VIDEO_CODEC: &str = "libx264";
+const VIDEO_PRESET: &str = "superfast";
+const VIDEO_CRF: &str = "23";
+const AUDIO_CODEC: &str = "aac";
+const AUDIO_BITRATE: &str = "128k";
+
 pub fn get_ffmpeg_path(app: Option<&AppHandle>) -> Result<PathBuf, String> {
     // Try Tauri sidecar first (bundled binary)
     if let Some(app_handle) = app {
@@ -24,6 +31,19 @@ pub fn get_ffmpeg_path(app: Option<&AppHandle>) -> Result<PathBuf, String> {
     Err("FFmpeg not found. Please install FFmpeg or ensure it's bundled with the app.".to_string())
 }
 
+fn run_ffmpeg_command(cmd: &mut Command, operation: &str) -> Result<(), String> {
+    let output = cmd
+        .output()
+        .map_err(|e| format!("Failed to execute ffmpeg for {}: {}", operation, e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("FFmpeg {} failed: {}", operation, stderr));
+    }
+
+    Ok(())
+}
+
 pub fn trim_video(
     app: Option<&AppHandle>,
     input_path: &str,
@@ -34,30 +54,55 @@ pub fn trim_video(
     let duration = end_time - start_time;
     let ffmpeg_path = get_ffmpeg_path(app)?;
 
-    let output = Command::new(ffmpeg_path)
-        .args([
-            "-ss",
-            &start_time.to_string(),
-            "-i",
-            input_path,
-            "-t",
-            &duration.to_string(),
-            "-c",
-            "copy", // Copy codec for fast processing
-            "-y",   // Overwrite output file
-            output_path,
-        ])
-        .output()
-        .map_err(|e| format!("Failed to execute ffmpeg: {}", e))?;
+    let mut cmd = Command::new(ffmpeg_path);
+    cmd.args([
+        "-ss",
+        &start_time.to_string(),
+        "-i",
+        input_path,
+        "-t",
+        &duration.to_string(),
+        "-c",
+        "copy", // Copy codec for fast processing
+        "-y",   // Overwrite output file
+        output_path,
+    ]);
 
-    if !output.status.success() {
-        return Err(format!(
-            "ffmpeg failed: {}",
-            String::from_utf8_lossy(&output.stderr)
-        ));
-    }
+    run_ffmpeg_command(&mut cmd, "trim video")
+}
 
-    Ok(())
+/// Trim and re-encode a video clip (needed for filter compatibility)
+fn trim_and_reencode_clip(
+    app: Option<&AppHandle>,
+    clip: &TimelineClip,
+    output_path: &str,
+) -> Result<(), String> {
+    let duration = clip.trim_end - clip.trim_start;
+    let ffmpeg_path = get_ffmpeg_path(app)?;
+
+    let mut cmd = Command::new(ffmpeg_path);
+    cmd.args([
+        "-ss",
+        &clip.trim_start.to_string(),
+        "-i",
+        &clip.video_path,
+        "-t",
+        &duration.to_string(),
+        "-c:v",
+        VIDEO_CODEC,
+        "-preset",
+        VIDEO_PRESET,
+        "-crf",
+        VIDEO_CRF,
+        "-c:a",
+        AUDIO_CODEC,
+        "-b:a",
+        AUDIO_BITRATE,
+        "-y",
+        output_path,
+    ]);
+
+    run_ffmpeg_command(&mut cmd, &format!("trim and encode clip {}", clip.id))
 }
 
 /// Concatenate videos using codec copy (no re-encoding)
@@ -99,33 +144,30 @@ pub fn concatenate_videos_fast(
 
     // Concatenate using concat demuxer with codec copy (no re-encoding)
     let ffmpeg_path = get_ffmpeg_path(app)?;
-    let output = Command::new(ffmpeg_path)
-        .args([
-            "-f",
-            "concat",
-            "-safe",
-            "0",
-            "-i",
-            concat_file.to_str().unwrap(),
-            "-c",
-            "copy", // Copy codec - no re-encoding!
-            "-y",
-            output_path,
-        ])
-        .output()
-        .map_err(|e| format!("Failed to execute ffmpeg: {}", e))?;
+    let mut cmd = Command::new(ffmpeg_path);
+    cmd.args([
+        "-f",
+        "concat",
+        "-safe",
+        "0",
+        "-i",
+        concat_file.to_str().unwrap(),
+        "-c",
+        "copy", // Copy codec - no re-encoding!
+        "-y",
+        output_path,
+    ]);
 
-    // Clean up temp files
+    run_ffmpeg_command(&mut cmd, "concatenate videos")?;
+
+    // Clean up temp files (best effort)
     for temp_file in temp_files {
-        let _ = std::fs::remove_file(temp_file);
+        if let Err(e) = std::fs::remove_file(temp_file) {
+            eprintln!("Warning: Failed to remove temp file: {}", e);
+        }
     }
-    let _ = std::fs::remove_file(concat_file);
-
-    if !output.status.success() {
-        return Err(format!(
-            "ffmpeg failed: {}",
-            String::from_utf8_lossy(&output.stderr)
-        ));
+    if let Err(e) = std::fs::remove_file(concat_file) {
+        eprintln!("Warning: Failed to remove concat list file: {}", e);
     }
 
     Ok(())
@@ -144,115 +186,31 @@ pub fn concatenate_videos_with_transitions(
 
     if clips.len() == 1 {
         // Single clip, just trim it
-        trim_video(
+        return trim_video(
             app,
             &clips[0].video_path,
             clips[0].trim_start,
             clips[0].trim_end,
             output_path,
-        )?;
-        return Ok(());
+        );
     }
 
-    // Create temporary trimmed clips
-    let mut temp_files = Vec::new();
+    let ffmpeg_path = get_ffmpeg_path(app)?;
 
+    // Create temporary trimmed and re-encoded clips
+    let mut temp_files = Vec::new();
     for (i, clip) in clips.iter().enumerate() {
         let temp_file = temp_dir.join(format!("clip_{}.mp4", i));
         let temp_file_str = temp_file.to_str().ok_or("Invalid temp file path")?;
 
-        // Trim the clip (still need to re-encode for xfade compatibility)
-        let ffmpeg_path = get_ffmpeg_path(app)?;
-        let output = Command::new(&ffmpeg_path)
-            .args([
-                "-ss",
-                &clip.trim_start.to_string(),
-                "-i",
-                &clip.video_path,
-                "-t",
-                &(clip.trim_end - clip.trim_start).to_string(),
-                "-c:v",
-                "libx264",
-                "-preset",
-                "superfast",
-                "-crf",
-                "23",
-                "-c:a",
-                "aac",
-                "-b:a",
-                "128k",
-                "-y",
-                temp_file_str,
-            ])
-            .output()
-            .map_err(|e| format!("Failed to execute ffmpeg: {}", e))?;
-
-        if !output.status.success() {
-            return Err(format!(
-                "ffmpeg failed on clip {}: {}",
-                i + 1,
-                String::from_utf8_lossy(&output.stderr)
-            ));
-        }
-
-        temp_files.push(temp_file.clone());
+        trim_and_reencode_clip(app, clip, temp_file_str)?;
+        temp_files.push(temp_file);
     }
 
-    // Build the filter_complex for xfade transitions
-    let mut filter_complex = String::new();
-    let mut current_label = String::from("0:v");
-    let mut cumulative_offset = 0.0;
+    // Build filter_complex for video transitions and audio concatenation
+    let filter_complex = build_transition_filter_complex(clips);
 
-    for (i, clip) in clips.iter().enumerate() {
-        if i == clips.len() - 1 {
-            // Last clip, no transition after it
-            break;
-        }
-
-        // Get transition settings (default to fade with 1s duration)
-        let transition_type = clip
-            .transition_type
-            .as_ref()
-            .map(|s| s.as_str())
-            .unwrap_or("fade");
-        let transition_duration = clip.transition_duration.unwrap_or(1.0);
-
-        // Calculate offset: when to start the transition
-        // For chained xfades, offset must be cumulative from the original timeline
-        // offset = sum of all previous (clip_duration - transition_duration)
-        let offset = if i == 0 {
-            // First transition: simple offset within first clip
-            clip.duration - transition_duration
-        } else {
-            // Subsequent transitions: cumulative offset from the start
-            cumulative_offset + clip.duration - transition_duration
-        };
-
-        // Update cumulative offset for next iteration
-        cumulative_offset += clip.duration - transition_duration;
-
-        let next_input = format!("{}:v", i + 1);
-        let output_label = if i == clips.len() - 2 {
-            String::from("out")
-        } else {
-            format!("v{}", i)
-        };
-
-        // Add xfade filter
-        if !filter_complex.is_empty() {
-            filter_complex.push_str("; ");
-        }
-
-        filter_complex.push_str(&format!(
-            "[{}][{}]xfade=transition={}:duration={}:offset={}[{}]",
-            current_label, next_input, transition_type, transition_duration, offset, output_label
-        ));
-
-        current_label = output_label;
-    }
-
-    // Build ffmpeg command with all inputs and filter
-    let ffmpeg_path = get_ffmpeg_path(app)?;
+    // Build and run FFmpeg command
     let mut cmd = Command::new(&ffmpeg_path);
 
     // Add all input files
@@ -265,36 +223,87 @@ pub fn concatenate_videos_with_transitions(
         "-filter_complex",
         &filter_complex,
         "-map",
-        "[out]",
+        "[out]", // Video output
+        "-map",
+        "[outa]", // Audio output
         "-c:v",
-        "libx264",
+        VIDEO_CODEC,
         "-preset",
-        "superfast",
+        VIDEO_PRESET,
         "-crf",
-        "23",
+        VIDEO_CRF,
         "-c:a",
-        "aac",
+        AUDIO_CODEC,
         "-b:a",
-        "128k",
+        AUDIO_BITRATE,
         "-y",
         output_path,
     ]);
 
-    let output = cmd
-        .output()
-        .map_err(|e| format!("Failed to execute ffmpeg: {}", e))?;
+    run_ffmpeg_command(&mut cmd, "concatenate videos with transitions")?;
 
-    // Clean up temp files
+    // Clean up temp files (best effort)
     for temp_file in temp_files {
-        let _ = std::fs::remove_file(temp_file);
-    }
-
-    if !output.status.success() {
-        return Err(format!(
-            "ffmpeg failed: {}",
-            String::from_utf8_lossy(&output.stderr)
-        ));
+        if let Err(e) = std::fs::remove_file(temp_file) {
+            eprintln!("Warning: Failed to remove temp file: {}", e);
+        }
     }
 
     Ok(())
+}
+
+/// Build the filter_complex string for video transitions and audio concatenation
+fn build_transition_filter_complex(clips: &[TimelineClip]) -> String {
+    let mut filter_parts = Vec::new();
+    let mut current_label = String::from("0:v");
+    let mut cumulative_offset = 0.0;
+
+    // Build video transition filters (xfade)
+    for (i, clip) in clips.iter().enumerate() {
+        if i == clips.len() - 1 {
+            // Last clip, no transition after it
+            break;
+        }
+
+        let transition_type = clip
+            .transition_type
+            .as_ref()
+            .map(|s| s.as_str())
+            .unwrap_or("fade");
+        let transition_duration = clip.transition_duration.unwrap_or(1.0);
+
+        // Calculate offset: cumulative from the start of the timeline
+        let offset = if i == 0 {
+            clip.duration - transition_duration
+        } else {
+            cumulative_offset + clip.duration - transition_duration
+        };
+
+        cumulative_offset += clip.duration - transition_duration;
+
+        let next_input = format!("{}:v", i + 1);
+        let output_label = if i == clips.len() - 2 {
+            String::from("out")
+        } else {
+            format!("v{}", i)
+        };
+
+        filter_parts.push(format!(
+            "[{}][{}]xfade=transition={}:duration={}:offset={}[{}]",
+            current_label, next_input, transition_type, transition_duration, offset, output_label
+        ));
+
+        current_label = output_label;
+    }
+
+    // Build audio concatenation filter
+    let audio_inputs: String = (0..clips.len()).map(|i| format!("[{}:a]", i)).collect();
+
+    filter_parts.push(format!(
+        "{}concat=n={}:v=0:a=1[outa]",
+        audio_inputs,
+        clips.len()
+    ));
+
+    filter_parts.join("; ")
 }
