@@ -61,6 +61,10 @@ export function VideoDetails({ video, onRegenerate, onRemix }: VideoDetailsProps
           <h2 className="text-lg font-semibold mb-3">Video Metadata</h2>
           <dl className="space-y-2">
             <div className="flex justify-between text-sm">
+              <dt className="text-muted-foreground">Video ID:</dt>
+              <dd className="font-medium text-xs truncate">{video.id}</dd>
+            </div>
+            <div className="flex justify-between text-sm">
               <dt className="text-muted-foreground">Model:</dt>
               <dd className="font-medium">{video.model}</dd>
             </div>
