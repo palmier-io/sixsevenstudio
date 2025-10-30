@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { validateApiKey } from "@/lib/openai/auth";
 
 export const API_KEY_QUERY_KEY = ["api-key"];
 
@@ -13,6 +14,11 @@ async function fetchApiKey(): Promise<string | null> {
 }
 
 async function saveApiKey(apiKey: string): Promise<void> {
+  const isValid = await validateApiKey(apiKey);
+  if (!isValid) {
+    throw new Error("Invalid API key. The API key could not be validated. Please check your key and try again.");
+  }
+
   try {
     await invoke("save_api_key", { apiKey });
   } catch (err) {
