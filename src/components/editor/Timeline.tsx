@@ -8,6 +8,7 @@ import { TimelineClip } from "./TimelineClip";
 import { TransitionSelector, type TransitionConfig } from "./TransitionSelector";
 import type { TimelineClip as TimelineClipType } from "@/types/video-editor";
 import { calculateTotalDuration } from "@/lib/utils";
+import { useWaveformCache, useSpriteCache } from "@/hooks/tauri/use-waveform-cache";
 import {
   DndContext,
   closestCenter,
@@ -43,14 +44,29 @@ interface TimelineProps {
   onExport?: () => void;
   isExporting?: boolean;
   canExport?: boolean;
+  projectName: string;
 }
 
 export const Timeline = memo(function Timeline({
-  clips, selectedClipId, onClipSelect, onClipDelete, onClipSplit, onClipReorder, onClipTransitionChange, currentTime, onTimelineClick, onExport, isExporting, canExport,
+  clips, selectedClipId, onClipSelect, onClipDelete, onClipSplit, onClipReorder, onClipTransitionChange, currentTime, onTimelineClick, onExport, isExporting, canExport, projectName,
 }: TimelineProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
   const timelineRef = useRef<HTMLDivElement>(null);
+
+  const pixelsPerSecond = zoomLevel;
+
+  // Use waveform and sprite cache hooks
+  const { getWaveform, isLoading: isWaveformLoading } = useWaveformCache(
+    projectName,
+    clips,
+    pixelsPerSecond
+  );
+  const { getSprite, isLoading: isSpriteLoading } = useSpriteCache(
+    projectName,
+    clips,
+    pixelsPerSecond
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -77,8 +93,6 @@ export const Timeline = memo(function Timeline({
 
   // Calculate total duration accounting for transitions (transitions cause overlap)
   const totalDuration = useMemo(() => calculateTotalDuration(clips), [clips]);
-
-  const pixelsPerSecond = zoomLevel;
 
   const timeMarkers = useMemo(() => {
     if (!totalDuration) return [];
@@ -147,14 +161,7 @@ export const Timeline = memo(function Timeline({
         onMouseDown={handlePlayheadMouseDown}
       >
         {showHandle && (
-          <>
-            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full" />
-            {canSplit && (
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-background border border-border rounded px-2 py-1 text-xs whitespace-nowrap pointer-events-none shadow-md">
-                Split here
-              </div>
-            )}
-          </>
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full" />
         )}
       </div>
     );
@@ -268,6 +275,10 @@ export const Timeline = memo(function Timeline({
                               onClick={() => onClipSelect(clip.id)}
                               position={position}
                               pixelsPerSecond={pixelsPerSecond}
+                              waveformPath={getWaveform(clip.id)}
+                              spritePath={getSprite(clip.id)}
+                              isWaveformLoading={isWaveformLoading(clip.id)}
+                              isSpriteLoading={isSpriteLoading(clip.id)}
                             />
                             {!isLastClip && onClipTransitionChange && (
                               <div

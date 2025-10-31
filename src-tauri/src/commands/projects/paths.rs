@@ -41,6 +41,9 @@ const CONTEXT_FILE: &str = "context.md";
 const SCENES_FOLDER: &str = "scenes";
 const SCENES_INDEX_FILE: &str = "index.json";
 const SCENE_FILE: &str = "scene.md";
+const CACHE_FOLDER: &str = "cache";
+const WAVEFORMS_FOLDER: &str = "waveforms";
+const SPRITES_FOLDER: &str = "sprites";
 
 pub struct ProjectPaths {
     root: PathBuf,
@@ -159,5 +162,30 @@ impl ProjectPaths {
     /// ~/sixsevenstudio/projects/<project_name>/storyboard/scenes/<scene_id>/scene.md
     pub fn scene_file(&self, scene_id: &str) -> PathBuf {
         self.scene_dir(scene_id).join(SCENE_FILE)
+    }
+
+    /// ~/sixsevenstudio/projects/<project_name>/.sixseven/cache/
+    pub fn cache_dir(&self) -> PathBuf {
+        self.metadata_dir().join(CACHE_FOLDER)
+    }
+
+    /// ~/sixsevenstudio/projects/<project_name>/.sixseven/cache/waveforms/
+    pub fn waveforms_dir(&self) -> PathBuf {
+        self.cache_dir().join(WAVEFORMS_FOLDER)
+    }
+
+    /// ~/sixsevenstudio/projects/<project_name>/.sixseven/cache/waveforms/<clip_id>_waveform_<width>.png
+    pub fn waveform_file(&self, clip_id: &str, width: u32) -> PathBuf {
+        self.waveforms_dir().join(format!("{}_waveform_{}.png", clip_id, width))
+    }
+
+    /// ~/sixsevenstudio/projects/<project_name>/.sixseven/cache/sprites/
+    pub fn sprites_dir(&self) -> PathBuf {
+        self.cache_dir().join(SPRITES_FOLDER)
+    }
+
+    /// ~/sixsevenstudio/projects/<project_name>/.sixseven/cache/sprites/<clip_id>_sprite_<width>.png
+    pub fn sprite_file(&self, clip_id: &str, width: u32) -> PathBuf {
+        self.sprites_dir().join(format!("{}_sprite_{}.png", clip_id, width))
     }
 }

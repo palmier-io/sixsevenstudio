@@ -22,7 +22,8 @@
       "assetProtocol": {
         "enable": true,
         "scope": [
-          "$HOME/**"
+          "$HOME/sixsevenstudio/**",
+          "$HOME/sixsevenstudio/*/.sixseven/**"
         ]
       }
     }

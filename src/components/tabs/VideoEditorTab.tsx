@@ -205,6 +205,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
             onExport={handleExport}
             isExporting={isExporting}
             canExport={!!previewVideoPath && !isGeneratingPreview}
+            projectName={projectName}
           />
         </div>
       </ResizablePanel>
