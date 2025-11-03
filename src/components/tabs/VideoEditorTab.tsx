@@ -176,7 +176,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
       <ResizablePanel defaultSize={75} minSize={40}>
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Left Panel: Clip Library */}
-          <ResizablePanel defaultSize={15} minSize={10} className="min-w-0">
+          <ResizablePanel defaultSize={30} minSize={20} className="min-w-0">
             <div className="h-full min-h-0 overflow-hidden">
               <ClipLibrary
                 clips={libraryClips}
@@ -192,7 +192,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
           <ResizableHandle withHandle />
 
           {/* Right Panel: Video Preview */}
-          <ResizablePanel defaultSize={80} minSize={40}>
+          <ResizablePanel defaultSize={70} minSize={40}>
             <div className="h-full overflow-auto p-6 flex items-center justify-center">
               <VideoPreview
                 videoPath={previewVideoPath}

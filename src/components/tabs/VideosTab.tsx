@@ -201,7 +201,7 @@ export function VideosTab({ projectName }: VideosTabProps) {
       <ResizablePanel defaultSize={75} minSize={40}>
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Left Panel: Video Details */}
-          <ResizablePanel defaultSize={25} minSize={15}>
+          <ResizablePanel defaultSize={40} minSize={20}>
             <VideoDetails
               video={selectedVideo}
               onRegenerate={selectedVideo ? () => handleVideoRegenerate(selectedVideo) : undefined}
@@ -212,7 +212,7 @@ export function VideosTab({ projectName }: VideosTabProps) {
           <ResizableHandle withHandle />
 
           {/* Right Panel: Video Player */}
-          <ResizablePanel defaultSize={75} minSize={40}>
+          <ResizablePanel defaultSize={60} minSize={40}>
             <div className="h-full overflow-auto p-6 flex items-center justify-center">
               {selectedVideoId && projectMeta ? (
                 <VideoPlayer

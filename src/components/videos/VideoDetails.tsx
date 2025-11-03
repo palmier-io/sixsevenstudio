@@ -52,7 +52,7 @@ export function VideoDetails({ video, onRegenerate, onRemix }: VideoDetailsProps
 
         <div>
           <h2 className="text-lg font-semibold mb-2">Original Prompt</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
             {video.prompt}
           </p>
         </div>
@@ -94,7 +94,7 @@ export function VideoDetails({ video, onRegenerate, onRemix }: VideoDetailsProps
         {video.remix_prompt && (
           <div>
             <h2 className="text-lg font-semibold mb-2">Remix Prompt</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
               {video.remix_prompt}
             </p>
           </div>
