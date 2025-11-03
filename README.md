@@ -4,6 +4,15 @@ sixsevenstudio is a native Mac app for generating and editing AI videos with Sor
 
 It lets you brainstorm ideas and storyboards with AI assistant, iterate on Sora videos, and edit the videos, all in one place.
 
+![Storyboard](images/storyboard.png)
+*Create and refine storyboards with AI assistance*
+
+![Videos](images/videos.png)
+*Browse and manage your generated videos*
+
+![Editor](images/editor.png)
+*Edit videos with trimming, transitions, and more*
+
 It's built with:
 - [Tauri v2](https://v2.tauri.app/)
 - React
@@ -15,6 +24,7 @@ It's built with:
 - Storyboard AI assistant with AI SDK
 - Local storage, all videos stored in your fs
 - Video editing (trimming, stitching, transitions)
+
 
 ### Development Guide
 #### Prerequisites

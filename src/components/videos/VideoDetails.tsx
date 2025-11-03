@@ -16,7 +16,7 @@ export function VideoDetails({ video, onRegenerate, onRemix }: VideoDetailsProps
       <ScrollArea className="h-full">
         <div className="p-6">
           <div>
-            <h2 className="text-lg font-semibold mb-2">Original Prompt</h2>
+            <h2 className="text-sm font-semibold mb-2">Original Prompt</h2>
             <p className="text-sm text-muted-foreground">No prompt available</p>
           </div>
         </div>
@@ -51,14 +51,14 @@ export function VideoDetails({ video, onRegenerate, onRemix }: VideoDetailsProps
         )}
 
         <div>
-          <h2 className="text-lg font-semibold mb-2">Original Prompt</h2>
+          <h2 className="text-sm font-semibold mb-2">Original Prompt</h2>
           <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
             {video.prompt}
           </p>
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold mb-3">Video Metadata</h2>
+          <h2 className="text-sm font-semibold mb-3">Video Metadata</h2>
           <dl className="space-y-2">
             <div className="flex justify-between text-sm">
               <dt className="text-muted-foreground">Video ID:</dt>
@@ -93,7 +93,7 @@ export function VideoDetails({ video, onRegenerate, onRemix }: VideoDetailsProps
 
         {video.remix_prompt && (
           <div>
-            <h2 className="text-lg font-semibold mb-2">Remix Prompt</h2>
+            <h2 className="text-sm font-semibold mb-2">Remix Prompt</h2>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
               {video.remix_prompt}
             </p>

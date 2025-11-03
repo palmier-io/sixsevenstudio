@@ -109,17 +109,17 @@ export function useEditorState(projectName: string, previewVideoPath: string | n
         ...clip,
         id: generateId('clip'),
         duration: splitPointInClip,
-        trimEnd: clip.trimStart + splitPointInClip, // Absolute end time at split point
+        trimEnd: clip.trimStart + splitPointInClip,
       };
 
-      // Create second clip (right portion) - trimStart becomes the split point
+      // Create second clip (right portion)
       const secondClip: TimelineClip = {
         ...clip,
         id: generateId('clip'),
-        position: splitTimelinePosition, // Timeline position (absolute)
+        position: splitTimelinePosition,
         duration: durationToRemove,
-        trimStart: clip.trimStart + splitPointInClip, // Absolute start time at split point
-        trimEnd: clip.trimEnd, // Keep original absolute end time
+        trimStart: clip.trimStart + splitPointInClip,
+        trimEnd: clip.trimEnd,
       };
 
       // Replace the original clip with the two new clips
