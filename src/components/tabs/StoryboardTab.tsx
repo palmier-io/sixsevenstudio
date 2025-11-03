@@ -165,24 +165,30 @@ export function StoryboardTab({ projectName }: StoryboardTabProps) {
                     ? await getSceneReferenceImage(scene.id)
                     : null;
 
-                  const videoId = await createVideo({
-                    model: videoSettings.model,
-                    prompt: scenePrompt,
-                    size: videoSettings.resolution as openai.Videos.VideoSize,
-                    seconds: sceneDuration.toString() as openai.Videos.VideoSeconds,
-                    ...(referenceImagePath && { input_reference: referenceImagePath as any }),
-                  });
+                  // Generate videos for n samples
+                  const videoMetadata = [];
+                  for (let i = 0; i < videoSettings.samples; i++) {
+                    const videoId = await createVideo({
+                      model: videoSettings.model,
+                      prompt: scenePrompt,
+                      size: videoSettings.resolution as openai.Videos.VideoSize,
+                      seconds: sceneDuration.toString() as openai.Videos.VideoSeconds,
+                      ...(referenceImagePath && { input_reference: referenceImagePath as any }),
+                    });
 
-                  await addVideosToProject(projectName, [{
-                    id: videoId,
-                    prompt: scenePrompt,
-                    model: videoSettings.model,
-                    resolution: videoSettings.resolution,
-                    duration: sceneDuration,
-                    created_at: Date.now(),
-                    scene_number: selectedSceneIndex + 1,
-                    scene_title: scene.title,
-                  }]);
+                    videoMetadata.push({
+                      id: videoId,
+                      prompt: scenePrompt,
+                      model: videoSettings.model,
+                      resolution: videoSettings.resolution,
+                      duration: sceneDuration,
+                      created_at: Date.now(),
+                      scene_number: selectedSceneIndex + 1,
+                      scene_title: scene.title,
+                    });
+                  }
+
+                  await addVideosToProject(projectName, videoMetadata);
                 }}
               />
             ) : null}

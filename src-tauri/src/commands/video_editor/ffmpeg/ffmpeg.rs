@@ -29,3 +29,41 @@ pub async fn run_ffmpeg(app: &AppHandle, args: &[&str], op: &str) -> Result<(), 
     }
 }
 
+/// Get video duration using FFprobe
+pub async fn get_video_duration(app: &AppHandle, video_path: &str) -> Result<f64, String> {
+    let output = app
+        .shell()
+        .sidecar("ffprobe")
+        .map_err(|e| format!("Failed to get ffprobe sidecar: {}", e))?
+        .args(&[
+            "-v", "quiet",
+            "-print_format", "json",
+            "-show_format",
+            video_path,
+        ])
+        .output()
+        .await
+        .map_err(|e| format!("Failed to execute ffprobe: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("FFprobe failed: {}", stderr));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let json: serde_json::Value = serde_json::from_str(&stdout)
+        .map_err(|e| format!("Failed to parse ffprobe JSON output: {}", e))?;
+
+    let duration_str = json
+        .get("format")
+        .and_then(|f| f.get("duration"))
+        .and_then(|d| d.as_str())
+        .ok_or("Duration not found in ffprobe output")?;
+
+    let duration: f64 = duration_str
+        .parse()
+        .map_err(|e| format!("Failed to parse duration '{}': {}", duration_str, e))?;
+
+    Ok(duration)
+}
+

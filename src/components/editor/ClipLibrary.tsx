@@ -1,24 +1,32 @@
-import { PlusCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { PlusCircle, Upload, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import type { VideoClip } from "@/types/video-editor";
 
 interface ClipLibraryProps {
   clips: VideoClip[];
   onClipAdd?: (clip: VideoClip) => void;
+  projectName: string;
+  onImportVideo?: () => Promise<VideoClip>;
+  onLoadImportedVideos?: () => Promise<VideoClip[]>;
+  onDeleteImportedVideo?: (videoId: string) => Promise<void>;
 }
 
 interface ClipItemProps {
   clip: VideoClip;
   onAdd?: (clip: VideoClip) => void;
+  onDelete?: (clip: VideoClip) => void;
 }
 
-function ClipItem({ clip, onAdd }: ClipItemProps) {
+function ClipItem({ clip, onAdd, onDelete }: ClipItemProps) {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -28,7 +36,7 @@ function ClipItem({ clip, onAdd }: ClipItemProps) {
   const videoSrc = clip.videoPath ? `${convertFileSrc(clip.videoPath)}#t=0.1` : null;
 
   return (
-    <div className="relative group max-w-xs">
+    <div className="relative group w-full">
       <div
         className={cn(
           "relative rounded border bg-card overflow-hidden",
@@ -85,40 +93,165 @@ function ClipItem({ clip, onAdd }: ClipItemProps) {
           Add
         </Button>
       )}
+
+      {onDelete && (
+        <Button
+          variant="secondary"
+          size="icon-sm"
+          className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+          onClick={() => onDelete(clip)}
+        >
+          <Trash2 className="size-3" />
+        </Button>
+      )}
     </div>
   );
 }
 
-export function ClipLibrary({ clips, onClipAdd }: ClipLibraryProps) {
-  return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Clips</CardTitle>
-        <CardDescription className="text-xs">Click to add to timeline</CardDescription>
-      </CardHeader>
+export function ClipLibrary({ clips, onClipAdd, projectName, onImportVideo, onLoadImportedVideos, onDeleteImportedVideo }: ClipLibraryProps) {
+  const [activeTab, setActiveTab] = useState<"sora" | "import">("sora");
+  const [importedClips, setImportedClips] = useState<VideoClip[]>([]);
 
-      <CardContent className="flex-1 overflow-auto px-3">
-        <ScrollArea className="h-full">
-          {clips.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <p className="text-sm text-muted-foreground">No clips yet</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Generate videos in the storyboard to see them here
-              </p>
+  // Load imported videos on mount and when project changes
+  useEffect(() => {
+    if (!onLoadImportedVideos) return;
+
+    const loadImportedVideos = async () => {
+      try {
+        const videos = await onLoadImportedVideos();
+        setImportedClips(videos);
+      } catch (error) {
+        console.error("Failed to load imported videos:", error);
+      }
+    };
+
+    loadImportedVideos();
+  }, [projectName, onLoadImportedVideos]);
+
+  const handleFilePicker = () => {
+    if (!onImportVideo) {
+      toast.error("Import functionality not available");
+      return;
+    }
+
+    // This will open the Tauri file dialog
+    onImportVideo().then((clip) => {
+      setImportedClips((prev) => [...prev, clip]);
+      toast.success("Video imported successfully");
+    }).catch((error) => {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      if (!errMsg.includes("cancelled")) {
+        toast.error("Failed to import video", { description: errMsg });
+      }
+    });
+  };
+
+  const handleDeleteImported = async (videoId: string) => {
+    if (!onDeleteImportedVideo) {
+      toast.error("Delete functionality not available");
+      return;
+    }
+
+    try {
+      await onDeleteImportedVideo(videoId);
+      setImportedClips((prev) => prev.filter((clip) => clip.id !== videoId));
+      toast.success("Video removed");
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      toast.error("Failed to delete video", { description: errMsg });
+    }
+  };
+
+  return (
+    <Card className="h-full flex flex-col overflow-hidden">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "sora" | "import")} className="flex-1 min-h-0 flex flex-col">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col">
+              <CardTitle className="text-base">Media</CardTitle>
             </div>
-          ) : (
-            <div className="space-y-2">
-              {clips.map((clip) => (
-                <ClipItem
-                  key={clip.id}
-                  clip={clip}
-                  onAdd={onClipAdd}
-                />
-              ))}
+            <TabsList className="w-fit h-7 p-[2px]">
+              <TabsTrigger 
+                value="sora" 
+                className="text-xs h-full px-2 gap-1.5"
+              >
+                <Sparkles className="size-3" />
+                Sora
+              </TabsTrigger>
+              <TabsTrigger value="import" className="text-xs h-full px-2 gap-1.5">
+                <Upload className="size-3" />
+                Import
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          {activeTab === "import" && (
+            <div className="flex justify-end mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleFilePicker}
+                className="h-7 px-2 text-xs"
+              >
+                <Upload className="size-3 mr-1" />
+                Browse
+              </Button>
             </div>
           )}
-        </ScrollArea>
-      </CardContent>
+        </CardHeader>
+
+        <CardContent className="flex-1 flex flex-col overflow-hidden pl-3 pr-1 pt-0 min-h-0">
+          <TabsContent value="sora" className="flex-1 flex flex-col min-h-0 mt-0 overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <ScrollArea className="h-full w-full" type="auto">
+                {clips.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <p className="text-sm text-muted-foreground">No media yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Generate videos in the storyboard to see them here
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 pb-2 pr-2">
+                    {clips.map((clip) => (
+                      <ClipItem
+                        key={clip.id}
+                        clip={clip}
+                        onAdd={onClipAdd}
+                      />
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="import" className="flex-1 flex flex-col min-h-0 mt-0 overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <ScrollArea className="h-full w-full" type="auto">
+                {importedClips.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <p className="text-sm text-muted-foreground">No imported videos yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Import your own video files to use in the editor
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 pb-2 pr-2">
+                    {importedClips.map((clip) => (
+                      <ClipItem
+                        key={clip.id}
+                        clip={clip}
+                        onAdd={onClipAdd}
+                        onDelete={(item) => handleDeleteImported(item.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
+          </TabsContent>
+        </CardContent>
+      </Tabs>
     </Card>
   );
 }

@@ -34,7 +34,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
     reorderClips,
     updateClipTransition
   } = useEditorState(projectName, previewVideoPath);
-  const { createPreviewVideo, exportVideo } = useEditor();
+  const { createPreviewVideo, exportVideo, importVideo, listImportedVideos, deleteImportedVideo } = useEditor();
 
   const [libraryClips, setLibraryClips] = useState<VideoClip[]>([]);
   const [seekToTime, setSeekToTime] = useState<number | undefined>(undefined);
@@ -77,6 +77,18 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
   const handleClipAdd = (clip: VideoClip) => {
     addClip(clip, totalDuration);
     toast.success('Clip added to timeline');
+  };
+
+  const handleImportVideo = async (): Promise<VideoClip> => {
+    return await importVideo(projectName);
+  };
+
+  const handleLoadImportedVideos = async (): Promise<VideoClip[]> => {
+    return await listImportedVideos(projectName);
+  };
+
+  const handleDeleteImportedVideo = async (videoId: string): Promise<void> => {
+    await deleteImportedVideo(projectName, videoId);
   };
 
   const handleDelete = () => {
@@ -164,11 +176,17 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
       <ResizablePanel defaultSize={75} minSize={40}>
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Left Panel: Clip Library */}
-          <ResizablePanel defaultSize={15} minSize={10}>
-            <ClipLibrary
-              clips={libraryClips}
-              onClipAdd={handleClipAdd}
-            />
+          <ResizablePanel defaultSize={15} minSize={10} className="min-w-0">
+            <div className="h-full min-h-0 overflow-hidden">
+              <ClipLibrary
+                clips={libraryClips}
+                onClipAdd={handleClipAdd}
+                projectName={projectName}
+                onImportVideo={handleImportVideo}
+                onLoadImportedVideos={handleLoadImportedVideos}
+              onDeleteImportedVideo={handleDeleteImportedVideo}
+              />
+            </div>
           </ResizablePanel>
 
           <ResizableHandle withHandle />

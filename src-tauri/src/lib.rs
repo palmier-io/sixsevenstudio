@@ -46,7 +46,10 @@ pub fn run() {
             load_editor_state,
             export_video,
             generate_clip_waveform,
-            generate_clip_sprite
+            generate_clip_sprite,
+            import_video,
+            list_imported_videos,
+            delete_imported_video
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
