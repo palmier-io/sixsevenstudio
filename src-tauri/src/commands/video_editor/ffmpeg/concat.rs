@@ -11,7 +11,7 @@ const VIDEO_CRF: &str = "23";
 const AUDIO_CODEC: &str = "aac";
 const AUDIO_BITRATE: &str = "128k";
 
-/// Trim a video segment using codec copy (no re-encoding)
+/// Trim a video segment from the source
 pub async fn trim_segment(
     app: &AppHandle,
     input: &str,
@@ -20,18 +20,33 @@ pub async fn trim_segment(
     output: &Path,
 ) -> Result<(), String> {
     let duration = end - start;
+    let output_str = output.to_str().ok_or("Invalid output path")?;
+    let start_str = start.to_string();
+    let duration_str = duration.to_string();
+
     let args = [
         "-ss",
-        &start.to_string(),
+        start_str.as_str(),
         "-i",
         input,
         "-t",
-        &duration.to_string(),
-        "-c",
-        "copy",
+        duration_str.as_str(),
+        "-c:v",
+        VIDEO_CODEC,
+        "-preset",
+        VIDEO_PRESET,
+        "-crf",
+        VIDEO_CRF,
+        "-c:a",
+        AUDIO_CODEC,
+        "-b:a",
+        AUDIO_BITRATE,
+        "-avoid_negative_ts",
+        "make_zero",
         "-y",
-        output.to_str().ok_or("Invalid output path")?,
+        output_str,
     ];
+
     run_ffmpeg(app, &args, "trim video").await
 }
 
@@ -116,14 +131,16 @@ pub async fn concatenate_with_transitions(
     for (i, clip) in clips.iter().enumerate() {
         let temp_file = temp_dir.join(format!("clip_{}.mp4", i));
         let duration = clip.trim_end - clip.trim_start;
+        let start_str = clip.trim_start.to_string();
+        let duration_str = duration.to_string();
 
         let args = [
-            "-ss",
-            &clip.trim_start.to_string(),
             "-i",
             &clip.video_path,
+            "-ss",
+            start_str.as_str(),
             "-t",
-            &duration.to_string(),
+            duration_str.as_str(),
             "-c:v",
             VIDEO_CODEC,
             "-preset",
@@ -134,6 +151,8 @@ pub async fn concatenate_with_transitions(
             AUDIO_CODEC,
             "-b:a",
             AUDIO_BITRATE,
+            "-avoid_negative_ts",
+            "make_zero",
             "-y",
             temp_file.to_str().ok_or("Invalid temp file path")?,
         ];
@@ -185,4 +204,3 @@ pub async fn concatenate_with_transitions(
 
     Ok(())
 }
-

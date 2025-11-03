@@ -82,6 +82,7 @@ export function useEditorState(projectName: string, previewVideoPath: string | n
   }, []);
 
   // Split clip at a given time (relative to the timeline)
+  // Following OpenCut's pattern: split is metadata-only, no FFmpeg call
   const splitClip = useCallback((clipId: string, splitTimelinePosition: number) => {
     setClips(prev => {
       const clipIndex = prev.findIndex(c => c.id === clipId);
@@ -100,22 +101,25 @@ export function useEditorState(projectName: string, previewVideoPath: string | n
 
       // Calculate split point relative to the clip's start
       const splitPointInClip = splitTimelinePosition - clipStartTime;
+      const durationToRemove = clip.duration - splitPointInClip;
 
-      // Create first clip (before split)
+      // Create first clip (left portion) - trimEnd becomes the split point
+      // Note: trimStart/trimEnd are absolute times in the source video
       const firstClip: TimelineClip = {
         ...clip,
         id: generateId('clip'),
         duration: splitPointInClip,
-        trimEnd: clip.trimStart + splitPointInClip,
+        trimEnd: clip.trimStart + splitPointInClip, // Absolute end time at split point
       };
 
-      // Create second clip (after split)
+      // Create second clip (right portion) - trimStart becomes the split point
       const secondClip: TimelineClip = {
         ...clip,
         id: generateId('clip'),
-        position: clip.position + splitPointInClip,
-        duration: clip.duration - splitPointInClip,
-        trimStart: clip.trimStart + splitPointInClip,
+        position: splitTimelinePosition, // Timeline position (absolute)
+        duration: durationToRemove,
+        trimStart: clip.trimStart + splitPointInClip, // Absolute start time at split point
+        trimEnd: clip.trimEnd, // Keep original absolute end time
       };
 
       // Replace the original clip with the two new clips
