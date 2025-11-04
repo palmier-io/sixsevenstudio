@@ -1,8 +1,6 @@
 import { useParams, useSearchParams, useLocation } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Video, BookOpen, Scissors, Home } from "lucide-react";
-import { useEffect } from "react";
-import type { KeyboardEvent } from "react";
 import { VideosTab } from "@/components/tabs/VideosTab";
 import { StoryboardTab } from "@/components/tabs/StoryboardTab";
 import { VideoEditorTab } from "@/components/tabs/VideoEditorTab";
@@ -37,32 +35,6 @@ export function ProjectPage({ selectedProject }: { selectedProject: ProjectSumma
   const handleTabChange = (value: string) => {
     setSearchParams({ tab: value });
   };
-
-  // Keyboard shortcuts for tab navigation: Cmd+1, Cmd+2, Cmd+3
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle if not typing in an input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      if (e.metaKey || e.ctrlKey) {
-        if (e.key === '1') {
-          e.preventDefault();
-          handleTabChange('storyboard');
-        } else if (e.key === '2') {
-          e.preventDefault();
-          handleTabChange('videos');
-        } else if (e.key === '3') {
-          e.preventDefault();
-          handleTabChange('editor');
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown as any);
-    return () => window.removeEventListener('keydown', handleKeyDown as any);
-  }, []);
 
   if (!params.projectName) {
     return (
