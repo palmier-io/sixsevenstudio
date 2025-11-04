@@ -1,5 +1,7 @@
 # sixseverstudio
 
+[![Download](https://img.shields.io/badge/Download-Latest-blue?style=for-the-badge&logo=apple)](https://github.com/palmier-io/sixsevenstudio/releases/latest)
+
 sixsevenstudio is a native Mac app for generating and editing AI videos with Sora.
 
 It lets you brainstorm ideas and storyboards with AI assistant, iterate on Sora videos, and edit the videos, all in one place.
