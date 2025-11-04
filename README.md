@@ -34,6 +34,7 @@ It's built with:
 1. Install [Node.js](https://nodejs.org/) (v18+)
 2. Install [Rust](https://www.rust-lang.org/tools/install)
 3. Install `ffmpeg` (see below)
+4. Get an [OpenAI API key](https://platform.openai.com/api-keys)
 
 #### Setup
 
