@@ -30,6 +30,43 @@ export function VideoPreview({ videoPath, onTimeUpdate, seekToTime, isGenerating
     }
   }, [seekToTime, videoPath]);
 
+  // Keyboard shortcuts: Space to play/pause, Arrow keys to seek
+  useEffect(() => {
+    if (!videoPath || !videoRef.current) return;
+
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      // Only handle if not typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      const video = videoRef.current;
+      if (!video) return;
+
+      switch (e.key) {
+        case ' ':
+          e.preventDefault();
+          if (video.paused) {
+            video.play();
+          } else {
+            video.pause();
+          }
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - 5);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          video.currentTime = Math.min(video.duration, video.currentTime + 5);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [videoPath]);
+
   // Use ref callback to set up listeners when video element mounts
   const videoRefCallback = useCallback((element: HTMLVideoElement | null) => {
     if (cleanupRef.current) {
@@ -80,8 +117,12 @@ export function VideoPreview({ videoPath, onTimeUpdate, seekToTime, isGenerating
     <Card className="w-full h-full flex flex-col overflow-hidden">
       <CardContent className="p-0 flex-1 flex items-center justify-center bg-black min-h-0">
         {isGenerating ? (
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">Generating preview...</p>
+          <div className="text-center space-y-4">
+            <div className="size-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Generating preview...</p>
+              <p className="text-xs text-muted-foreground mt-1">This may take a moment</p>
+            </div>
           </div>
         ) : videoPath ? (
           <video
@@ -92,11 +133,29 @@ export function VideoPreview({ videoPath, onTimeUpdate, seekToTime, isGenerating
             key={videoPath} // Force re-render when video changes
           />
         ) : (
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">No clips on timeline</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Add clips to the timeline to see preview
-            </p>
+          <div className="text-center space-y-3">
+            <div className="size-16 rounded-full bg-muted flex items-center justify-center mx-auto">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="size-8 text-muted-foreground"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">No clips on timeline</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Add clips from the library to see preview
+              </p>
+            </div>
           </div>
         )}
       </CardContent>

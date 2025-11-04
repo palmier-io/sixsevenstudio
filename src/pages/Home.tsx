@@ -151,11 +151,14 @@ export function Home() {
 
   return (
     <div className="flex h-screen items-center justify-center p-6 -mt-16">
-      <div className="mx-auto w-full max-w-2xl space-y-4">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-4 mb-2">
-            <h1 className="text-3xl">Let's create.</h1>
+      <div className="mx-auto w-full max-w-2xl space-y-6">
+        <div className="text-center mb-10">
+          <div className="flex items-center justify-center gap-4 mb-3">
+            <h1 className="text-4xl font-semibold tracking-tight">Let's create.</h1>
           </div>
+          <p className="text-muted-foreground text-sm">
+            Generate AI videos or create storyboards with Sora
+          </p>
         </div>
         <InputBox
           onGenerate={handleGenerate}
@@ -164,7 +167,6 @@ export function Home() {
           onImageClear={handleImageClear}
           disabled={isGenerating}
         />
-
       </div>
     </div>
   );

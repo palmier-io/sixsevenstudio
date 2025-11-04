@@ -50,12 +50,10 @@ export function Sidebar({
 
   return (
     <UISidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="px-4 py-3">
-        <div className="flex items-center justify-center">
+      <SidebarHeader className="px-4 py-3 border-b">
+        <div className="flex items-center justify-between">
           <span className="text-sm font-semibold leading-tight group-data-[collapsible=icon]:hidden">sixsevenstudio</span>
-          <div className="flex gap-2 ml-auto">
-            <SidebarTrigger />
-          </div>
+          <SidebarTrigger />
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -64,12 +62,12 @@ export function Sidebar({
             <SidebarMenu>
                 <>
                   <div
-                    className="mt-2 flex items-center gap-1 px-3 group-data-[collapsible=icon]:hidden cursor-pointer hover:bg-accent rounded-md py-1"
+                    className="mt-2 flex items-center gap-1.5 px-3 group-data-[collapsible=icon]:hidden cursor-pointer hover:bg-accent rounded-md py-1.5 transition-colors"
                     onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
                   >
                     <div className="text-xs font-medium text-muted-foreground">Projects</div>
                     <ChevronRight
-                      className={`size-4 text-muted-foreground transition-transform ${
+                      className={`size-3.5 text-muted-foreground transition-transform ${
                         isProjectsExpanded ? 'rotate-90' : ''
                       }`}
                     />
@@ -77,7 +75,7 @@ export function Sidebar({
                   {isProjectsExpanded && projects.map((p) => (
                     <SidebarMenuItem key={p.path}>
                       <SidebarMenuButton
-                        className="gap-2"
+                        className="gap-2 px-2 py-1.5 group"
                         isActive={location.pathname === `/projects/${p.name}`}
                         onClick={() => {
                           onSelectProject?.(p)
@@ -86,9 +84,8 @@ export function Sidebar({
                           })
                         }}
                       >
-                        <Folder className="size-4" />
-                        <span className="truncate">{p.name}</span>
-                        <span className="ml-auto" />
+                        <Folder className="size-4 shrink-0" />
+                        <span className="truncate flex-1">{p.name}</span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -96,6 +93,7 @@ export function Sidebar({
                               size="icon-sm"
                               aria-label="Project actions"
                               onClick={(e) => e.stopPropagation()}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                             >
                               <MoreHorizontal className="size-4" />
                             </Button>

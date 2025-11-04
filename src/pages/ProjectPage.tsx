@@ -1,6 +1,8 @@
 import { useParams, useSearchParams, useLocation } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Video, BookOpen, Scissors, Home } from "lucide-react";
+import { useEffect } from "react";
+import type { KeyboardEvent } from "react";
 import { VideosTab } from "@/components/tabs/VideosTab";
 import { StoryboardTab } from "@/components/tabs/StoryboardTab";
 import { VideoEditorTab } from "@/components/tabs/VideoEditorTab";
@@ -36,6 +38,32 @@ export function ProjectPage({ selectedProject }: { selectedProject: ProjectSumma
     setSearchParams({ tab: value });
   };
 
+  // Keyboard shortcuts for tab navigation: Cmd+1, Cmd+2, Cmd+3
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle if not typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.metaKey || e.ctrlKey) {
+        if (e.key === '1') {
+          e.preventDefault();
+          handleTabChange('storyboard');
+        } else if (e.key === '2') {
+          e.preventDefault();
+          handleTabChange('videos');
+        } else if (e.key === '3') {
+          e.preventDefault();
+          handleTabChange('editor');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown as any);
+    return () => window.removeEventListener('keydown', handleKeyDown as any);
+  }, []);
+
   if (!params.projectName) {
     return (
       <div className="h-full w-full flex items-center justify-center">
@@ -50,20 +78,20 @@ export function ProjectPage({ selectedProject }: { selectedProject: ProjectSumma
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Header with breadcrumb and tabs */}
-      <div className="px-6 py-3 flex-shrink-0 flex items-center justify-between border-b">
+      <div className="px-6 py-3 flex-shrink-0 flex items-center justify-between border-b bg-background/50 backdrop-blur-sm">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/" className="flex items-center gap-1.5">
+              <BreadcrumbLink href="/" className="flex items-center gap-1.5 hover:text-primary transition-colors">
                 <Home className="size-4 text-primary" />
-                <span className="text-primary">Home</span>
+                <span className="text-primary font-medium">Home</span>
               </BreadcrumbLink>
             </BreadcrumbItem>
             {selectedProject && (
               <>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>{selectedProject.name}</BreadcrumbPage>
+                  <BreadcrumbPage className="font-medium">{selectedProject.name}</BreadcrumbPage>
                 </BreadcrumbItem>
               </>
             )}
@@ -72,15 +100,15 @@ export function ProjectPage({ selectedProject }: { selectedProject: ProjectSumma
 
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="w-fit h-7 p-[2px]">
-            <TabsTrigger value="storyboard" className="text-xs h-full px-2 gap-1.5">
+            <TabsTrigger value="storyboard" className="text-xs h-full px-2 gap-1.5" title="Storyboard (⌘1)">
               <BookOpen className="size-3" />
               Storyboard
             </TabsTrigger>
-            <TabsTrigger value="videos" className="text-xs h-full px-2 gap-1.5">
+            <TabsTrigger value="videos" className="text-xs h-full px-2 gap-1.5" title="Videos (⌘2)">
               <Video className="size-3" />
               Videos
             </TabsTrigger>
-            <TabsTrigger value="editor" className="text-xs h-full px-2 gap-1.5">
+            <TabsTrigger value="editor" className="text-xs h-full px-2 gap-1.5" title="Editor (⌘3)">
               <Scissors className="size-3" />
               Editor
             </TabsTrigger>

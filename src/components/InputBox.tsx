@@ -105,6 +105,22 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
     }
   }
 
+  // Keyboard shortcut: Cmd/Ctrl + Enter to send
+  useEffect(() => {
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && value.trim() && !disabled) {
+        e.preventDefault()
+        if (mode === "storyboard") {
+          onStoryboard?.({ prompt: value, settings, llmModel })
+        } else {
+          onGenerate?.({ prompt: value, settings })
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [value, disabled, mode, settings, llmModel, onStoryboard, onGenerate])
+
   return (
     <Tabs value={mode} onValueChange={(value) => setMode(value as InputMode)} className="mx-auto mt-6">
       <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
@@ -135,7 +151,7 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
           />
         </div>
         <div className="flex items-center justify-between gap-2 border-t px-4 py-3">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {mode === "video" && (
               <>
                 <TooltipProvider>
@@ -167,7 +183,7 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
                 <button
                   type="button"
                   onClick={handleClearImage}
-                  className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-background text-foreground ring-1 ring-border hover:bg-accent"
+                  className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-background text-foreground ring-1 ring-border hover:bg-accent transition-colors"
                   aria-label="Remove image"
                 >
                   <X className="size-3" />
@@ -183,13 +199,23 @@ export function InputBox({ onGenerate, onStoryboard, onImageSelect, onImageClear
             />
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              size="icon"
-              onClick={handleSend}
-              disabled={!value.trim() || disabled}
-            >
-              <Send className="size-4" />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    onClick={handleSend}
+                    disabled={!value.trim() || disabled}
+                    aria-label="Send"
+                  >
+                    <Send className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="text-xs">Send (⌘↩)</div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>

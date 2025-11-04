@@ -45,15 +45,19 @@ export function VideoStatus({ status, progress, size = "small", error }: VideoSt
   // Failed state
   if (hasFailed) {
     return (
-      <div className="absolute inset-0 bg-red-950/80 flex flex-col items-center justify-center gap-2 text-red-200 rounded-lg z-10 p-2">
+      <div className="absolute inset-0 bg-red-950/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 text-red-200 rounded-lg z-10 p-3">
         <AlertCircle className={isSmall ? "size-4" : "size-8"} />
         <span className={isSmall ? "text-[10px]" : "text-sm font-medium"}>
           {isSmall ? "Failed" : "Video Generation Failed"}
         </span>
         {!isSmall && (
-          <div className="text-xs text-center px-2 space-y-1">
-            {error && <p className="break-words max-w-full">Error from OpenAI: {error}</p>}
-            <p>Please try creating a new video</p>
+          <div className="text-xs text-center px-3 space-y-2 max-w-md">
+            {error && (
+              <p className="break-words max-w-full bg-red-900/50 rounded px-2 py-1">
+                {error}
+              </p>
+            )}
+            <p className="text-red-200/80">Please try regenerating the video</p>
           </div>
         )}
       </div>

@@ -26,15 +26,16 @@ export function VideoDetails({ video, onRegenerate, onRemix }: VideoDetailsProps
 
   return (
     <ScrollArea className="h-full">
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-5">
         {/* Action Buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 pb-2 border-b">
           {onRegenerate && (
             <Button
               onClick={onRegenerate}
               variant="outline"
               size="sm"
               className="w-fit"
+              aria-label="Regenerate video"
             >
               <RotateCw className="size-3 mr-1.5" />
               Regenerate
@@ -45,21 +46,21 @@ export function VideoDetails({ video, onRegenerate, onRemix }: VideoDetailsProps
 
         {/* Scene Information (if available) */}
         {video.scene_number && video.scene_title && (
-          <div>
+          <div className="pb-2 border-b">
             <p className="text-sm font-medium">Scene {video.scene_number} - {video.scene_title}</p>
           </div>
         )}
 
         <div>
           <h2 className="text-sm font-semibold mb-2">Original Prompt</h2>
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">
             {video.prompt}
           </p>
         </div>
 
         <div>
           <h2 className="text-sm font-semibold mb-3">Video Metadata</h2>
-          <dl className="space-y-2">
+          <dl className="space-y-2.5">
             <div className="flex justify-between text-sm">
               <dt className="text-muted-foreground">Video ID:</dt>
               <dd className="font-medium text-xs truncate">{video.id}</dd>

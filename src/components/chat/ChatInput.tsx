@@ -30,10 +30,15 @@ export function ChatInput({ onSend, onStop, disabled = false, status = 'ready', 
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Submit on Enter (without Shift)
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Submit on Enter (without Shift) or Cmd/Ctrl+Enter
+    if (e.key === 'Enter' && (!e.shiftKey || e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       handleSubmit();
+    }
+    // Stop on Escape
+    if (e.key === 'Escape' && isProcessing && onStop) {
+      e.preventDefault();
+      onStop();
     }
   };
 
@@ -66,7 +71,8 @@ export function ChatInput({ onSend, onStop, disabled = false, status = 'ready', 
             size="icon"
             className="shrink-0"
             variant="destructive"
-            title="Stop"
+            title="Stop (Esc)"
+            aria-label="Stop generation"
           >
             <Square className="size-4 fill-current" />
           </Button>
@@ -76,6 +82,8 @@ export function ChatInput({ onSend, onStop, disabled = false, status = 'ready', 
             disabled={isDisabled || !input.trim()}
             size="icon"
             className="shrink-0"
+            aria-label="Send message"
+            title="Send (⌘↩)"
           >
             <Send className="size-4" />
           </Button>

@@ -204,8 +204,11 @@ export function ClipLibrary({ clips, onClipAdd, projectName, onImportVideo, onLo
             <div className="flex-1 min-h-0 overflow-hidden">
               <ScrollArea className="h-full w-full" type="auto">
                 {clips.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <p className="text-sm text-muted-foreground">No media yet</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="size-16 rounded-full bg-muted flex items-center justify-center mb-3">
+                      <Sparkles className="size-8 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground">No media yet</p>
                     <p className="text-xs text-muted-foreground mt-1">
                       Generate videos in the storyboard to see them here
                     </p>
@@ -229,10 +232,13 @@ export function ClipLibrary({ clips, onClipAdd, projectName, onImportVideo, onLo
             <div className="flex-1 min-h-0 overflow-hidden">
               <ScrollArea className="h-full w-full" type="auto">
                 {importedClips.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <p className="text-sm text-muted-foreground">No imported videos yet</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="size-16 rounded-full bg-muted flex items-center justify-center mb-3">
+                      <Upload className="size-8 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground">No imported videos yet</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Import your own video files to use in the editor
+                      Click Browse to import your own video files
                     </p>
                   </div>
                 ) : (
