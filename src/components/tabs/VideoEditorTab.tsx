@@ -189,7 +189,7 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
             </div>
           </ResizablePanel>
 
-          <ResizableHandle withHandle />
+          <ResizableHandle />
 
           {/* Right Panel: Video Preview */}
           <ResizablePanel defaultSize={70} minSize={40}>
@@ -205,11 +205,11 @@ export function VideoEditorTab({ projectName }: VideoEditorTabProps) {
         </ResizablePanelGroup>
       </ResizablePanel>
 
-      <ResizableHandle withHandle />
+      <ResizableHandle />
 
       {/* Bottom Panel - Timeline */}
       <ResizablePanel defaultSize={40} minSize={10} maxSize={50}>
-        <div className="h-full border-t">
+        <div className="h-full">
           <Timeline
             clips={clips}
             selectedClipId={selectedClipId}

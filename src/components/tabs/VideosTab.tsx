@@ -209,7 +209,7 @@ export function VideosTab({ projectName }: VideosTabProps) {
             />
           </ResizablePanel>
 
-          <ResizableHandle withHandle />
+          <ResizableHandle />
 
           {/* Right Panel: Video Player */}
           <ResizablePanel defaultSize={60} minSize={40}>
@@ -231,23 +231,21 @@ export function VideosTab({ projectName }: VideosTabProps) {
         </ResizablePanelGroup>
       </ResizablePanel>
 
-      <ResizableHandle withHandle />
+      <ResizableHandle />
 
       {/* Bottom Panel - Video Gallery */}
       <ResizablePanel defaultSize={25} minSize={10} maxSize={50}>
-        <div className="h-full border-t">
-          {projectMeta && (
-            <VideoGallery
-              videos={projectMeta.videos}
-              selectedVideoId={selectedVideoId || undefined}
-              onVideoSelect={handleVideoSelect}
-              onVideoDelete={handleVideoDelete}
-              onVideoRegenerate={handleVideoRegenerate}
-              onVideoRemix={handleVideoRemix}
-              projectPath={projectMeta.path}
-            />
-          )}
-        </div>
+        {projectMeta && (
+          <VideoGallery
+            videos={projectMeta.videos}
+            selectedVideoId={selectedVideoId || undefined}
+            onVideoSelect={handleVideoSelect}
+            onVideoDelete={handleVideoDelete}
+            onVideoRegenerate={handleVideoRegenerate}
+            onVideoRemix={handleVideoRemix}
+            projectPath={projectMeta.path}
+          />
+        )}
       </ResizablePanel>
     </ResizablePanelGroup>
   );

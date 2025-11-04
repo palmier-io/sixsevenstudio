@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sidebar } from "@/components/Sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
@@ -23,8 +23,16 @@ function AppLayout() {
       : "light";
   });
 
+  const location = useLocation();
   const [selectedProject, setSelectedProject] = useState<ProjectSummary | null>(null);
   const { apiKey, isLoading: isCheckingApiKey } = useApiKey();
+  
+  const isProjectPage = location.pathname.startsWith("/projects/");
+  const [sidebarOpen, setSidebarOpen] = useState(() => !isProjectPage);
+
+  useEffect(() => {
+    setSidebarOpen(!isProjectPage);
+  }, [isProjectPage]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -32,7 +40,7 @@ function AppLayout() {
   }, [theme]);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
       <Sidebar
         selectedProject={selectedProject?.name ?? null}
         onSelectProject={(p) => setSelectedProject(p)}
